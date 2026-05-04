@@ -2,32 +2,21 @@
 Excel Processor - Backend as a Service
 ======================================
 Main entry point for the Flask API
+No storage needed - files processed in memory
 """
 
-from flask import Flask, jsonify
+from flask import Flask, jsonify, send_file
 from flask_cors import CORS
 from dotenv import load_dotenv
+import io
 
 load_dotenv()
 
-from backend.api.endpoints import api_bp, init_services
-from excel_processor.errors import handle_exception
+from backend.api.endpoints import api_bp
 
 
 app = Flask(__name__)
 CORS(app)
-
-
-@app.before_request
-def before_request():
-    """Initialize services before first request"""
-    if not hasattr(app, '_services_initialized'):
-        try:
-            init_services()
-            app._services_initialized = True
-        except Exception as e:
-            print(f"Warning: Could not initialize services: {e}")
-            app._services_initialized = True
 
 
 @app.route('/')
@@ -36,15 +25,26 @@ def home():
     return jsonify({
         "name": "Excel Processor API",
         "version": "2.0.0",
-        "description": "Excel as a Backend Service - Upload Excel files, fill inputs, get calculated outputs",
+        "description": "Excel as a Backend Service - Upload Excel, fill inputs, get calculated outputs",
         "endpoints": {
-            "POST /api/v1/files": "Upload Excel file",
-            "GET /api/v1/files/<file_id>": "Get file info",
-            "DELETE /api/v1/files/<file_id>": "Delete file",
-            "POST /api/v1/execute/<file_id>": "Fill inputs → Get calculated outputs",
-            "GET /api/v1/read/<file_id>": "Read specific cells",
-            "PUT /api/v1/write/<file_id>": "Write to cells",
-            "GET /api/v1/sheets/<file_id>": "Get sheet names"
+            "POST /api/v1/execute": "Fill inputs → Excel calculates → Return outputs (multipart/form-data)",
+            "POST /api/v1/read": "Read specific cells from Excel",
+            "POST /api/v1/write": "Write to cells and get updated file",
+            "POST /api/v1/sheets": "Get sheet names from Excel file",
+            "GET /api/v1/health": "Health check"
+        },
+        "example": {
+            "description": "Excel has C11=input, C12=input, C13=SUM(C11,C12)",
+            "request": {
+                "file": "salary.xlsx",
+                "inputs": '{"C11": 5000, "C12": 750}',
+                "outputs": "C13"
+            },
+            "response": {
+                "success": True,
+                "results": {"C13": 5750},
+                "sheet": "Sheet1"
+            }
         }
     })
 
@@ -77,11 +77,14 @@ if __name__ == '__main__':
     print("=" * 70)
     print("  Excel Processor API - Backend as a Service")
     print("  Version 2.0.0")
+    print("  No storage needed - files processed in memory")
     print("=" * 70)
     print()
-    print("  Make sure to set these environment variables:")
-    print("  - SUPABASE_URL")
-    print("  - SUPABASE_KEY")
-    print("  - SUPABASE_BUCKET (default: excel-files)")
+    print("  Endpoints:")
+    print("  - POST /api/v1/execute  : Fill inputs → Get calculated outputs")
+    print("  - POST /api/v1/read    : Read specific cells")
+    print("  - POST /api/v1/write   : Write to cells")
+    print("  - POST /api/v1/sheets  : Get sheet names")
+    print("  - GET  /api/v1/health : Health check")
     print()
     run_server(debug=True)
