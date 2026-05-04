@@ -150,7 +150,7 @@ export const BatchWritePage: React.FC<BatchWritePageProps> = ({ lang }) => {
             <div className="flex gap-4">
               <div className="flex-1 bg-green-50 rounded-lg p-4 text-center">
                 <p className="text-2xl font-bold text-green-600">{result.total_updated}</p>
-                <p className="text-sm text-green-600">{t.successfulCount}</p>
+                <p className="text-sm text-green-600">{t.successCount}</p>
               </div>
               <div className="flex-1 bg-red-50 rounded-lg p-4 text-center">
                 <p className="text-2xl font-bold text-red-600">{result.total_failed}</p>

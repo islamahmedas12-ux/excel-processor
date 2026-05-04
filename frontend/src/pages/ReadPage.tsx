@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Eye, FileSpreadsheet, Table } from 'lucide-react';
-import { Card, Button, Input, Select, Alert, Table as TableComponent, LoadingSpinner } from '../components/ui';
+import { Card, Button, Input, Alert, Table as TableComponent, LoadingSpinner } from '../components/ui';
 import { apiService } from '../services/api';
 
 interface ReadPageProps {
