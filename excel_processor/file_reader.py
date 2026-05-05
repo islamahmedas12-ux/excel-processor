@@ -6,6 +6,7 @@
 """
 
 import xlrd
+from io import BytesIO
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 from openpyxl import load_workbook
@@ -27,32 +28,47 @@ class ExcelReader:
     تدعم صيغتي .xlsx و .xls مع الحفاظ على التنسيق
     """
 
-    def __init__(self, file_path: str):
+    def __init__(self, file_source: Union[str, bytes, BytesIO], is_bytes: bool = False):
         """
-        تهيئة القارئ بمسار الملف
+        تهيئة القارئ بمسار الملف أو البيانات الثنائية
 
         المعلمات:
-            file_path (str): مسار ملف Excel
+            file_source (str | bytes | BytesIO): مسار الملف أو البيانات الثنائية
+            is_bytes (bool): إذا كان True، يتم التعامل مع file_source كبيانات ثنائية
 
         الاستثناءات:
             FileNotFoundError_: إذا كان الملف غير موجود
             UnsupportedFormatError: إذا كانت الصيغة غير مدعومة
             CorruptedFileError: إذا كان الملف تالفاً
         """
-        self.file_path = validate_file_path(file_path)
-        self.file_format = validate_file_format(file_path)
+        if is_bytes or isinstance(file_source, (bytes, BytesIO)):
+            self._bytes_data = BytesIO(file_source) if isinstance(file_source, bytes) else file_source
+            self.file_path = None
+            self.file_format = None
+        else:
+            self.file_path = validate_file_path(file_source)
+            self.file_format = validate_file_format(file_source)
+            self._bytes_data = None
         self.workbook = None
         self._open()
 
     def _open(self):
         """فتح الملف حسب صيغته"""
         try:
-            if self.file_format == '.xlsx':
+            if self._bytes_data is not None:
+                self._bytes_data.seek(0)
+                self.workbook = load_workbook(
+                    filename=self._bytes_data,
+                    data_only=False,
+                    keep_vba=False
+                )
+                self.file_format = '.xlsx'
+            elif self.file_format == '.xlsx':
                 self._open_xlsx()
             else:
                 self._open_xls()
         except Exception as e:
-            raise CorruptedFileError(str(self.file_path))
+            raise CorruptedFileError(str(self.file_path) if self.file_path else "bytes data")
 
     def _open_xlsx(self):
         """فتح ملف .xlsx باستخدام openpyxl"""

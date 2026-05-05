@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { FileSpreadsheet, Edit3, Eye, Settings, Globe } from 'lucide-react';
+import { FileSpreadsheet, Edit3, Eye, Settings, Globe, FileText, Play } from 'lucide-react';
 import { Card, Tabs } from '../components/ui';
 import { ReadPage } from './ReadPage';
 import { WritePage } from './WritePage';
 import { BatchWritePage } from './BatchWritePage';
+import { ExportPdfPage } from './ExportPdfPage';
+import { BatchExecutePage } from './BatchExecutePage';
 
 interface HomePageProps {
   lang: 'ar' | 'en';
@@ -21,6 +23,8 @@ export const HomePage: React.FC<HomePageProps> = ({ lang, onLangChange }) => {
         { id: 'read', label: 'قراءة البيانات', icon: Eye },
         { id: 'write', label: 'تعديل خلية', icon: Edit3 },
         { id: 'batch', label: 'تعديل متعدد', icon: Settings },
+        { id: 'pdf', label: 'تصدير PDF', icon: FileText },
+        { id: 'execute', label: 'تنفيذ دفعي', icon: Play },
       ],
     },
     en: {
@@ -30,6 +34,8 @@ export const HomePage: React.FC<HomePageProps> = ({ lang, onLangChange }) => {
         { id: 'read', label: 'Read Data', icon: Eye },
         { id: 'write', label: 'Edit Cell', icon: Edit3 },
         { id: 'batch', label: 'Batch Edit', icon: Settings },
+        { id: 'pdf', label: 'Export PDF', icon: FileText },
+        { id: 'execute', label: 'Batch Execute', icon: Play },
       ],
     },
   };
@@ -75,6 +81,8 @@ export const HomePage: React.FC<HomePageProps> = ({ lang, onLangChange }) => {
           {activeTab === 'read' && <ReadPage lang={lang} />}
           {activeTab === 'write' && <WritePage lang={lang} />}
           {activeTab === 'batch' && <BatchWritePage lang={lang} />}
+          {activeTab === 'pdf' && <ExportPdfPage lang={lang} />}
+          {activeTab === 'execute' && <BatchExecutePage lang={lang} />}
         </div>
       </main>
 
