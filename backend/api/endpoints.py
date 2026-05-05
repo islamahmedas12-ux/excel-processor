@@ -5,8 +5,9 @@ Simple API endpoints for Excel as a Backend Service
 No storage needed - files processed in memory
 """
 
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, send_file
 from io import BytesIO
+import os
 
 from ..services.excel_service import ExcelService
 
@@ -247,6 +248,39 @@ def get_sheets():
                 "count": len(sheets)
             }
         })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@api_bp.route('/export/pdf', methods=['POST'])
+def export_pdf():
+    """
+    Convert Excel file to PDF using LibreOffice
+    """
+    if 'file' not in request.files:
+        return jsonify({"error": "No file provided"}), 400
+
+    file = request.files['file']
+    output_name = request.form.get('output_name')
+
+    excel_content = file.read()
+
+    try:
+        from ..services.pdf_export_service import get_pdf_export_service
+        service = get_pdf_export_service()
+        pdf_bytes = service.convert_excel_to_pdf(
+            excel_content=excel_content,
+            filename=file.filename,
+            output_name=output_name
+        )
+
+        from flask import send_file
+        return send_file(
+            BytesIO(pdf_bytes),
+            mimetype='application/pdf',
+            as_attachment=True,
+            download_name=f"{os.path.splitext(file.filename)[0]}.pdf"
+        )
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 

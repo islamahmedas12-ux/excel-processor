@@ -1,11 +1,9 @@
 """
 Excel Service
-=============
+============
 Handles Excel operations with in-memory file processing
 """
 
-import tempfile
-import os
 from io import BytesIO
 from typing import Dict, List, Any, Optional
 
@@ -37,42 +35,32 @@ class ExcelService:
         Returns:
             Dict with results
         """
-        with tempfile.NamedTemporaryFile(suffix='.xlsx', delete=False) as tmp:
-            tmp.write(file_content)
-            tmp_path = tmp.name
+        bytes_io = BytesIO(file_content)
 
-        try:
-            sheet_name_to_use = sheet_name
+        with ExcelEditor(bytes_io) as editor:
+            sheet_name_to_use = sheet_name or editor.get_sheet_names()[0]
 
-            with ExcelEditor(tmp_path) as editor:
-                sheet_name_to_use = sheet_name or editor.get_sheet_names()[0]
+            for cell, value in inputs.items():
+                editor.update_cell(
+                    coordinates=cell,
+                    value=value,
+                    sheet_name=sheet_name_to_use,
+                    preserve_format=True
+                )
 
-                for cell, value in inputs.items():
-                    editor.update_cell(
-                        coordinates=cell,
-                        value=value,
-                        sheet_name=sheet_name_to_use,
-                        preserve_format=True
-                    )
+            results = {}
+            for output_cell in outputs:
+                value = editor.get_sheet(sheet_name_to_use)[output_cell].value
+                results[output_cell] = value
 
-                results = {}
-                for output_cell in outputs:
-                    value = editor.get_sheet(sheet_name_to_use)[output_cell].value
-                    results[output_cell] = value
+            editor.save()
 
-                editor.save()
-
-            with open(tmp_path, 'rb') as f:
-                updated_bytes = f.read()
-
-            return {
-                "success": True,
-                "results": results,
-                "sheet": sheet_name_to_use,
-                "filename": filename
-            }
-        finally:
-            os.unlink(tmp_path)
+        return {
+            "success": True,
+            "results": results,
+            "sheet": sheet_name_to_use,
+            "filename": filename
+        }
 
     def read_cells(
         self,
@@ -93,26 +81,21 @@ class ExcelService:
         Returns:
             Dict with cell values
         """
-        with tempfile.NamedTemporaryFile(suffix='.xlsx', delete=False) as tmp:
-            tmp.write(file_content)
-            tmp_path = tmp.name
+        bytes_io = BytesIO(file_content)
 
-        try:
-            with ExcelReader(tmp_path) as reader:
-                sheet_name_to_use = sheet_name or reader.get_sheet_names()[0]
+        with ExcelReader(bytes_io) as reader:
+            sheet_name_to_use = sheet_name or reader.get_sheet_names()[0]
 
-                results = {}
-                for cell in cells:
-                    results[cell] = reader.read_cell(cell, sheet_name_to_use)
+            results = {}
+            for cell in cells:
+                results[cell] = reader.read_cell(cell, sheet_name_to_use)
 
-                return {
-                    "success": True,
-                    "sheet": sheet_name_to_use,
-                    "filename": filename,
-                    "cells": results
-                }
-        finally:
-            os.unlink(tmp_path)
+            return {
+                "success": True,
+                "sheet": sheet_name_to_use,
+                "filename": filename,
+                "cells": results
+            }
 
     def write_cells(
         self,
@@ -135,38 +118,29 @@ class ExcelService:
         Returns:
             Dict with updated cells info
         """
-        with tempfile.NamedTemporaryFile(suffix='.xlsx', delete=False) as tmp:
-            tmp.write(file_content)
-            tmp_path = tmp.name
+        bytes_io = BytesIO(file_content)
 
-        try:
-            with ExcelEditor(tmp_path) as editor:
-                sheet_name_to_use = sheet_name or editor.get_sheet_names()[0]
+        with ExcelEditor(bytes_io) as editor:
+            sheet_name_to_use = sheet_name or editor.get_sheet_names()[0]
 
-                successful = []
-                for cell, value in updates.items():
-                    result = editor.update_cell(
-                        coordinates=cell,
-                        value=value,
-                        sheet_name=sheet_name_to_use,
-                        preserve_format=preserve_format
-                    )
-                    successful.append(result)
+            successful = []
+            for cell, value in updates.items():
+                result = editor.update_cell(
+                    coordinates=cell,
+                    value=value,
+                    sheet_name=sheet_name_to_use,
+                    preserve_format=preserve_format
+                )
+                successful.append(result)
 
-                editor.save()
+            editor.save()
 
-            with open(tmp_path, 'rb') as f:
-                updated_bytes = f.read()
-
-            return {
-                "success": True,
-                "sheet": sheet_name_to_use,
-                "filename": filename,
-                "updated": successful,
-                "file_size": len(updated_bytes)
-            }
-        finally:
-            os.unlink(tmp_path)
+        return {
+            "success": True,
+            "sheet": sheet_name_to_use,
+            "filename": filename,
+            "updated": successful
+        }
 
 
 def get_excel_service() -> ExcelService:

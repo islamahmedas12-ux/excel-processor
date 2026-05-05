@@ -92,3 +92,11 @@ frontend/build/
 
 # Logs
 *.log
+
+# AI planning docs (local only)
+plan.md
+HUMAN_INPUT.md
+roles.mdthoughts/
+.sisyphus/
+frontend/dist/
+roles.md

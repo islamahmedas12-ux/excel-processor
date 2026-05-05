@@ -7,6 +7,7 @@
 import xlrd
 import xlwt
 import copy
+from io import BytesIO
 from pathlib import Path
 from typing import Any, Dict, Optional, Union
 from openpyxl import load_workbook
@@ -40,29 +41,42 @@ class ExcelEditor:
     تدعم التعديل على صيغتي .xlsx و .xls مع الحفاظ على التنسيق
     """
 
-    def __init__(self, file_path: str):
+    def __init__(self, file_source: Union[str, bytes, BytesIO]):
         """
-        تهيئة المحرر بمسار الملف
+        تهيئة المحرر بمسار الملف أو البيانات الثنائية
 
         المعلمات:
-            file_path (str): مسار ملف Excel
-
-        الاستثناءات:
-            FileNotFoundError_: إذا كان الملف غير موجود
-            UnsupportedFormatError: إذا كانت الصيغة غير مدعومة
+            file_source (str | bytes | BytesIO): مسار الملف أو البيانات الثنائية
         """
-        self.file_path = validate_file_path(file_path)
-        self.file_format = validate_file_format(file_path)
+        if isinstance(file_source, (bytes, BytesIO)):
+            self._bytes_data = BytesIO(file_source) if isinstance(file_source, bytes) else file_source
+            self.file_path = None
+            self.file_format = '.xlsx'
+        else:
+            self.file_path = validate_file_path(file_source)
+            self.file_format = validate_file_format(file_source)
+            self._bytes_data = None
         self.workbook = None
         self.saved = False
         self._open()
 
     def _open(self):
         """فتح الملف للتحرير حسب صيغته"""
-        if self.file_format == '.xlsx':
+        if self._bytes_data is not None:
+            self._bytes_data.seek(0)
+            self._open_xlsx_bytes()
+        elif self.file_format == '.xlsx':
             self._open_xlsx()
         else:
             self._open_xls()
+
+    def _open_xlsx_bytes(self):
+        """فتح ملف .xlsx من البيانات الثنائية"""
+        self.workbook = load_workbook(
+            filename=self._bytes_data,
+            data_only=False,
+            keep_vba=False
+        )
 
     def _open_xlsx(self):
         """فتح ملف .xlsx للتحرير"""
@@ -311,17 +325,27 @@ class ExcelEditor:
             "number_format": cell.number_format
         }
 
-    def save(self, output_path: Optional[str] = None):
+    def save(self, output_path: Optional[str] = None) -> Optional[bytes]:
         """
         حفظ الملف
 
         المعلمات:
             output_path (str, optional): مسار الحفظ الجديد. إذا كان None، يتم الحفظ في المسار الأصلي
 
+        المخرجات:
+            bytes | None: البيانات الثنائية للملف إذا كان working من البيانات الثنائية، None otherwise
+
         الاستثناءات:
             FileSaveError: إذا حدث خطأ أثناء الحفظ
         """
         try:
+            if self._bytes_data is not None and output_path is None:
+                output = BytesIO()
+                self.workbook.save(output)
+                output.seek(0)
+                self.saved = True
+                return output.read()
+
             save_path = output_path or str(self.file_path)
 
             if self.file_format == '.xlsx':
@@ -330,9 +354,10 @@ class ExcelEditor:
                 self._save_xls(save_path)
 
             self.saved = True
+            return None
 
         except Exception as e:
-            raise FileSaveError(save_path)
+            raise FileSaveError(save_path if save_path else "bytes output")
 
     def _save_xls(self, output_path: str):
         """حفظ ملف .xls"""
