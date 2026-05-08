@@ -1,0 +1,76 @@
+---
+title: Merge PDF
+description: Combine multiple saved PDFs into one file with an optional cover page
+---
+
+# Merge PDF
+
+Merge two or more saved PDF results into a single file. Optionally add a styled cover page with a title, subtitle, and date.
+
+## Endpoint
+
+**POST** `/api/v1/pdf/merge`
+
+## Request Fields
+
+| Field            | Type   | Required | Description                                         |
+|------------------|--------|----------|-----------------------------------------------------|
+| `result_ids`     | string | Yes      | Comma-separated result IDs (PDF kind), in order     |
+| `cover_title`    | string | No       | Cover page title (leave empty for no cover page)   |
+| `cover_subtitle` | string | No       | Cover page subtitle                                 |
+| `cover_date`     | string | No       | Date string (defaults to today)                     |
+| `output_name`    | string | No       | Output filename without `.pdf` (default: `merged`) |
+| `save_result`    | bool   | No       | `true` to save as a result instead of downloading  |
+
+## Example — Merge + Download
+
+```bash
+curl -X POST https://api.yoursite.com/api/v1/pdf/merge \
+  -H "Authorization: Bearer <token>" \
+  -F "result_ids=r1abc,r2def,r3ghi" \
+  -F "cover_title=Q2 Financial Report" \
+  -F "cover_subtitle=Finance Department" \
+  -F "cover_date=2026-05-06" \
+  -F "output_name=q2-report" \
+  --output q2-report.pdf
+```
+
+## Example — Merge + Save as Result
+
+```bash
+curl -X POST https://api.yoursite.com/api/v1/pdf/merge \
+  -H "Authorization: Bearer <token>" \
+  -F "result_ids=r1abc,r2def" \
+  -F "cover_title=Annual Report" \
+  -F "save_result=true"
+```
+
+```json
+{
+  "success": true,
+  "result": {
+    "id": "res_xyz",
+    "filename": "merged.pdf",
+    "kind": "pdf",
+    "size": 512000,
+    "created_at": "2026-05-06T12:00:00Z"
+  }
+}
+```
+
+## Cover Page Design
+
+The auto-generated cover page includes:
+
+- **Dark header band** (slate-800) with the title centred in white
+- **Subtitle** in slate-300 beneath the title
+- **Indigo accent line** separating the header from the body
+- **Date** in the footer
+- **Brand name** (Excel Processor) top-right
+
+## Notes
+
+- The **order** of `result_ids` determines page order in the merged file
+- All result IDs must have `kind = "pdf"` — xlsx results are rejected
+- Merged PDFs are counted toward your storage quota if saved as a result
+- Minimum 2 result IDs are required

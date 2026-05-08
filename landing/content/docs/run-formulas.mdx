@@ -1,0 +1,79 @@
+---
+title: Run Formulas
+description: Input values and get Excel formula results
+---
+
+# Run Formulas
+
+**POST** `/api/v1/excel/execute`
+
+Write input values to cells, let Excel recalculate, and read the results — all in one request.
+
+## Request
+
+```json
+{
+  "file_id": "abc123",
+  "sheet": "Sheet1",
+  "inputs": {
+    "B2": 50000,
+    "B3": 0.15,
+    "B4": 12
+  },
+  "outputs": ["B8", "B9", "B10"]
+}
+```
+
+| Field   | Type            | Description                              |
+|---------|-----------------|------------------------------------------|
+| file_id | string          | ID from the upload response              |
+| sheet   | string          | Sheet name (defaults to first sheet)     |
+| inputs  | object          | Cells to write before reading            |
+| outputs | array of string | Cells to read after formula evaluation   |
+
+## Response
+
+```json
+{
+  "results": {
+    "B8": 8500.00,
+    "B9": 0.17,
+    "B10": "Approved"
+  }
+}
+```
+
+## Example: Loan Calculator
+
+If your Excel file has a loan calculator with:
+- `B2` = principal
+- `B3` = annual interest rate
+- `B4` = term in months
+- `B8` = monthly payment (formula)
+
+```json
+{
+  "file_id": "loan-calc-id",
+  "sheet": "Calculator",
+  "inputs": {
+    "B2": 100000,
+    "B3": 0.06,
+    "B4": 36
+  },
+  "outputs": ["B8"]
+}
+```
+
+Response:
+
+```json
+{
+  "results": { "B8": 3042.19 }
+}
+```
+
+## Notes
+
+- Formula cells are evaluated **after** inputs are written
+- Use `xlwings`-style cell notation: `A1`, `Sheet1!B2`
+- Results reflect the Excel engine's calculation, including cross-sheet references

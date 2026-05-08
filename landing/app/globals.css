@@ -1,0 +1,96 @@
+/* ─── Base ────────────────────────────────────────────── */
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+/* ─── Design tokens ──────────────────────────────────── */
+@theme {
+  /* Brand — Indigo */
+  --color-primary-50:  #eef2ff;
+  --color-primary-100: #e0e7ff;
+  --color-primary-200: #c7d2fe;
+  --color-primary-300: #a5b4fc;
+  --color-primary-400: #818cf8;
+  --color-primary-500: #6366f1;
+  --color-primary-600: #4f46e5;
+  --color-primary-700: #4338ca;
+  --color-primary-800: #3730a3;
+  --color-primary-900: #312e81;
+
+  /* Fumadocs semantic colors — light mode (indigo brand) */
+  --color-fd-background:           #ffffff;
+  --color-fd-foreground:           #0f172a;
+  --color-fd-muted:                #f8fafc;
+  --color-fd-muted-foreground:     #64748b;
+  --color-fd-popover:              #ffffff;
+  --color-fd-popover-foreground:   #0f172a;
+  --color-fd-card:                 #f8fafc;
+  --color-fd-card-foreground:      #0f172a;
+  --color-fd-border:               rgba(226, 232, 240, 0.7);
+  --color-fd-primary:              #4f46e5;
+  --color-fd-primary-foreground:   #ffffff;
+  --color-fd-secondary:            #f1f5f9;
+  --color-fd-secondary-foreground: #1e293b;
+  --color-fd-accent:               #ede9fe;
+  --color-fd-accent-foreground:    #4338ca;
+  --color-fd-ring:                 #4f46e5;
+  --color-fd-overlay:              rgba(0, 0, 0, 0.15);
+
+  /* Fumadocs static colors — need to be real @theme entries so
+     @apply works inside the Fumadocs typography plugin          */
+  --color-fd-info:              oklch(62.3% 0.214 259.815);
+  --color-fd-warning:           oklch(76.9% 0.188 70.08);
+  --color-fd-error:             oklch(63.7% 0.237 25.331);
+  --color-fd-success:           oklch(72.3% 0.219 149.579);
+  --color-fd-idea:              oklch(70.5% 0.209 60.849);
+  --color-fd-diff-remove:       rgba(200, 10, 100, 0.12);
+  --color-fd-diff-remove-symbol:rgb(230, 10, 100);
+  --color-fd-diff-add:          rgba(14, 180, 100, 0.1);
+  --color-fd-diff-add-symbol:   rgb(10, 200, 100);
+
+  /* Fonts */
+  --font-sans:    'Inter', 'Noto Sans Arabic', system-ui, sans-serif;
+  --font-display: 'Plus Jakarta Sans', 'Noto Sans Arabic', sans-serif;
+  --font-mono:    'JetBrains Mono', ui-monospace, monospace;
+}
+
+/* ─── Fumadocs animations + component source hints ────── */
+@import "fumadocs-ui/css/lib/base.css";
+@import "fumadocs-ui/css/lib/shiki.css";
+@import "fumadocs-ui/css/generated/docs.css";
+@import "fumadocs-ui/css/generated/shared.css";
+@plugin "@fumadocs/tailwind/typography";
+
+/* ─── Global base ────────────────────────────────────── */
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font-sans);
+  background: #ffffff;
+  color: #0f172a;
+}
+
+h1, h2, h3, h4 {
+  font-family: 'Plus Jakarta Sans', 'Noto Sans Arabic', sans-serif;
+}
+
+[dir="rtl"],
+[dir="rtl"] h1,
+[dir="rtl"] h2,
+[dir="rtl"] h3,
+[dir="rtl"] h4 {
+  font-family: 'Noto Sans Arabic', 'Plus Jakarta Sans', sans-serif;
+}
+
+code, pre, kbd { font-family: var(--font-mono); }
+
+/* ─── Fumadocs sidebar — indigo active state ─────────── */
+#nd-sidebar {
+  background-color: #f8fafc;
+}
+
+#nd-sidebar a[data-active="true"],
+#nd-sidebar button[data-active="true"] {
+  background-color: #ede9fe !important;
+  color: #4f46e5 !important;
+  font-weight: 600;
+}

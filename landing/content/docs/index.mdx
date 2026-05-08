@@ -1,0 +1,42 @@
+---
+title: Introduction
+description: Excel Processor API — turn Excel files into instant APIs
+---
+
+# Excel Processor API
+
+Excel Processor lets you upload Excel files and interact with them via a simple REST API.
+Read cells, edit values, run formulas, and export PDFs — all programmatically.
+
+## Base URL
+
+```
+http://localhost:5000/api/v1
+```
+
+## Authentication
+
+All requests (except login and register) require a JWT token in the `Authorization` header:
+
+```
+Authorization: Bearer <your_token>
+```
+
+Get your token by logging in via [POST /auth/login](/docs/authentication).
+
+## Quick Start
+
+1. [Register an account](/docs/authentication) and get a JWT token
+2. [Upload an Excel file](/docs/upload-files) and note the `file_id`
+3. [Read cells](/docs/read-cells) or [edit cells](/docs/edit-cells) using the `file_id`
+4. [Export to PDF](/docs/export-pdf) when done
+
+## Response Format
+
+All endpoints return JSON. Errors include an `error` key:
+
+```json
+{ "error": "file not found" }
+```
+
+Success responses include a `message` or the requested data.

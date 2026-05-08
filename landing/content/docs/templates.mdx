@@ -1,0 +1,120 @@
+---
+title: Template Library
+description: Save reusable Excel templates that are never modified by operations
+---
+
+# Template Library
+
+Templates are Excel files stored in your personal library. Unlike working files, templates are **never modified** — every operation that uses a template first creates a copy, so the original is always intact.
+
+## Upload a Template
+
+**POST** `/api/v1/templates`
+
+```bash
+curl -X POST https://api.yoursite.com/api/v1/templates \
+  -H "Authorization: Bearer <token>" \
+  -F "file=@invoice-template.xlsx" \
+  -F "name=Invoice Template v3" \
+  -F "description=Standard invoice with tax calculation"
+```
+
+```json
+{
+  "success": true,
+  "template": {
+    "id": "tpl_abc",
+    "name": "Invoice Template v3",
+    "description": "Standard invoice with tax calculation",
+    "filename": "invoice-template.xlsx",
+    "size_bytes": 48320,
+    "created_at": "2026-05-06T12:00:00Z"
+  }
+}
+```
+
+| Field         | Type   | Required | Description                                  |
+|---------------|--------|----------|----------------------------------------------|
+| `file`        | file   | Yes      | `.xlsx` or `.xls` file to save as template   |
+| `name`        | string | No       | Friendly name (defaults to filename)         |
+| `description` | string | No       | Optional description                         |
+
+## List Templates
+
+**GET** `/api/v1/templates`
+
+```json
+{
+  "success": true,
+  "templates": [
+    { "id": "tpl_abc", "name": "Invoice Template v3", ... }
+  ]
+}
+```
+
+## Use a Template
+
+**POST** `/api/v1/templates/{template_id}/use`
+
+Creates a copy of the template in your results — the original is untouched.
+
+```bash
+curl -X POST https://api.yoursite.com/api/v1/templates/tpl_abc/use \
+  -H "Authorization: Bearer <token>"
+```
+
+```json
+{
+  "success": true,
+  "result": {
+    "id": "res_xyz",
+    "filename": "invoice-template.xlsx",
+    "kind": "xlsx"
+  }
+}
+```
+
+Now use `result_id = "res_xyz"` in write/execute/export endpoints — the template is safe.
+
+## Update Template Metadata
+
+**PATCH** `/api/v1/templates/{template_id}`
+
+```bash
+curl -X PATCH https://api.yoursite.com/api/v1/templates/tpl_abc \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Invoice Template v4", "description": "Updated for 2026 tax rates"}'
+```
+
+## Download Template
+
+**GET** `/api/v1/templates/{template_id}/download`
+
+Downloads the original template file as-is.
+
+## Delete Template
+
+**DELETE** `/api/v1/templates/{template_id}`
+
+Permanently deletes the template and its file. Results created from it are not affected.
+
+## Plan Limits
+
+| Plan     | Max Templates |
+|----------|--------------|
+| Free     | 5            |
+| Basic    | 25           |
+| Pro      | 100          |
+| Business | Unlimited    |
+
+## Typical Workflow
+
+```
+1. Upload template once     → GET /templates to find template_id
+2. Use template             → POST /templates/{id}/use → result_id
+3. Fill in data             → POST /write  with result_id
+4. Run formulas             → POST /execute with result_id
+5. Export to PDF            → POST /export/pdf with result_id
+6. Repeat from step 2       → template is always unchanged
+```

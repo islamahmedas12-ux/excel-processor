@@ -1,0 +1,58 @@
+---
+title: Read Cells
+description: Read cell values from an Excel file
+---
+
+# Read Cells
+
+**POST** `/api/v1/excel/read`
+
+Read one or more cell values from an uploaded Excel file.
+
+## Request
+
+```json
+{
+  "file_id": "abc123",
+  "sheet": "Sheet1",
+  "cells": ["A1", "B2", "C3:D5"]
+}
+```
+
+| Field   | Type            | Description                          |
+|---------|-----------------|--------------------------------------|
+| file_id | string          | ID from the upload response          |
+| sheet   | string          | Sheet name (defaults to first sheet) |
+| cells   | array of string | Cell references or ranges            |
+
+## Response
+
+```json
+{
+  "values": {
+    "A1": "Product Name",
+    "B2": 1500.00,
+    "C3:D5": [
+      ["Jan", "Feb"],
+      [100,   200 ],
+      [150,   250 ]
+    ]
+  }
+}
+```
+
+## Reading a Range
+
+Ranges return a 2D array of values, row by row.
+
+```json
+{
+  "file_id": "abc123",
+  "sheet": "Sheet1",
+  "cells": ["A1:Z100"]
+}
+```
+
+## Reading All Sheets
+
+Omit the `sheet` field to read from the first sheet, or specify the exact sheet name from the `sheets` array returned during upload.

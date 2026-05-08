@@ -1,0 +1,104 @@
+---
+title: Async Jobs
+description: Submit long-running operations in the background and poll for results
+---
+
+# Async Jobs
+
+For operations that can take more than a few seconds (PDF export, batch execute), you can run them asynchronously. Submit the job and get back a `job_id` immediately — then poll until it's `done`.
+
+## Submit an Async PDF Export
+
+Add `?async=true` to the PDF export endpoint:
+
+```bash
+curl -X POST https://api.yoursite.com/api/v1/export/pdf?async=true \
+  -H "Authorization: Bearer <token>" \
+  -F "file_id=abc123" \
+  -F "sheets=Sheet1,Sheet2"
+```
+
+**Response `202 Accepted`**
+
+```json
+{
+  "success": true,
+  "job": {
+    "id": "f4a1b2c3-...",
+    "status": "pending",
+    "job_type": "pdf_export",
+    "params": { "filename": "report.xlsx", "sheets": ["Sheet1", "Sheet2"] },
+    "created_at": "2026-05-06T12:00:00Z",
+    "updated_at": "2026-05-06T12:00:00Z"
+  }
+}
+```
+
+## Poll Job Status
+
+**GET** `/api/v1/jobs/{job_id}`
+
+```bash
+curl https://api.yoursite.com/api/v1/jobs/f4a1b2c3-... \
+  -H "Authorization: Bearer <token>"
+```
+
+```json
+{
+  "success": true,
+  "job": {
+    "id": "f4a1b2c3-...",
+    "status": "done",
+    "result_ext": ".pdf"
+  }
+}
+```
+
+| `status`  | Meaning                        |
+|-----------|-------------------------------|
+| `pending` | Queued, not started yet        |
+| `running` | Being processed                |
+| `done`    | Finished — result ready        |
+| `failed`  | Error — see `error` field      |
+
+## Download Result
+
+**GET** `/api/v1/jobs/{job_id}/download`
+
+Only available when `status = "done"`.
+
+```bash
+curl https://api.yoursite.com/api/v1/jobs/f4a1b2c3-.../download \
+  -H "Authorization: Bearer <token>" \
+  --output result.pdf
+```
+
+## List All Jobs
+
+**GET** `/api/v1/jobs`
+
+```json
+{
+  "success": true,
+  "jobs": [ { "id": "...", "status": "done", ... } ]
+}
+```
+
+## Delete a Job
+
+**DELETE** `/api/v1/jobs/{job_id}`
+
+Deletes the job record and its result file. Cannot delete a running job.
+
+## Plan Limits
+
+| Plan     | Concurrent Jobs |
+|----------|----------------|
+| Free     | 1              |
+| Basic    | 3              |
+| Pro      | 10             |
+| Business | 50             |
+
+<Callout type="info">
+Jobs expire after **24 hours**. Download the result before then, or save it to the server using `save_result=true` in the sync flow.
+</Callout>

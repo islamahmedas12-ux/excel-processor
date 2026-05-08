@@ -1,0 +1,60 @@
+---
+title: Batch Edit
+description: Edit hundreds of cells in a single request
+---
+
+# Batch Edit
+
+**POST** `/api/v1/excel/batch-write`
+
+Write multiple cells across multiple sheets in a single efficient request.
+
+## Request
+
+```json
+{
+  "file_id": "abc123",
+  "updates": [
+    {
+      "sheet": "Sheet1",
+      "cells": {
+        "A1": "Updated Title",
+        "B5": 42
+      }
+    },
+    {
+      "sheet": "Sheet2",
+      "cells": {
+        "C10": "=Sheet1!B5 * 2",
+        "D11": "Done"
+      }
+    }
+  ]
+}
+```
+
+| Field            | Type   | Description                          |
+|------------------|--------|--------------------------------------|
+| file_id          | string | ID from the upload response          |
+| updates          | array  | List of sheet update objects         |
+| updates[].sheet  | string | Sheet name                           |
+| updates[].cells  | object | Map of cell reference → new value    |
+
+## Response
+
+The response is the modified Excel file as a binary download.
+
+```bash
+curl -X POST http://localhost:5000/api/v1/excel/batch-write \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{"file_id":"abc123","updates":[{"sheet":"Sheet1","cells":{"A1":"Hello"}}]}' \
+  --output updated.xlsx
+```
+
+## When to Use Batch Edit
+
+Use batch edit instead of multiple single-cell writes when:
+- You need to update cells across multiple sheets
+- You have hundreds of cells to update at once
+- You want a single consistent snapshot of all changes

@@ -1,0 +1,93 @@
+---
+title: Document Verification
+description: Generate short codes to verify document authenticity on a public page
+---
+
+# Document Verification
+
+Issue a **6-character verification code** for any file or result. Anyone with the code can visit the public `/verify` page and confirm the document's authenticity — no account needed.
+
+## Create a Verification Code
+
+**POST** `/api/v1/tokens`
+
+```bash
+curl -X POST https://api.yoursite.com/api/v1/tokens \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{"resource_type": "file", "resource_id": "abc123"}'
+```
+
+**Response `201 Created`**
+
+```json
+{
+  "success": true,
+  "token": {
+    "id": "9f3a...",
+    "access_code": "XK29AB",
+    "resource_type": "file",
+    "filename": "budget.xlsx",
+    "size_bytes": 204800,
+    "is_active": true,
+    "created_at": "2026-05-06T12:00:00Z"
+  }
+}
+```
+
+If a code already exists for that resource, the same token is returned (idempotent).
+
+| Field           | Values              | Description                          |
+|-----------------|---------------------|--------------------------------------|
+| `resource_type` | `file` \| `result`  | Whether to link a file or a result   |
+| `resource_id`   | string              | The `id` from `GET /files` or results |
+
+## List Your Codes
+
+**GET** `/api/v1/tokens`
+
+```json
+{
+  "success": true,
+  "tokens": [
+    { "id": "...", "access_code": "XK29AB", "filename": "budget.xlsx", ... }
+  ]
+}
+```
+
+## Delete a Code
+
+**DELETE** `/api/v1/tokens/{token_id}`
+
+Once deleted the code is permanently revoked.
+
+## Public Verify Endpoint
+
+**GET** `/api/v1/verify/{access_code}` — **No authentication required**
+
+```bash
+curl https://api.yoursite.com/api/v1/verify/XK29AB
+```
+
+```json
+{
+  "success": true,
+  "document": {
+    "filename": "budget.xlsx",
+    "size_bytes": 204800,
+    "resource_type": "file",
+    "issued_at": "2026-05-06T12:00:00Z",
+    "verified_at": "2026-05-07T09:15:00Z"
+  }
+}
+```
+
+Rate limited to **20 requests per minute** per IP.
+
+## Verify Page
+
+Share the URL `https://yoursite.com/verify?code=XK29AB` — anyone can open it in a browser, enter the code, and see the document metadata with a green verified badge.
+
+<Callout type="info">
+Combine Document Verification with **QR Code Injection** (Phase 4) to embed a scannable link directly in the Excel file itself.
+</Callout>

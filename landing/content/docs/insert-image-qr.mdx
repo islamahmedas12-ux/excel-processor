@@ -1,0 +1,101 @@
+---
+title: Insert Image & QR Code
+description: Embed images or QR codes directly into Excel cells via API
+---
+
+# Insert Image & QR Code
+
+Embed any PNG/JPG image or a generated QR code directly into an Excel worksheet at a given cell. The modified file is saved as a result entry and can be downloaded or exported to PDF.
+
+## Insert an Image
+
+**POST** `/api/v1/insert/image`
+
+| Field        | Type   | Required | Description                                 |
+|--------------|--------|----------|---------------------------------------------|
+| `file_id`    | string | Yes*     | Source file from the repository             |
+| `result_id`  | string | Yes*     | Or use a saved result as the source         |
+| `image`      | file   | Yes      | PNG or JPG image to embed                   |
+| `cell`       | string | No       | Anchor cell (default `A1`)                  |
+| `sheet_name` | string | No       | Sheet name (default: first sheet)           |
+| `width_px`   | int    | No       | Image width in pixels (default `120`)       |
+| `height_px`  | int    | No       | Image height in pixels (default `120`)      |
+
+\* One of `file_id` or `result_id` is required.
+
+```bash
+curl -X POST https://api.yoursite.com/api/v1/insert/image \
+  -H "Authorization: Bearer <token>" \
+  -F "file_id=abc123" \
+  -F "image=@logo.png" \
+  -F "cell=C5" \
+  -F "width_px=200" \
+  -F "height_px=80"
+```
+
+```json
+{
+  "success": true,
+  "result": {
+    "id": "res_...",
+    "filename": "report_with_image.xlsx",
+    "kind": "xlsx"
+  }
+}
+```
+
+## Insert a QR Code
+
+**POST** `/api/v1/insert/qr`
+
+| Field          | Type   | Required | Description                                          |
+|----------------|--------|----------|------------------------------------------------------|
+| `file_id`      | string | Yes*     | Source file from the repository                      |
+| `qr_data`      | string | No**     | Any URL or text to encode in the QR                  |
+| `access_code`  | string | No**     | 6-char verification code — auto-builds verify URL   |
+| `cell`         | string | No       | Anchor cell (default `A1`)                           |
+| `sheet_name`   | string | No       | Sheet name (default: first sheet)                   |
+| `size_px`      | int    | No       | QR code size in pixels (default `120`)              |
+
+\*\* One of `qr_data` or `access_code` is required.
+
+```bash
+# Using a verification code (auto-generates verify URL)
+curl -X POST https://api.yoursite.com/api/v1/insert/qr \
+  -H "Authorization: Bearer <token>" \
+  -F "file_id=abc123" \
+  -F "access_code=XK29AB" \
+  -F "cell=H2" \
+  -F "size_px=150"
+```
+
+```bash
+# Using custom URL or text
+curl -X POST https://api.yoursite.com/api/v1/insert/qr \
+  -H "Authorization: Bearer <token>" \
+  -F "file_id=abc123" \
+  -F "qr_data=https://yoursite.com/verify?code=XK29AB" \
+  -F "cell=H2"
+```
+
+```json
+{
+  "success": true,
+  "result": { "id": "res_...", "filename": "report_with_qr.xlsx" },
+  "qr_data": "https://yoursite.com/verify?code=XK29AB"
+}
+```
+
+## Recommended Workflow
+
+```
+1. Upload template Excel file          → file_id
+2. Create verification token for it   → access_code = "XK29AB"
+3. Insert QR into the Excel file      → result with embedded QR
+4. Export result to PDF               → PDF with embedded QR code
+5. Share PDF — recipient scans QR     → lands on /verify page
+```
+
+<Callout type="info">
+The inserted image or QR is anchored to the cell but does not affect cell data — formulas and values in the same cell are preserved.
+</Callout>

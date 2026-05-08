@@ -1,0 +1,53 @@
+---
+title: Export PDF
+description: Export Excel sheets as PDF files
+---
+
+# Export PDF
+
+**POST** `/api/v1/excel/export-pdf`
+
+Export an Excel file or specific sheet as a high-quality PDF.
+
+## Request
+
+```json
+{
+  "file_id": "abc123",
+  "sheet": "Sheet1"
+}
+```
+
+| Field   | Type   | Required | Description                              |
+|---------|--------|----------|------------------------------------------|
+| file_id | string | Yes      | ID from the upload response              |
+| sheet   | string | No       | Sheet name — omit to export all sheets  |
+
+## Response
+
+The response is a PDF file binary (`application/pdf`).
+
+```bash
+curl -X POST http://localhost:5000/api/v1/excel/export-pdf \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{"file_id":"abc123","sheet":"Sheet1"}' \
+  --output report.pdf
+```
+
+## Export All Sheets
+
+Omit the `sheet` field to export all sheets as a single PDF:
+
+```json
+{
+  "file_id": "abc123"
+}
+```
+
+## Notes
+
+- Charts, images, and formatting are preserved in the PDF
+- Page breaks follow the Excel print settings
+- The PDF uses the file's print area if defined, otherwise the used range
+- Large files may take a few seconds to process

@@ -1,0 +1,112 @@
+---
+title: Authentication
+description: Register, login, and manage tokens
+---
+
+# Authentication
+
+## Register
+
+Create a new account.
+
+**POST** `/api/v1/auth/register`
+
+```json
+{
+  "username": "John Doe",
+  "email": "john@example.com",
+  "password": "secret123"
+}
+```
+
+**Response**
+
+```json
+{
+  "message": "Registration successful. Please verify your email."
+}
+```
+
+A verification email is sent to the provided address.
+
+---
+
+## Verify Email
+
+**GET** `/api/v1/auth/verify?token=<verification_token>`
+
+Called automatically from the link in the verification email.
+
+---
+
+## Login
+
+**POST** `/api/v1/auth/login`
+
+```json
+{
+  "email": "john@example.com",
+  "password": "secret123"
+}
+```
+
+**Response**
+
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "username": "John Doe",
+  "email": "john@example.com",
+  "role": "user",
+  "plan": "free"
+}
+```
+
+Use the `token` in all subsequent requests:
+
+```
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+---
+
+## Forgot Password
+
+**POST** `/api/v1/auth/forgot-password`
+
+```json
+{ "email": "john@example.com" }
+```
+
+A password reset link is sent to the email.
+
+---
+
+## Reset Password
+
+**POST** `/api/v1/auth/reset-password`
+
+```json
+{
+  "token": "<reset_token>",
+  "new_password": "newSecret456"
+}
+```
+
+---
+
+## Get Profile
+
+**GET** `/api/v1/auth/me`
+
+Returns the current user's info including plan and storage usage.
+
+```json
+{
+  "username": "John Doe",
+  "email": "john@example.com",
+  "role": "user",
+  "plan": "free",
+  "plan_expires_at": null
+}
+```

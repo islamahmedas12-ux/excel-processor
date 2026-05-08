@@ -1,0 +1,55 @@
+---
+title: Edit Cells
+description: Modify cell values and download the updated file
+---
+
+# Edit Cells
+
+**POST** `/api/v1/excel/write`
+
+Write new values to specific cells and download the updated Excel file.
+
+## Request
+
+```json
+{
+  "file_id": "abc123",
+  "sheet": "Sheet1",
+  "cells": {
+    "A1": "New Title",
+    "B2": 9999,
+    "C3": "=SUM(A1:A10)"
+  }
+}
+```
+
+| Field   | Type   | Description                              |
+|---------|--------|------------------------------------------|
+| file_id | string | ID from the upload response              |
+| sheet   | string | Sheet name (defaults to first sheet)     |
+| cells   | object | Map of cell reference → new value        |
+
+## Response
+
+The response is the modified Excel file as a binary download (`application/octet-stream`).
+
+```bash
+curl -X POST http://localhost:5000/api/v1/excel/write \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{"file_id":"abc123","sheet":"Sheet1","cells":{"A1":"Hello"}}' \
+  --output updated.xlsx
+```
+
+## Supported Value Types
+
+- **String** — plain text
+- **Number** — integer or float
+- **Formula** — starts with `=`, e.g. `"=SUM(A1:A10)"`
+- **null** — clears the cell
+
+## Notes
+
+- Images, formatting, and styles are preserved
+- The original file stored on the server is **not** modified — edits are applied to a copy
+- To persist the changes, re-upload the downloaded file
