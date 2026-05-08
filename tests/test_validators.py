@@ -15,6 +15,7 @@ from excel_processor.validators import (
     validate_cell_coordinates,
     validate_language,
     validate_sheet_name,
+    validate_cell_value,
     column_to_number,
     number_to_column,
     parse_cell_reference,
@@ -25,7 +26,8 @@ from excel_processor.errors import (
     FileNotFoundError_,
     UnsupportedFormatError,
     InvalidCellCoordinatesError,
-    FilePermissionError
+    FilePermissionError,
+    SheetNotFoundError
 )
 
 
@@ -183,3 +185,86 @@ class TestParseCellReference:
         assert column == "XYZ"
         assert row == 123
         assert col_num == column_to_number("XYZ")
+
+
+class TestSheetNameValidation:
+    """اختبارات التحقق من اسم ورقة العمل"""
+
+    def test_validate_sheet_name_none(self):
+        """اختبار None يُرجع None"""
+        result = validate_sheet_name(None)
+        assert result is None
+
+    def test_validate_sheet_name_valid(self):
+        """اختبار اسم صالح"""
+        result = validate_sheet_name("Sheet1")
+        assert result == "Sheet1"
+
+    def test_validate_sheet_name_strips_whitespace(self):
+        """اختبار إزالة المسافات"""
+        result = validate_sheet_name("  Sheet1  ")
+        assert result == "Sheet1"
+
+    def test_validate_sheet_name_empty_after_strip(self):
+        """اختبار سلسلة فارغة بعد إزالة المسافات"""
+        result = validate_sheet_name("   ")
+        assert result is None
+
+    def test_validate_sheet_name_not_string(self):
+        """اختبار غير نص يطرح SheetNotFoundError"""
+        with pytest.raises(SheetNotFoundError):
+            validate_sheet_name(123)
+        with pytest.raises(SheetNotFoundError):
+            validate_sheet_name(["Sheet1"])
+
+
+class TestCellValueValidation:
+    """اختبارات التحقق من قيمة الخلية"""
+
+    def test_validate_cell_value_none(self):
+        """اختبار None يُرجع None"""
+        result = validate_sheet_name(None)
+        assert result is None
+
+    def test_validate_cell_value_strings(self):
+        """اختبار القيم النصية"""
+        assert validate_cell_value("hello") == "hello"
+        assert validate_cell_value("") == ""
+
+    def test_validate_cell_value_numeric(self):
+        """اختبار القيم الرقمية"""
+        assert validate_cell_value(42) == 42
+        assert validate_cell_value(3.14) == 3.14
+
+    def test_validate_cell_value_bool(self):
+        """اختبار القيم المنطقية"""
+        assert validate_cell_value(True) is True
+        assert validate_cell_value(False) is False
+
+    def test_validate_cell_value_list(self):
+        """اختبار القوائم"""
+        result = validate_cell_value([1, 2, 3])
+        assert result == "[1, 2, 3]"
+
+    def test_validate_cell_value_dict(self):
+        """اختبار القواميس"""
+        result = validate_cell_value({"a": 1})
+        assert result == '{"a": 1}'
+
+    def test_validate_cell_value_object(self):
+        """اختبار الكائنات تتحول إلى نص"""
+        class Custom:
+            def __str__(self):
+                return "custom_object"
+        assert validate_cell_value(Custom()) == "custom_object"
+
+    def test_validate_cell_value_formula_prefix(self):
+        """اختبار منع حقن الصيغة"""
+        assert validate_cell_value("=SUM(A1:A10)") == "'=SUM(A1:A10)"
+        assert validate_cell_value("+1+2") == "'+1+2"
+        assert validate_cell_value("-1") == "'-1"
+        assert validate_cell_value("@HYPERLINK") == "'@HYPERLINK"
+
+    def test_validate_cell_value_formula_prefix_single_quote(self):
+        """اختبار أن البداية تكون علامة اقتباس واحدة"""
+        assert validate_cell_value("=A1+B1")[0] == "'"

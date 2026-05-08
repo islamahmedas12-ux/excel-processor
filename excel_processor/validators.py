@@ -177,16 +177,15 @@ def validate_cell_value(value) -> Any:
 
     allowed_types = (str, int, float, bool)
     if isinstance(value, allowed_types):
+        if isinstance(value, str) and value and value[0] in '=+-@':
+            return "'" + value
         return value
 
     if isinstance(value, (list, dict)):
         import json
         return json.dumps(value)
 
-    str_value = str(value)
-    if str_value and str_value[0] in '=+-@':
-        str_value = "'" + str_value
-    return str_value
+    return str(value)
 
 
 def validate_row_and_column(row: int, column: str, max_row: int = None, max_col: int = None) -> Tuple[int, int]:

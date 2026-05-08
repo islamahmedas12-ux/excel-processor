@@ -182,15 +182,8 @@ class ExcelReader:
         result = []
 
         if self.file_format == '.xlsx':
-            for row in range(start_row, end_row + 1):
-                row_data = []
-                for col in range(start_col_num, end_col_num + 1):
-                    col_letter = self._num_to_column(col)
-                    cell_ref = f"{col_letter}{row}"
-                    if cell_ref in sheet:
-                        row_data.append(sheet[cell_ref].value)
-                    else:
-                        row_data.append(None)
+            for row in sheet.iter_rows(min_row=start_row, max_row=end_row, min_col=start_col_num, max_col=end_col_num):
+                row_data = [cell.value for cell in row]
                 result.append(row_data)
         else:
             for row in range(start_row - 1, end_row):
