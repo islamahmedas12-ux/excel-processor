@@ -1,14 +1,14 @@
 """
 Excel Processor - Backend as a Service
-======================================
+=====================================
 Main entry point for the Flask API
 No storage needed - files processed in memory
 """
 
-from flask import Flask, jsonify, send_file
+import os
+from flask import Flask, jsonify
 from flask_cors import CORS
 from dotenv import load_dotenv
-import io
 
 load_dotenv()
 
@@ -16,7 +16,13 @@ from backend.api.endpoints import api_bp
 
 
 app = Flask(__name__)
-CORS(app)
+app.config['MAX_CONTENT_LENGTH'] = int(os.getenv('MAX_FILE_SIZE', 50 * 1024 * 1024))
+
+origins = os.getenv('CORS_ORIGINS', '').split(',') if os.getenv('CORS_ORIGINS') else []
+if origins:
+    CORS(app, resources={"/api/*": {"origins": origins}})
+else:
+    CORS(app)
 
 
 @app.route('/')
@@ -59,23 +65,13 @@ def internal_error(error):
     return jsonify({"error": "Internal server error"}), 500
 
 
-def run_server(host='0.0.0.0', port=5000, debug=False):
+def run_server(host='0.0.0.0', port=5000, debug=None):
     """Run the Flask server"""
+    if debug is None:
+        debug = os.getenv('FLASK_DEBUG', 'False').lower() == 'true'
     app.run(host=host, port=port, debug=debug)
 
 
 if __name__ == '__main__':
-    print("=" * 70)
-    print("  Excel Processor API - Backend as a Service")
-    print("  Version 2.0.0")
-    print("  No storage needed - files processed in memory")
-    print("=" * 70)
-    print()
-    print("  Endpoints:")
-    print("  - POST /api/v1/execute  : Fill inputs → Get calculated outputs")
-    print("  - POST /api/v1/read    : Read specific cells")
-    print("  - POST /api/v1/write   : Write to cells")
-    print("  - POST /api/v1/sheets  : Get sheet names")
-    print("  - GET  /api/v1/health : Health check")
-    print()
-    run_server(debug=True)
+    debug = os.getenv('FLASK_DEBUG', 'False').lower() == 'true'
+    run_server(debug=debug)

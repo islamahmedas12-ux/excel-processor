@@ -93,7 +93,7 @@ def execute():
         )
         return jsonify(result)
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "Internal server error"}), 500
 
 
 @api_bp.route('/read', methods=['POST'])
@@ -147,7 +147,7 @@ def read_cells():
         )
         return jsonify(result)
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "Internal server error"}), 500
 
 
 @api_bp.route('/write', methods=['POST'])
@@ -206,7 +206,7 @@ def write_cells():
         )
         return jsonify(result)
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "Internal server error"}), 500
 
 
 @api_bp.route('/sheets', methods=['POST'])
@@ -249,7 +249,7 @@ def get_sheets():
             }
         })
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "Internal server error"}), 500
 
 
 @api_bp.route('/export/pdf', methods=['POST'])
@@ -282,7 +282,7 @@ def export_pdf():
             download_name=f"{os.path.splitext(file.filename)[0]}.pdf"
         )
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "Internal server error"}), 500
 
 
 @api_bp.route('/health', methods=['GET'])
