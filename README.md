@@ -45,6 +45,7 @@ API 文档地址：`http://localhost:5000/`
 | `POST` | `/api/v1/read` | 从 Excel 读取特定单元格 |
 | `POST` | `/api/v1/write` | 写入单元格并获取更新后的文件 |
 | `POST` | `/api/v1/sheets` | 获取工作表列表 |
+| `POST` | `/api/v1/export/pdf` | 将 Excel 文件导出为 PDF |
 | `GET` | `/api/v1/health` | 健康检查 |
 
 ## 💡 使用示例

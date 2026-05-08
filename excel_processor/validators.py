@@ -170,7 +170,7 @@ def validate_cell_value(value) -> Any:
         value: القيمة المراد التحقق منها
 
     المخرجات:
-        any: القيمة نفسها إذا كانت صالحة
+        Any: القيمة نفسها إذا كانت صالحة
     """
     if value is None:
         return None
@@ -183,7 +183,10 @@ def validate_cell_value(value) -> Any:
         import json
         return json.dumps(value)
 
-    return str(value)
+    str_value = str(value)
+    if str_value and str_value[0] in '=+-@':
+        str_value = "'" + str_value
+    return str_value
 
 
 def validate_row_and_column(row: int, column: str, max_row: int = None, max_col: int = None) -> Tuple[int, int]:
