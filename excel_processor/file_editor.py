@@ -128,7 +128,9 @@ class ExcelEditor:
             return self.workbook[sheet_name]
         else:
             try:
-                return self.workbook.sheet_by_name(sheet_name)
+                sheet = self.workbook.sheet_by_name(sheet_name)
+                self._current_sheet_index = self.workbook.sheet_names().index(sheet_name)
+                return sheet
             except xlrd.XLRDError:
                 raise SheetNotFoundError(sheet_name)
 
@@ -365,7 +367,7 @@ class ExcelEditor:
             self._rebuild_xls_workbook(output_path)
         else:
             from xlutils.copy import copy as xl_copy
-            wb = copy(self.workbook)
+            wb = xl_copy(self.workbook)
             wb.save(output_path)
 
     def _rebuild_xls_workbook(self, output_path: str):
@@ -396,6 +398,12 @@ class ExcelEditor:
             if self.file_format == '.xlsx':
                 self.workbook.close()
             self.workbook = None
+        if hasattr(self, '_bytes_data') and self._bytes_data:
+            try:
+                self._bytes_data.close()
+            except Exception:
+                pass
+            self._bytes_data = None
 
     def __enter__(self):
         """دعم استخدام with statement"""

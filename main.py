@@ -49,15 +49,6 @@ def home():
     })
 
 
-@app.route('/api/v1/health')
-def health():
-    """Health check"""
-    return jsonify({"status": "healthy", "version": "2.0.0"})
-
-
-app.register_blueprint(api_bp)
-
-
 @app.errorhandler(404)
 def not_found(error):
     return jsonify({"error": "Not found"}), 404

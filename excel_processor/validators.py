@@ -8,14 +8,15 @@
 import re
 import os
 from pathlib import Path
-from typing import Tuple
+from typing import Tuple, Any
 
 from .errors import (
     InvalidFilePathError,
     UnsupportedFormatError,
     InvalidCellCoordinatesError,
     FileNotFoundError_,
-    FilePermissionError
+    FilePermissionError,
+    SheetNotFoundError
 )
 
 
@@ -144,12 +145,15 @@ def validate_sheet_name(sheet_name: str | None) -> str | None:
 
     المخرجات:
         str | None: اسم ورقة العمل أو None
+
+    الاستثناءات:
+        SheetNotFoundError: إذا لم يكن اسم ورقة العمل نصاً
     """
     if sheet_name is None:
         return None
 
     if not isinstance(sheet_name, str):
-        raise ValueError("اسم ورقة العمل يجب أن يكون نصاً")
+        raise SheetNotFoundError(sheet_name)
 
     sheet_name = sheet_name.strip()
     if len(sheet_name) == 0:
@@ -158,7 +162,7 @@ def validate_sheet_name(sheet_name: str | None) -> str | None:
     return sheet_name
 
 
-def validate_cell_value(value) -> any:
+def validate_cell_value(value) -> Any:
     """
     التحقق من صحة قيمة الخلية
 

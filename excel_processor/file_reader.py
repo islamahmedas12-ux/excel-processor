@@ -42,7 +42,10 @@ class ExcelReader:
             CorruptedFileError: إذا كان الملف تالفاً
         """
         if is_bytes or isinstance(file_source, (bytes, BytesIO)):
-            self._bytes_data = BytesIO(file_source) if isinstance(file_source, bytes) else file_source
+            if isinstance(file_source, bytes):
+                self._bytes_data = BytesIO(file_source)
+            else:
+                self._bytes_data = file_source
             self.file_path = None
             self.file_format = None
         else:
@@ -81,8 +84,7 @@ class ExcelReader:
     def _open_xls(self):
         """فتح ملف .xls باستخدام xlrd"""
         self.workbook = xlrd.open_workbook(
-            filename=str(self.file_path),
-            encoding_override='utf-8' if hasattr(self, 'encoding_override') else None
+            filename=str(self.file_path)
         )
 
     def get_sheet_names(self) -> List[str]:
@@ -293,6 +295,12 @@ class ExcelReader:
             if self.file_format == '.xlsx':
                 self.workbook.close()
             self.workbook = None
+        if hasattr(self, '_bytes_data') and self._bytes_data:
+            try:
+                self._bytes_data.close()
+            except Exception:
+                pass
+            self._bytes_data = None
 
     def __enter__(self):
         """دعم استخدام with statement"""
