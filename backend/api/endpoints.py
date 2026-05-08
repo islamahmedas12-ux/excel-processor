@@ -242,11 +242,8 @@ def get_sheets():
             sheets = reader.get_sheet_names()
 
         return jsonify({
-            "success": True,
-            "data": {
-                "sheets": sheets,
-                "count": len(sheets)
-            }
+            "sheets": sheets,
+            "count": len(sheets)
         })
     except Exception as e:
         return jsonify({"error": "Internal server error"}), 500

@@ -147,13 +147,13 @@ def validate_sheet_name(sheet_name: str | None) -> str | None:
         str | None: اسم ورقة العمل أو None
 
     الاستثناءات:
-        SheetNotFoundError: إذا لم يكن اسم ورقة العمل نصاً
+        TypeError: إذا لم يكن اسم ورقة العمل نصاً أو None
     """
     if sheet_name is None:
         return None
 
     if not isinstance(sheet_name, str):
-        raise SheetNotFoundError(sheet_name)
+        raise TypeError(f"Sheet name must be a string, got {type(sheet_name).__name__}")
 
     sheet_name = sheet_name.strip()
     if len(sheet_name) == 0:

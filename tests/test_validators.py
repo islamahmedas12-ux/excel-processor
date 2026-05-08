@@ -211,10 +211,10 @@ class TestSheetNameValidation:
         assert result is None
 
     def test_validate_sheet_name_not_string(self):
-        """اختبار غير نص يطرح SheetNotFoundError"""
-        with pytest.raises(SheetNotFoundError):
+        """اختبار غير نص يطرح TypeError"""
+        with pytest.raises(TypeError):
             validate_sheet_name(123)
-        with pytest.raises(SheetNotFoundError):
+        with pytest.raises(TypeError):
             validate_sheet_name(["Sheet1"])
 
 

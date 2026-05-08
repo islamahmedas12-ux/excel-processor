@@ -120,6 +120,7 @@ class ExcelEditor:
             if self.file_format == '.xlsx':
                 return self.workbook.active
             else:
+                self._current_sheet_index = 0
                 return self.workbook.sheet_by_index(0)
 
         if self.file_format == '.xlsx':
