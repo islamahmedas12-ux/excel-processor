@@ -98,6 +98,42 @@ class ExcelService:
                 "cells": results
             }
 
+    def read_range(
+        self,
+        file_content: bytes,
+        filename: str,
+        start_cell: str,
+        end_cell: str,
+        sheet_name: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """
+        Read a range of cells from Excel file
+
+        Args:
+            file_content: Excel file bytes
+            filename: Original filename
+            start_cell: Starting cell coordinates (e.g., A1)
+            end_cell: Ending cell coordinates (e.g., C10)
+            sheet_name: Optional sheet name
+
+        Returns:
+            Dict with range data
+        """
+        bytes_io = BytesIO(file_content)
+
+        with ExcelReader(bytes_io) as reader:
+            sheet_name_to_use = sheet_name or reader.get_sheet_names()[0]
+
+            data = reader.read_range(start_cell, end_cell, sheet_name_to_use)
+
+            return {
+                "success": True,
+                "sheet": sheet_name_to_use,
+                "filename": filename,
+                "range": f"{start_cell}:{end_cell}",
+                "data": data
+            }
+
     def write_cells(
         self,
         file_content: bytes,
