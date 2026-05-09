@@ -1,0 +1,25 @@
+{
+  "active": true,
+  "spec": "020-no-troubleshooting-deployment-or-common-errors-doc",
+  "state": "planning",
+  "subtasks": {
+    "completed": 0,
+    "total": 0,
+    "in_progress": 1,
+    "failed": 0
+  },
+  "phase": {
+    "current": "Documentation",
+    "id": null,
+    "total": 5
+  },
+  "workers": {
+    "active": 0,
+    "max": 1
+  },
+  "session": {
+    "number": 2,
+    "started_at": "2026-05-10T02:54:01.869941"
+  },
+  "last_update": "2026-05-10T02:56:46.607355"
+}
