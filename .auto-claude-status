@@ -1,0 +1,25 @@
+{
+  "active": true,
+  "spec": "022-parallelize-batch-job-execution-instead-of-sequent",
+  "state": "planning",
+  "subtasks": {
+    "completed": 0,
+    "total": 0,
+    "in_progress": 1,
+    "failed": 0
+  },
+  "phase": {
+    "current": "Frontend Batch Parallelization",
+    "id": null,
+    "total": 2
+  },
+  "workers": {
+    "active": 0,
+    "max": 1
+  },
+  "session": {
+    "number": 2,
+    "started_at": "2026-05-10T02:54:02.418410"
+  },
+  "last_update": "2026-05-10T02:55:31.245839"
+}

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { Play, FileSpreadsheet, Loader } from 'lucide-react';
 import { Card, Button, Badge } from '../components/ui';
 
@@ -59,25 +59,43 @@ export const BatchExecutePage: React.FC<BatchExecutePageProps> = ({ lang }) => {
     setJobs(prev => [...prev, ...newJobs]);
   };
 
-  const handleExecute = async () => {
+  const handleExecute = useCallback(async () => {
     if (jobs.length === 0) return;
 
     setLoading(true);
 
-    for (let i = 0; i < jobs.length; i++) {
-      setJobs(prev => prev.map(job =>
-        job.id === jobs[i].id ? { ...job, status: 'running' } : job
-      ));
+    // Chunk size for parallel execution (limit concurrency)
+    const CHUNK_SIZE = 5;
 
-      await new Promise(resolve => setTimeout(resolve, 500));
-
+    // Helper to update a single job's status
+    const updateJobStatus = (jobId: string, status: BatchJob['status'], result?: any, error?: string) => {
       setJobs(prev => prev.map(job =>
-        job.id === jobs[i].id ? { ...job, status: 'done', result: { success: true } } : job
+        job.id === jobId
+          ? { ...job, status, result, error }
+          : job
       ));
+    };
+
+    // Helper to execute a single job
+    const executeJob = async (job: BatchJob): Promise<void> => {
+      updateJobStatus(job.id, 'running');
+      try {
+        // Simulate processing - replace with actual API call
+        await new Promise(resolve => setTimeout(resolve, 500));
+        updateJobStatus(job.id, 'done', { success: true });
+      } catch (err: any) {
+        updateJobStatus(job.id, 'error', undefined, err.message);
+      }
+    };
+
+    // Process jobs in chunks using Promise.all for parallel execution
+    for (let i = 0; i < jobs.length; i += CHUNK_SIZE) {
+      const chunk = jobs.slice(i, i + CHUNK_SIZE);
+      await Promise.all(chunk.map(job => executeJob(job)));
     }
 
     setLoading(false);
-  };
+  }, [jobs]);
 
   const handleClear = () => {
     setJobs([]);
