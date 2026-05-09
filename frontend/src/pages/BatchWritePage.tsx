@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
-import { Settings, FileSpreadsheet, CheckCircle, XCircle } from 'lucide-react';
-import { Card, Button, Input, Alert, LoadingSpinner, Badge } from '../components/ui';
+import { Settings, FileSpreadsheet, CheckCircle, Download, FileText } from 'lucide-react';
+import { Card, Button, Alert, LoadingSpinner } from '../components/ui';
+import { FileSelector } from '../components/FileSelector';
+import { SheetSelector } from '../components/SheetSelector';
+import { useFiles } from '../context/FilesContext';
+import { useResults } from '../context/ResultsContext';
 import { apiService } from '../services/api';
 
 interface BatchWritePageProps {
@@ -8,19 +12,19 @@ interface BatchWritePageProps {
 }
 
 export const BatchWritePage: React.FC<BatchWritePageProps> = ({ lang }) => {
-  const [filePath, setFilePath] = useState('');
+  const { selectedFile } = useFiles();
+  const { downloadResult } = useResults();
   const [sheetName, setSheetName] = useState('');
   const [updatesText, setUpdatesText] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const content = {
+  const t = {
     ar: {
       title: 'تعديل متعدد',
-      description: 'عدّل عدة خلايا دفعة واحدة',
-      filePath: 'مسار الملف',
-      filePathPlaceholder: '/path/to/file.xlsx',
+      description: 'اختر ملفاً من المستودع وعدّل عدة خلايا دفعة واحدة',
+      file: 'الملف',
       sheetName: 'اسم الورقة (اختياري)',
       sheetNamePlaceholder: 'Sheet1',
       updates: 'التحديثات',
@@ -28,18 +32,17 @@ export const BatchWritePage: React.FC<BatchWritePageProps> = ({ lang }) => {
       updatesHelp: 'أدخل الإحداثيات والقيم بتنسيق JSON',
       submit: 'تعديل الكل',
       resultTitle: 'نتيجة التعديل',
-      successCount: 'تم التعديل بنجاح',
-      failedCount: 'فشل',
-      successful: 'ناجحة',
-      failed: 'فاشلة',
+      updatedCount: 'تم تعديل',
+      cells: 'خلايا',
       coordinates: 'الإحداثيات',
-      status: 'الحالة',
+      oldValue: 'القديمة',
+      newValue: 'الجديدة',
+      noFileError: 'الرجاء اختيار ملف من المستودع',
     },
     en: {
       title: 'Batch Edit',
-      description: 'Modify multiple cells at once',
-      filePath: 'File Path',
-      filePathPlaceholder: '/path/to/file.xlsx',
+      description: 'Select a file from the repository and modify multiple cells at once',
+      file: 'File',
       sheetName: 'Sheet Name (optional)',
       sheetNamePlaceholder: 'Sheet1',
       updates: 'Updates',
@@ -47,20 +50,19 @@ export const BatchWritePage: React.FC<BatchWritePageProps> = ({ lang }) => {
       updatesHelp: 'Enter coordinates and values in JSON format',
       submit: 'Modify All',
       resultTitle: 'Edit Result',
-      successCount: 'Successfully modified',
-      failedCount: 'Failed',
-      successful: 'Successful',
-      failed: 'Failed',
+      updatedCount: 'Updated',
+      cells: 'cells',
       coordinates: 'Coordinates',
-      status: 'Status',
+      oldValue: 'Old',
+      newValue: 'New',
+      noFileError: 'Please select a file from the repository',
     },
-  };
-
-  const t = content[lang];
+  }[lang];
 
   const handleSubmit = async () => {
-    if (!filePath || !updatesText) {
-      setError(lang === 'ar' ? 'الرجاء ملء جميع الحقول المطلوبة' : 'Please fill all required fields');
+    if (!selectedFile) { setError(t.noFileError); return; }
+    if (!updatesText) {
+      setError(lang === 'ar' ? 'الرجاء إدخال التحديثات' : 'Please enter updates');
       return;
     }
 
@@ -77,22 +79,14 @@ export const BatchWritePage: React.FC<BatchWritePageProps> = ({ lang }) => {
     setResult(null);
 
     try {
-      const response = await apiService.batchWrite(
-        {
-          file_path: filePath,
-          updates,
-          sheet_name: sheetName || undefined,
-        },
-        lang
-      );
-
-      if (apiService.isSuccess(response)) {
-        setResult(response.بيانات || response.data);
+      const response = await apiService.writeCells(selectedFile.id, updates, sheetName || undefined, lang);
+      if (response.success) {
+        setResult({ ...response, _resultMeta: response.result });
       } else {
-        setError(apiService.getErrorMessage(response));
+        setError(response.error || (lang === 'ar' ? 'حدث خطأ' : 'An error occurred'));
       }
     } catch (err: any) {
-      setError(err.message || (lang === 'ar' ? 'حدث خطأ' : 'An error occurred'));
+      setError(err.response?.data?.error || err.message || (lang === 'ar' ? 'حدث خطأ' : 'An error occurred'));
     } finally {
       setLoading(false);
     }
@@ -104,27 +98,18 @@ export const BatchWritePage: React.FC<BatchWritePageProps> = ({ lang }) => {
         <p className="text-gray-600 mb-6">{t.description}</p>
 
         <div className="space-y-4">
-          <Input
-            label={t.filePath}
-            placeholder={t.filePathPlaceholder}
-            value={filePath}
-            onChange={(e) => setFilePath(e.target.value)}
-          />
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{t.file}</label>
+            <FileSelector lang={lang} />
+          </div>
 
-          <Input
-            label={t.sheetName}
-            placeholder={t.sheetNamePlaceholder}
-            value={sheetName}
-            onChange={(e) => setSheetName(e.target.value)}
-          />
+          <SheetSelector lang={lang} value={sheetName} onChange={setSheetName} />
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              {t.updates}
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{t.updates}</label>
             <textarea
               value={updatesText}
-              onChange={(e) => setUpdatesText(e.target.value)}
+              onChange={e => setUpdatesText(e.target.value)}
               placeholder={t.updatesPlaceholder}
               rows={6}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent font-mono"
@@ -134,7 +119,7 @@ export const BatchWritePage: React.FC<BatchWritePageProps> = ({ lang }) => {
 
           {error && <Alert type="error" message={error} onClose={() => setError(null)} />}
 
-          <Button onClick={handleSubmit} loading={loading} disabled={!filePath || !updatesText}>
+          <Button onClick={handleSubmit} loading={loading} disabled={!selectedFile || !updatesText}>
             {t.submit}
           </Button>
         </div>
@@ -147,57 +132,53 @@ export const BatchWritePage: React.FC<BatchWritePageProps> = ({ lang }) => {
           </div>
         ) : result ? (
           <div className="space-y-4">
-            <div className="flex gap-4">
-              <div className="flex-1 bg-green-50 rounded-lg p-4 text-center">
-                <p className="text-2xl font-bold text-green-600">{result.total_updated}</p>
-                <p className="text-sm text-green-600">{t.successCount}</p>
+            <div className="flex items-center gap-2 text-sm text-green-700 bg-green-50 rounded-lg px-4 py-3">
+              <CheckCircle className="w-4 h-4 flex-shrink-0" />
+              <span>{t.updatedCount} {result.updated?.length ?? 0} {t.cells}</span>
+            </div>
+            <div className="divide-y divide-gray-100 rounded-lg border border-gray-200 overflow-hidden">
+              <div className="grid grid-cols-3 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-500 uppercase">
+                <span>{t.coordinates}</span>
+                <span>{t.oldValue}</span>
+                <span>{t.newValue}</span>
               </div>
-              <div className="flex-1 bg-red-50 rounded-lg p-4 text-center">
-                <p className="text-2xl font-bold text-red-600">{result.total_failed}</p>
-                <p className="text-sm text-red-600">{t.failedCount}</p>
-              </div>
+              {(result.updated || []).map((cell: any, idx: number) => (
+                <div key={idx} className="grid grid-cols-3 px-4 py-3 text-sm">
+                  <span className="font-mono font-medium text-primary-600">{cell.coordinates}</span>
+                  <span className="text-gray-500">{cell.old_value ?? '-'}</span>
+                  <span className="text-gray-800 font-medium">{cell.new_value ?? '-'}</span>
+                </div>
+              ))}
             </div>
 
-            {result.successful_cells && result.successful_cells.length > 0 && (
-              <div>
-                <h4 className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-green-500" />
-                  {t.successful}
-                </h4>
-                <div className="space-y-2">
-                  {result.successful_cells.map((cell: any, idx: number) => (
-                    <div key={idx} className="flex justify-between items-center py-2 px-3 bg-gray-50 rounded-lg text-sm">
-                      <span className="font-mono">{cell.coordinates}</span>
-                      <Badge variant="success">{cell.new_value?.toString() || '-'}</Badge>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {result.failed_cells && result.failed_cells.length > 0 && (
-              <div>
-                <h4 className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                  <XCircle className="w-4 h-4 text-red-500" />
-                  {t.failed}
-                </h4>
-                <div className="space-y-2">
-                  {result.failed_cells.map((cell: any, idx: number) => (
-                    <div key={idx} className="flex justify-between items-center py-2 px-3 bg-red-50 rounded-lg text-sm">
-                      <span className="font-mono">{cell.coordinates}</span>
-                      <Badge variant="error">{cell.error}</Badge>
-                    </div>
-                  ))}
-                </div>
+            {result._resultMeta && (
+              <div className="flex gap-2 pt-3 border-t border-gray-100">
+                <button
+                  onClick={() => downloadResult(result._resultMeta.id, result._resultMeta.filename)}
+                  className="flex-1 flex items-center justify-center gap-2 py-2 text-sm font-medium bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-lg transition-colors"
+                >
+                  <Download className="w-4 h-4" />
+                  {lang === 'ar' ? 'تحميل الملف المعدّل' : 'Download Modified File'}
+                </button>
+                <button
+                  onClick={async () => {
+                    try {
+                      const entry = await apiService.exportResultToPdf(result._resultMeta.id);
+                      if (entry?.id) await downloadResult(entry.id, entry.filename);
+                    } catch { /* silent */ }
+                  }}
+                  className="flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium bg-red-50 text-red-600 hover:bg-red-100 rounded-lg transition-colors"
+                >
+                  <FileText className="w-4 h-4" />
+                  {lang === 'ar' ? 'تصدير PDF' : 'Export PDF'}
+                </button>
               </div>
             )}
           </div>
         ) : (
           <div className="text-center py-12">
             <Settings className="w-16 h-16 mx-auto text-gray-300 mb-4" />
-            <p className="text-gray-500">
-              {lang === 'ar' ? 'لم يتم تعديل أي خلية بعد' : 'No cells modified yet'}
-            </p>
+            <p className="text-gray-500">{lang === 'ar' ? 'لم يتم تعديل أي خلية بعد' : 'No cells modified yet'}</p>
           </div>
         )}
       </Card>

@@ -13,6 +13,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from backend.api.endpoints import api_bp
+from backend.api.auth import auth_bp
+from backend.api.admin import admin_bp
 
 
 app = Flask(__name__)
@@ -53,6 +55,17 @@ def home():
             }
         }
     })
+
+
+@app.route('/api/v1/health')
+def health():
+    """Health check"""
+    return jsonify({"status": "healthy", "version": "2.0.0"})
+
+
+app.register_blueprint(auth_bp)
+app.register_blueprint(api_bp)
+app.register_blueprint(admin_bp)
 
 
 @app.errorhandler(404)

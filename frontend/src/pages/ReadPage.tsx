@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { Eye, FileSpreadsheet, Table } from 'lucide-react';
-import { Card, Button, Input, Alert, Table as TableComponent, LoadingSpinner } from '../components/ui';
+import { Card, Button, Input, Alert, LoadingSpinner } from '../components/ui';
+import { FileSelector } from '../components/FileSelector';
+import { SheetSelector } from '../components/SheetSelector';
+import { useFiles } from '../context/FilesContext';
 import { apiService } from '../services/api';
 
 interface ReadPageProps {
@@ -8,121 +11,73 @@ interface ReadPageProps {
 }
 
 export const ReadPage: React.FC<ReadPageProps> = ({ lang }) => {
-  const [filePath, setFilePath] = useState('');
+  const { selectedFile } = useFiles();
   const [sheetName, setSheetName] = useState('');
   const [coordinates, setCoordinates] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
-  const [mode, setMode] = useState<'cell' | 'all'>('cell');
 
-  const content = {
+  const t = {
     ar: {
       title: 'قراءة البيانات',
-      description: 'اقرأ بيانات من خلية واحدة أو كل البيانات',
-      filePath: 'مسار الملف',
-      filePathPlaceholder: '/path/to/file.xlsx',
+      description: 'اختر ملفاً من المستودع واقرأ قيم الخلايا',
+      file: 'الملف',
       sheetName: 'اسم الورقة (اختياري)',
       sheetNamePlaceholder: 'Sheet1',
-      coordinates: 'الإحداثيات (اختياري)',
-      coordinatesPlaceholder: 'A1',
-      readCell: 'قراءة خلية',
-      readAll: 'قراءة الكل',
-      modeCell: 'خلية واحدة',
-      modeAll: 'جميع البيانات',
+      coordinates: 'الخلايا',
+      coordinatesPlaceholder: 'A1 أو A1,B2,C3',
+      coordinatesHelp: 'خلية واحدة أو عدة خلايا مفصولة بفاصلة',
+      read: 'قراءة',
       resultTitle: 'النتيجة',
       noResult: 'لم يتم تحميل أي بيانات بعد',
-      sheet: 'الورقة',
+      cell: 'الخلية',
       value: 'القيمة',
-      dimensions: 'الأبعاد',
-      rows: 'صفوف',
-      columns: 'أعمدة',
+      sheet: 'الورقة',
+      noFileError: 'الرجاء اختيار ملف من المستودع',
     },
     en: {
       title: 'Read Data',
-      description: 'Read data from a single cell or all data',
-      filePath: 'File Path',
-      filePathPlaceholder: '/path/to/file.xlsx',
+      description: 'Select a file from the repository and read cell values',
+      file: 'File',
       sheetName: 'Sheet Name (optional)',
       sheetNamePlaceholder: 'Sheet1',
-      coordinates: 'Coordinates (optional)',
-      coordinatesPlaceholder: 'A1',
-      readCell: 'Read Cell',
-      readAll: 'Read All',
-      modeCell: 'Single Cell',
-      modeAll: 'All Data',
+      coordinates: 'Cells',
+      coordinatesPlaceholder: 'A1 or A1,B2,C3',
+      coordinatesHelp: 'Single cell or multiple cells separated by commas',
+      read: 'Read',
       resultTitle: 'Result',
       noResult: 'No data loaded yet',
-      sheet: 'Sheet',
+      cell: 'Cell',
       value: 'Value',
-      dimensions: 'Dimensions',
-      rows: 'rows',
-      columns: 'columns',
+      sheet: 'Sheet',
+      noFileError: 'Please select a file from the repository',
     },
-  };
+  }[lang];
 
-  const t = content[lang];
-
-  const handleReadCell = async () => {
-    if (!filePath) {
-      setError(lang === 'ar' ? 'الرجاء إدخال مسار الملف' : 'Please enter file path');
-      return;
-    }
-
-    if (!coordinates) {
-      setError(lang === 'ar' ? 'الرجاء إدخال الإحداثيات' : 'Please enter coordinates');
-      return;
-    }
+  const handleRead = async () => {
+    if (!selectedFile) { setError(t.noFileError); return; }
+    if (!coordinates) { setError(lang === 'ar' ? 'الرجاء إدخال الخلايا' : 'Please enter cell coordinates'); return; }
 
     setLoading(true);
     setError(null);
     setResult(null);
 
     try {
-      const response = await apiService.readCell(
-        { file_path: filePath, sheet_name: sheetName || undefined, coordinates },
-        lang
-      );
-
-      if (apiService.isSuccess(response)) {
-        setResult(response.بيانات || response.data);
+      const response = await apiService.readCells(selectedFile.id, coordinates, sheetName || undefined, lang);
+      if (response.success) {
+        setResult(response);
       } else {
-        setError(apiService.getErrorMessage(response));
+        setError(response.error || (lang === 'ar' ? 'حدث خطأ' : 'An error occurred'));
       }
     } catch (err: any) {
-      setError(err.message || (lang === 'ar' ? 'حدث خطأ' : 'An error occurred'));
+      setError(err.response?.data?.error || err.message || (lang === 'ar' ? 'حدث خطأ' : 'An error occurred'));
     } finally {
       setLoading(false);
     }
   };
 
-  const handleReadAll = async () => {
-    if (!filePath) {
-      setError(lang === 'ar' ? 'الرجاء إدخال مسار الملف' : 'Please enter file path');
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-    setResult(null);
-
-    try {
-      const response = await apiService.readAllData(
-        { file_path: filePath, sheet_name: sheetName || undefined },
-        lang
-      );
-
-      if (apiService.isSuccess(response)) {
-        setResult(response.بيانات || response.data);
-      } else {
-        setError(apiService.getErrorMessage(response));
-      }
-    } catch (err: any) {
-      setError(err.message || (lang === 'ar' ? 'حدث خطأ' : 'An error occurred'));
-    } finally {
-      setLoading(false);
-    }
-  };
+  const cellEntries = result?.cells ? Object.entries(result.cells) : [];
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -130,61 +85,28 @@ export const ReadPage: React.FC<ReadPageProps> = ({ lang }) => {
         <p className="text-gray-600 mb-6">{t.description}</p>
 
         <div className="space-y-4">
-          <Input
-            label={t.filePath}
-            placeholder={t.filePathPlaceholder}
-            value={filePath}
-            onChange={(e) => setFilePath(e.target.value)}
-          />
-
-          <Input
-            label={t.sheetName}
-            placeholder={t.sheetNamePlaceholder}
-            value={sheetName}
-            onChange={(e) => setSheetName(e.target.value)}
-          />
-
-          <div className="flex gap-2 p-1 bg-gray-100 rounded-lg">
-            <button
-              onClick={() => setMode('cell')}
-              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-                mode === 'cell' ? 'bg-white shadow text-primary-600' : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              {t.modeCell}
-            </button>
-            <button
-              onClick={() => setMode('all')}
-              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-                mode === 'all' ? 'bg-white shadow text-primary-600' : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              {t.modeAll}
-            </button>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{t.file}</label>
+            <FileSelector lang={lang} />
           </div>
 
-          {mode === 'cell' && (
+          <SheetSelector lang={lang} value={sheetName} onChange={setSheetName} />
+
+          <div>
             <Input
               label={t.coordinates}
               placeholder={t.coordinatesPlaceholder}
               value={coordinates}
-              onChange={(e) => setCoordinates(e.target.value)}
+              onChange={e => setCoordinates(e.target.value)}
             />
-          )}
+            <p className="mt-1 text-xs text-gray-500">{t.coordinatesHelp}</p>
+          </div>
 
           {error && <Alert type="error" message={error} onClose={() => setError(null)} />}
 
-          <div className="flex gap-3">
-            {mode === 'cell' ? (
-              <Button onClick={handleReadCell} loading={loading} disabled={!filePath || !coordinates}>
-                {t.readCell}
-              </Button>
-            ) : (
-              <Button onClick={handleReadAll} loading={loading} disabled={!filePath}>
-                {t.readAll}
-              </Button>
-            )}
-          </div>
+          <Button onClick={handleRead} loading={loading} disabled={!selectedFile || !coordinates}>
+            {t.read}
+          </Button>
         </div>
       </Card>
 
@@ -195,43 +117,21 @@ export const ReadPage: React.FC<ReadPageProps> = ({ lang }) => {
           </div>
         ) : result ? (
           <div className="space-y-4">
-            {mode === 'cell' ? (
-              <div className="bg-gray-50 rounded-lg p-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-xs text-gray-500 uppercase">{t.sheet}</p>
-                    <p className="font-medium">{result.sheet}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500 uppercase">{t.coordinates}</p>
-                    <p className="font-medium">{result.coordinates}</p>
-                  </div>
-                </div>
-                <div className="mt-4">
-                  <p className="text-xs text-gray-500 uppercase">{t.value}</p>
-                  <p className="font-medium text-lg mt-1">{result.value ?? '-'}</p>
-                </div>
+            <p className="text-xs text-gray-500">
+              {t.sheet}: <span className="font-medium text-gray-700">{result.sheet}</span>
+            </p>
+            <div className="divide-y divide-gray-100 rounded-lg border border-gray-200 overflow-hidden">
+              <div className="grid grid-cols-2 bg-gray-50 px-4 py-2 text-xs font-medium text-gray-500 uppercase">
+                <span>{t.cell}</span>
+                <span>{t.value}</span>
               </div>
-            ) : (
-              <div>
-                {result.dimensions && (
-                  <div className="flex gap-4 mb-4 text-sm">
-                    <span className="text-gray-600">
-                      {t.dimensions}: {result.dimensions.rows} {t.rows} × {result.dimensions.columns} {t.columns}
-                    </span>
-                  </div>
-                )}
-                {result.data && result.data.length > 0 ? (
-                  <TableComponent
-                    headers={result.data[0].map((_: any, i: number) => `${i + 1}`)}
-                    data={result.data.slice(0, 20)}
-                    emptyMessage={t.noResult}
-                  />
-                ) : (
-                  <p className="text-gray-500 text-center py-8">{t.noResult}</p>
-                )}
-              </div>
-            )}
+              {cellEntries.map(([cell, val]) => (
+                <div key={cell} className="grid grid-cols-2 px-4 py-3 text-sm">
+                  <span className="font-mono font-medium text-primary-600">{cell}</span>
+                  <span className="text-gray-800">{val === null || val === undefined ? '-' : String(val)}</span>
+                </div>
+              ))}
+            </div>
           </div>
         ) : (
           <div className="text-center py-12">

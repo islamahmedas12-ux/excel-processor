@@ -162,11 +162,16 @@ interface CardProps {
 
 export const Card: React.FC<CardProps> = ({ children, className = '', title, icon }) => {
   return (
-    <div className={`bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden ${className}`}>
+    <div className={`bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden ${className}`}>
       {title && (
-        <div className="px-6 py-4 border-b border-gray-200 bg-gray-50 flex items-center gap-3">
-          {icon || <FileSpreadsheet className="w-5 h-5 text-primary-600" />}
-          <h3 className="font-semibold text-gray-900">{title}</h3>
+        <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-3">
+          <div className="w-8 h-8 bg-primary-50 rounded-lg flex items-center justify-center flex-shrink-0">
+            {icon
+              ? React.cloneElement(icon as React.ReactElement, { className: 'w-4 h-4 text-primary-600' })
+              : <FileSpreadsheet className="w-4 h-4 text-primary-600" />
+            }
+          </div>
+          <h3 className="font-semibold text-slate-800 text-sm">{title}</h3>
         </div>
       )}
       <div className="p-6">{children}</div>

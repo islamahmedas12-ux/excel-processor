@@ -9,6 +9,7 @@ from typing import Dict, List, Any, Optional
 
 from excel_processor.file_reader import ExcelReader
 from excel_processor.file_editor import ExcelEditor
+from .xlsx_patch import write_cells as _zip_write_cells
 
 
 class ExcelService:
@@ -120,26 +121,30 @@ class ExcelService:
         """
         bytes_io = BytesIO(file_content)
 
+        # Read old values and resolve sheet name via openpyxl (no save → no image loss)
         with ExcelEditor(bytes_io) as editor:
             sheet_name_to_use = sheet_name or editor.get_sheet_names()[0]
-
+            sheet = editor.get_sheet(sheet_name_to_use)
             successful = []
             for cell, value in updates.items():
-                result = editor.update_cell(
-                    coordinates=cell,
-                    value=value,
-                    sheet_name=sheet_name_to_use,
-                    preserve_format=preserve_format
-                )
-                successful.append(result)
+                old_value = sheet[cell.upper()].value
+                successful.append({
+                    'coordinates': cell.upper(),
+                    'old_value': old_value,
+                    'new_value': value,
+                    'sheet': sheet_name_to_use,
+                    'format_preserved': True,
+                })
 
-            editor.save()
+        # Write via direct ZIP patching — preserves images, charts, drawings byte-for-byte
+        modified_bytes = _zip_write_cells(file_content, updates, sheet_name_to_use)
 
         return {
             "success": True,
             "sheet": sheet_name_to_use,
             "filename": filename,
-            "updated": successful
+            "updated": successful,
+            "_modified_bytes": modified_bytes,  # internal — stripped before sending to client
         }
 
 

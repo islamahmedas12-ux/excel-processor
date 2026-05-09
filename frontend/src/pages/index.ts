@@ -1,6 +1,16 @@
 export { HomePage } from './HomePage';
+export { LoginPage } from './LoginPage';
+export { FilesPage } from './FilesPage';
 export { ReadPage } from './ReadPage';
 export { WritePage } from './WritePage';
 export { BatchWritePage } from './BatchWritePage';
 export { ExportPdfPage } from './ExportPdfPage';
 export { BatchExecutePage } from './BatchExecutePage';
+export { MergePdfPage } from './MergePdfPage';
+export { InsertImagePage } from './InsertImagePage';
+export { TemplatesPage } from './TemplatesPage';
+export { JobsPage } from './JobsPage';
+export { VerifyTokensPage } from './VerifyTokensPage';
+export { ResultsPage } from './ResultsPage';
+export { DashboardPage } from './DashboardPage';
+export { ProfilePage } from './ProfilePage';
