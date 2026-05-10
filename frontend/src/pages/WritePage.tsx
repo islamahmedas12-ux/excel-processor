@@ -174,7 +174,7 @@ export const WritePage: React.FC<WritePageProps> = ({ lang }) => {
           </div>
         ) : (
           <div className="text-center py-12">
-            <Edit3 className="w-16 h-16 mx-auto text-gray-300 mb-4" />
+            <Edit3 className="w-16 h-16 mx-auto text-gray-400 mb-4" />
             <p className="text-gray-500">{lang === 'ar' ? 'لم يتم تعديل أي خلية بعد' : 'No cell modified yet'}</p>
           </div>
         )}
