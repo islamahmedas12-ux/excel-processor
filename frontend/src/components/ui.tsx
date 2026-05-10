@@ -237,7 +237,7 @@ export const Table: React.FC<TableProps> = ({ headers, data, emptyMessage = 'No 
   if (data.length === 0) {
     return (
       <div className="text-center py-8 text-gray-500">
-        <FileSpreadsheet className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+        <FileSpreadsheet className="w-12 h-12 mx-auto mb-3 text-gray-400" />
         <p>{emptyMessage}</p>
       </div>
     );
