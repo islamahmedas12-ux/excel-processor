@@ -1,0 +1,115 @@
+---
+title: Admin - User Management
+description: List, update plan, update status, and delete users
+---
+
+# Admin - User Management
+
+All endpoints require admin authentication. Include the admin token in the Authorization header:
+
+```
+Authorization: Bearer <admin_token>
+```
+
+---
+
+## List Users
+
+Retrieve all registered users.
+
+**GET** `/api/v1/admin/users`
+
+**Response**
+
+```json
+{
+  "success": true,
+  "users": [
+    {
+      "email": "john@example.com",
+      "username": "John Doe",
+      "role": "user",
+      "plan": "free",
+      "active": true,
+      "storage_used": 1048576,
+      "storage_limit": 104857600,
+      "created_at": "2024-01-15T10:30:00Z"
+    }
+  ]
+}
+```
+
+---
+
+## Update User Plan
+
+Change a user's subscription plan.
+
+**PATCH** `/api/v1/admin/users/{email}/plan`
+
+```json
+{
+  "plan": "pro",
+  "months": 3
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `plan` | string | Plan name: `free`, `starter`, `pro`, `enterprise` |
+| `months` | integer | Duration in months (default: 1) |
+
+**Response**
+
+```json
+{
+  "success": true,
+  "plan": "pro",
+  "expires_at": "2024-04-15T10:30:00+00:00"
+}
+```
+
+---
+
+## Update User Status
+
+Activate or deactivate a user account.
+
+**PATCH** `/api/v1/admin/users/{email}/status`
+
+```json
+{
+  "active": false
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `active` | boolean | `true` to activate, `false` to deactivate |
+
+**Response**
+
+```json
+{
+  "success": true,
+  "active": false
+}
+```
+
+---
+
+## Delete User
+
+Permanently remove a user account.
+
+**DELETE** `/api/v1/admin/users/{email}`
+
+**Response**
+
+```json
+{
+  "success": true
+}
+```
+
+Returns 404 if the user is not found.

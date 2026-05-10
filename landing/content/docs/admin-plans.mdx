@@ -1,0 +1,193 @@
+---
+title: Admin - Plan Management
+description: List, create, update, and delete subscription plans
+---
+
+# Admin - Plan Management
+
+All endpoints require admin authentication. Include the admin token in the Authorization header:
+
+```
+Authorization: Bearer <admin_token>
+```
+
+---
+
+## List Plans
+
+Retrieve all subscription plans.
+
+**GET** `/api/v1/admin/plans`
+
+**Response**
+
+```json
+{
+  "success": true,
+  "plans": {
+    "free": {
+      "label": "Free",
+      "label_ar": "مجاني",
+      "price_usd": 0,
+      "max_files": 3,
+      "max_file_mb": 100,
+      "storage_gb": 0.3,
+      "max_concurrent_jobs": 1,
+      "max_templates": 5,
+      "description": "3 ملفات، كل ملف حتى 100 MB",
+      "description_en": "3 files, up to 100 MB each",
+      "features": ["3 ملفات مرفوعة", "حجم أقصى 100 MB للملف", "قراءة وكتابة الخلايا", "تصدير PDF"],
+      "features_en": ["3 uploaded files", "Max 100 MB per file", "Read & write cells", "Export to PDF"],
+      "popular": false,
+      "active": true,
+      "order": 0
+    },
+    "pro": {
+      "label": "Pro",
+      "label_ar": "احترافي",
+      "price_usd": 29,
+      "max_files": 200,
+      "max_file_mb": 1024,
+      "storage_gb": 20,
+      "max_concurrent_jobs": 10,
+      "max_templates": 100,
+      "description": "200 ملفاً، كل ملف حتى 1 GB",
+      "description_en": "200 files, up to 1 GB each",
+      "features": ["200 ملفاً مرفوعاً", "حجم أقصى 1 GB للملف", "20 GB مساحة تخزين", "دعم فني ذو أولوية"],
+      "features_en": ["200 uploaded files", "Max 1 GB per file", "20 GB storage", "Priority support"],
+      "popular": true,
+      "active": true,
+      "order": 2
+    }
+  }
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `label` | string | Display name (English) |
+| `label_ar` | string | Display name (Arabic) |
+| `price_usd` | number | Price in USD |
+| `max_files` | integer | Maximum files per batch |
+| `max_file_mb` | integer | Maximum file size in MB |
+| `storage_gb` | number | Storage quota in GB |
+| `max_concurrent_jobs` | integer | Maximum concurrent jobs |
+| `max_templates` | integer | Maximum saved templates |
+| `popular` | boolean | Show as recommended plan |
+| `active` | boolean | Plan is available for selection |
+| `order` | integer | Display order in pricing table |
+
+---
+
+## Create Plan
+
+Create a new subscription plan.
+
+**POST** `/api/v1/admin/plans`
+
+```json
+{
+  "id": "enterprise",
+  "label": "Enterprise",
+  "label_ar": "مؤسسات",
+  "price_usd": 199,
+  "max_files": 999,
+  "max_file_mb": 5120,
+  "storage_gb": 500,
+  "max_concurrent_jobs": 100,
+  "max_templates": 999,
+  "description": "خطة للمؤسسات",
+  "description_en": "For enterprises",
+  "features": ["ملفات غير محدودة", "حتى 5 GB للملف", "500 GB تخزين"],
+  "features_en": ["Unlimited files", "Up to 5 GB per file", "500 GB storage"],
+  "popular": false,
+  "active": true
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | string | Unique plan identifier (required) |
+| `label` | string | Display name (English) |
+| `label_ar` | string | Display name (Arabic) |
+| `price_usd` | number | Price in USD |
+| `max_files` | integer | Maximum files per batch |
+| `max_file_mb` | integer | Maximum file size in MB |
+| `storage_gb` | number | Storage quota in GB |
+| `max_concurrent_jobs` | integer | Maximum concurrent jobs |
+| `max_templates` | integer | Maximum saved templates |
+| `popular` | boolean | Show as recommended plan (default: false) |
+| `active` | boolean | Plan is available (default: true) |
+
+**Response**
+
+```json
+{
+  "success": true,
+  "id": "enterprise"
+}
+```
+
+Returns 409 if the plan ID already exists.
+
+---
+
+## Update Plan
+
+Modify an existing subscription plan.
+
+**PATCH** `/api/v1/admin/plans/{plan_id}`
+
+```json
+{
+  "price_usd": 249,
+  "storage_gb": 1000
+}
+```
+
+Any fields can be provided to update. Only the specified fields are modified.
+
+**Response**
+
+```json
+{
+  "success": true,
+  "plan": {
+    "id": "enterprise",
+    "label": "Enterprise",
+    "price_usd": 249,
+    "storage_gb": 1000,
+    ...
+  }
+}
+```
+
+Returns 404 if the plan is not found.
+
+---
+
+## Delete Plan
+
+Permanently remove a subscription plan.
+
+**DELETE** `/api/v1/admin/plans/{plan_id}`
+
+**Response**
+
+```json
+{
+  "success": true
+}
+```
+
+Returns 404 if the plan is not found. The `free` plan cannot be deleted (protected).
+
+---
+
+## Protected Plans
+
+The following plans are protected and cannot be deleted:
+
+| Plan ID | Description |
+|---------|-------------|
+| `free` | Free tier plan |

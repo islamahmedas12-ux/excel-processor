@@ -1,0 +1,50 @@
+---
+title: Admin Stats
+description: View platform-wide statistics and usage metrics
+---
+
+# Admin Stats
+
+## Get Statistics
+
+Returns platform-wide statistics including user counts, plan distribution, and storage usage.
+
+**GET** `/api/v1/admin/stats`
+
+**Headers**
+
+```
+Authorization: Bearer <admin_token>
+```
+
+**Response**
+
+```json
+{
+  "success": true,
+  "data": {
+    "total_users": 150,
+    "active_users": 142,
+    "verified_users": 138,
+    "plans": {
+      "free": 100,
+      "starter": 30,
+      "professional": 15,
+      "enterprise": 5
+    },
+    "total_files": 1250,
+    "total_storage_bytes": 5368709120
+  }
+}
+```
+
+**Response Fields**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `total_users` | integer | Total number of registered users |
+| `active_users` | integer | Users with active status |
+| `verified_users` | integer | Users with verified email |
+| `plans` | object | Count of users per plan tier |
+| `total_files` | integer | Total files uploaded across all users |
+| `total_storage_bytes` | integer | Total storage used in bytes |

@@ -1,0 +1,49 @@
+---
+title: Admin Authentication
+description: Admin login and authentication
+---
+
+# Admin Authentication
+
+## Login
+
+Authenticate as an admin to access the admin dashboard.
+
+**POST** `/api/v1/auth/admin/login`
+
+```json
+{
+  "email": "admin@example.com",
+  "password": "secret123"
+}
+```
+
+**Response**
+
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "username": "Admin",
+  "role": "admin"
+}
+```
+
+Use the `token` in all subsequent admin requests:
+
+```
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+**Error Responses**
+
+| Error Code | Description |
+|------------|-------------|
+| `account_disabled` | The admin account is disabled |
+| `email_not_verified` | The admin email has not been verified |
+| Invalid credentials | Email or password is incorrect |
+
+---
+
+## Admin-Only Endpoints
+
+All endpoints under `/api/v1/admin/*` require an admin token obtained from the login endpoint. Regular user tokens are not accepted for admin operations.
