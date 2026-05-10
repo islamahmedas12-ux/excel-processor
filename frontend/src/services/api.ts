@@ -602,21 +602,46 @@ class ExcelApiService {
   // Results
   // -------------------------------------------------------------------------
 
+  /**
+   * Retrieves a list of all results owned by the authenticated user, optionally filtered by kind.
+   * @param {'xlsx' | 'pdf'} [kind] - Optional filter to return only results of a specific type ('xlsx' or 'pdf').
+   * @returns {Promise<any[]>} An array of result objects containing id, filename, kind, and metadata.
+   * @throws {Error} When the API request fails or authentication is invalid.
+   */
   async listResults(kind?: 'xlsx' | 'pdf'): Promise<any[]> {
     const url = kind ? `/api/v1/results?kind=${kind}` : '/api/v1/results';
     const res = await this.client.get(url);
     return res.data.results || [];
   }
 
+  /**
+   * Permanently deletes a result from the repository.
+   * @param {string} id - The unique identifier of the result to delete.
+   * @returns {Promise<void>} Resolves when the result has been successfully deleted.
+   * @throws {Error} When the result does not exist or deletion fails.
+   */
   async deleteResult(id: string): Promise<void> {
     await this.client.delete(`/api/v1/results/${id}`);
   }
 
+  /**
+   * Downloads the result file as a Blob.
+   * @param {string} id - The unique identifier of the result to download.
+   * @returns {Promise<Blob>} A Blob containing the result file data, suitable for downloading.
+   * @throws {Error} When the result does not exist or download fails.
+   */
   async downloadResult(id: string): Promise<Blob> {
     const res = await this.client.get(`/api/v1/results/${id}/download`, { responseType: 'blob' });
     return res.data;
   }
 
+  /**
+   * Exports the specified sheets of a result file to PDF.
+   * @param {string} resultId - The unique identifier of the result file to export.
+   * @param {string[]} [sheets] - Optional array of sheet names to export. If not provided, exports all sheets.
+   * @returns {Promise<any>} The created PDF result object with metadata.
+   * @throws {Error} When the result does not exist, specified sheets are not found, or PDF generation fails.
+   */
   async exportResultToPdf(resultId: string, sheets?: string[]): Promise<any> {
     const formData = new FormData();
     if (sheets && sheets.length > 0) formData.append('sheets', sheets.join(','));
@@ -624,6 +649,11 @@ class ExcelApiService {
     return res.data.result;
   }
 
+  /**
+   * Checks the health status of the API server.
+   * @returns {Promise<any>} An object containing the health status and any additional server information.
+   * @throws {Error} When the API request fails or the server is unavailable.
+   */
   async healthCheck(): Promise<any> {
     const res = await this.client.get('/api/v1/health');
     return res.data;
