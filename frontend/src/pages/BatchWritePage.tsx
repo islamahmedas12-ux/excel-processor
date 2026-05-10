@@ -75,6 +75,18 @@ export const BatchWritePage: React.FC<BatchWritePageProps> = ({ lang }) => {
       newValue: 'الجديدة',
       noFileError: 'الرجاء اختيار ملف من المستودع',
       validating: 'جارٍ التحقق من JSON...',
+      validJson: 'صالح',
+      invalidJson: 'غير صالح',
+      awaitingInput: 'في انتظار الإدخال',
+      validJsonMessage: '✓ JSON صالح',
+      entries: 'إدخال',
+      downloadModified: 'تحميل الملف المعدّل',
+      exportPdf: 'تصدير PDF',
+      modifying: 'جاري التعديل...',
+      noCellsModified: 'لم يتم تعديل أي خلية بعد',
+      enterUpdatesError: 'الرجاء إدخال التحديثات',
+      invalidJsonFormat: 'صيغة JSON غير صالحة',
+      errorOccurred: 'حدث خطأ',
     },
     en: {
       title: 'Batch Edit',
@@ -96,18 +108,30 @@ export const BatchWritePage: React.FC<BatchWritePageProps> = ({ lang }) => {
       newValue: 'New',
       noFileError: 'Please select a file from the repository',
       validating: 'Validating JSON...',
+      validJson: 'Valid',
+      invalidJson: 'Invalid',
+      awaitingInput: 'Awaiting Input',
+      validJsonMessage: '✓ Valid JSON',
+      entries: 'entries',
+      downloadModified: 'Download Modified File',
+      exportPdf: 'Export PDF',
+      modifying: 'Modifying...',
+      noCellsModified: 'No cells modified yet',
+      enterUpdatesError: 'Please enter updates',
+      invalidJsonFormat: 'Invalid JSON format',
+      errorOccurred: 'An error occurred',
     },
   }[lang];
 
   const handleSubmit = async () => {
     if (!selectedFile) { setError(t.noFileError); return; }
     if (!updatesText) {
-      setError(lang === 'ar' ? 'الرجاء إدخال التحديثات' : 'Please enter updates');
+      setError(t.enterUpdatesError);
       return;
     }
 
     if (jsonValid === false || !parsedJson) {
-      setError(lang === 'ar' ? 'صيغة JSON غير صالحة' : 'Invalid JSON format');
+      setError(t.invalidJsonFormat);
       return;
     }
 
@@ -120,10 +144,10 @@ export const BatchWritePage: React.FC<BatchWritePageProps> = ({ lang }) => {
       if (response.success) {
         setResult({ ...response, _resultMeta: response.result });
       } else {
-        setError(response.error || (lang === 'ar' ? 'حدث خطأ' : 'An error occurred'));
+        setError(response.error || t.errorOccurred);
       }
     } catch (err: any) {
-      setError(err.response?.data?.error || err.message || (lang === 'ar' ? 'حدث خطأ' : 'An error occurred'));
+      setError(err.response?.data?.error || err.message || t.errorOccurred);
     } finally {
       setLoading(false);
     }
@@ -154,17 +178,17 @@ export const BatchWritePage: React.FC<BatchWritePageProps> = ({ lang }) => {
                 )}
                 {jsonValid === true && (
                   <Badge variant="success">
-                    {lang === 'ar' ? 'صالح' : 'Valid'}
+                    {t.validJson}
                   </Badge>
                 )}
                 {jsonValid === false && (
                   <Badge variant="error">
-                    {lang === 'ar' ? 'غير صالح' : 'Invalid'}
+                    {t.invalidJson}
                   </Badge>
                 )}
                 {jsonValid === null && !isValidating && (
                   <Badge variant="default">
-                    {lang === 'ar' ? 'في انتظار الإدخال' : 'Awaiting Input'}
+                    {t.awaitingInput}
                   </Badge>
                 )}
               </div>
@@ -184,7 +208,7 @@ export const BatchWritePage: React.FC<BatchWritePageProps> = ({ lang }) => {
             )}
             {jsonValid === true && parsedJson && (
               <p className="mt-1 text-xs text-green-600">
-                {lang === 'ar' ? '✓ JSON صالح' : '✓ Valid JSON'} - {Object.keys(parsedJson).length} {lang === 'ar' ? 'إدخال' : 'entries'}
+                {t.validJsonMessage} - {Object.keys(parsedJson).length} {t.entries}
               </p>
             )}
           </div>
@@ -230,7 +254,7 @@ export const BatchWritePage: React.FC<BatchWritePageProps> = ({ lang }) => {
       <Card title={t.resultTitle} icon={<FileSpreadsheet className="w-5 h-5" />}>
         {loading ? (
           <div className="flex justify-center py-12">
-            <LoadingSpinner text={lang === 'ar' ? 'جاري التعديل...' : 'Modifying...'} />
+            <LoadingSpinner text={t.modifying} />
           </div>
         ) : result ? (
           <div className="space-y-4">
@@ -260,7 +284,7 @@ export const BatchWritePage: React.FC<BatchWritePageProps> = ({ lang }) => {
                   className="flex-1 flex items-center justify-center gap-2 py-2 text-sm font-medium bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-lg transition-colors"
                 >
                   <Download className="w-4 h-4" />
-                  {lang === 'ar' ? 'تحميل الملف المعدّل' : 'Download Modified File'}
+                  {t.downloadModified}
                 </button>
                 <button
                   onClick={async () => {
@@ -272,7 +296,7 @@ export const BatchWritePage: React.FC<BatchWritePageProps> = ({ lang }) => {
                   className="flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium bg-red-50 text-red-600 hover:bg-red-100 rounded-lg transition-colors"
                 >
                   <FileText className="w-4 h-4" />
-                  {lang === 'ar' ? 'تصدير PDF' : 'Export PDF'}
+                  {t.exportPdf}
                 </button>
               </div>
             )}
@@ -280,7 +304,7 @@ export const BatchWritePage: React.FC<BatchWritePageProps> = ({ lang }) => {
         ) : (
           <div className="text-center py-12">
             <Settings className="w-16 h-16 mx-auto text-gray-300 mb-4" />
-            <p className="text-gray-500">{lang === 'ar' ? 'لم يتم تعديل أي خلية بعد' : 'No cells modified yet'}</p>
+            <p className="text-gray-500">{t.noCellsModified}</p>
           </div>
         )}
       </Card>
