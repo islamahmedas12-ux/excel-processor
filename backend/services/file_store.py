@@ -2,6 +2,8 @@ import uuid
 from datetime import datetime
 from typing import Dict, List, Optional
 
+FILE_TTL_HOURS = 24
+
 
 class FileStore:
     """In-memory file repository — files stored per owner until server restart."""
