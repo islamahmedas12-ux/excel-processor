@@ -1,3 +1,4 @@
+import mimetypes
 import traceback
 from flask import Blueprint, request, jsonify, send_file
 from ..services.auth_service import (
@@ -222,6 +223,10 @@ def upload_avatar():
     image_bytes = file.read()
     if len(image_bytes) > 5 * 1024 * 1024:
         return jsonify({"error": "Avatar must be under 5 MB"}), 400
+    # Validate MIME type before processing
+    mime = mimetypes.guess_type(file.filename)[0]
+    if mime not in ('image/jpeg', 'image/png', 'image/webp', 'image/gif'):
+        return jsonify({"error": "Only JPEG, PNG, WEBP, and GIF images are allowed"}), 400
     # Convert to PNG via Pillow (handles jpg/webp/etc)
     try:
         from io import BytesIO
