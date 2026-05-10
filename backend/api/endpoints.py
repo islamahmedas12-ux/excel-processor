@@ -434,6 +434,33 @@ def _do_write_job(job_id: str, file_content: bytes, filename: str, updates, shee
         job_store.update_status(job_id, 'failed', error=str(exc))
 
 
+def _do_batch_write_job(job_id: str, file_content: bytes, filename: str,
+                        operations, sheet_name):
+    """Background worker: apply batch write operations to Excel, save result, update job status."""
+    job_store.update_status(job_id, 'running')
+    try:
+        result = excel_service.batch_write(
+            file_content=file_content,
+            filename=filename,
+            operations=operations,
+            sheet_name=sheet_name,
+        )
+        modified_bytes = result.pop('_modified_bytes', None)
+        if modified_bytes:
+            result_filename = os.path.splitext(filename)[0] + '_modified.xlsx'
+            job_store.save_result(
+                job_id,
+                modified_bytes,
+                '.xlsx',
+                content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                filename=result_filename,
+            )
+        else:
+            job_store.update_status(job_id, 'done')
+    except Exception as exc:
+        job_store.update_status(job_id, 'failed', error=str(exc))
+
+
 @api_bp.route('/export/pdf', methods=['POST'])
 @require_auth
 def export_pdf():
