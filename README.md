@@ -23,17 +23,50 @@ API: 更新输入单元格 → Excel 自动计算 → 读取输出结果
 
 ## 🚀 快速开始
 
-### 1. 安装依赖
+### 前置要求
+
+- Docker & Docker Compose
+- 或者直接使用 `docker compose` (Docker Desktop 内置)
+
+### 1. 配置环境变量
+
+复制环境变量示例文件：
 
 ```bash
-pip install -r requirements.txt
+cp .env.example .env
 ```
 
-### 2. 运行服务器
+编辑 `.env` 文件配置您的 Supabase：
+
+```env
+# Supabase Configuration
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_KEY=your-supabase-api-key
+SUPABASE_BUCKET=excel-files
+```
+
+### 2. 启动服务
+
+使用 Docker Compose 启动所有服务：
 
 ```bash
-python main.py
+docker-compose up -d
 ```
+
+或使用新版 Docker Compose：
+
+```bash
+docker compose up -d
+```
+
+### 3. 访问服务
+
+| 服务 | URL |
+|------|-----|
+| API (后端) | http://localhost:5000 |
+| 用户界面 | http://localhost:3000 |
+| 管理后台 | http://localhost:3100 |
+| 落地页 | http://localhost:4200 |
 
 API 文档地址：`http://localhost:5000/`
 
