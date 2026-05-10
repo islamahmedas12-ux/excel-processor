@@ -43,7 +43,7 @@ export const Layout: React.FC<LayoutProps> = ({
   const [mobileOpen, setMobileOpen] = useState(false);
   const [avatarUrl, setAvatarUrl]   = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [debouncedQuery, setDebouncedQuery] = useState('');
+  const [_debouncedQuery, setDebouncedQuery] = useState('');
   const { user, logout } = useAuth();
   const isRtl = lang === 'ar';
   const dir   = isRtl ? 'rtl' : 'ltr';
