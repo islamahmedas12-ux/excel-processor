@@ -358,6 +358,28 @@ def write_cells():
     except json.JSONDecodeError:
         return jsonify({"error": "Invalid JSON in updates"}), 400
 
+    # ── Async mode ──────────────────────────────────────────────────────────
+    if request.args.get('async') == 'true' or request.form.get('async') == 'true':
+        email = _current_email()
+        plan  = _get_user_plan(email)
+        max_jobs = plan.get('max_concurrent_jobs', 1)
+        active   = job_store.count_active(email)
+        if active >= max_jobs:
+            return jsonify({
+                "error": "job_limit",
+                "message": f"لديك {active} مهمة قيد التشغيل (الحد الأقصى للخطة {max_jobs}). انتظر اكتمالها أو قم بالترقية.",
+                "message_en": f"You have {active} active job(s). Your plan allows {max_jobs}. Wait or upgrade.",
+            }), 429
+
+        job = job_store.create(
+            owner_email=email,
+            job_type='write',
+            params={'filename': filename, 'updates': updates, 'sheet_name': sheet_name},
+        )
+        _executor.submit(_do_write_job, job['id'], file_content, filename, updates, sheet_name)
+        return jsonify({"success": True, "job": job}), 202
+
+    # ── Sync mode (original) ────────────────────────────────────────────────
     try:
         result = excel_service.write_cells(file_content=file_content, filename=filename,
                                            updates=updates, sheet_name=sheet_name)

@@ -3,14 +3,14 @@
   "spec": "003-add-async-job-support-for-write-and-batch-write-op",
   "state": "building",
   "subtasks": {
-    "completed": 1,
+    "completed": 2,
     "total": 6,
     "in_progress": 1,
     "failed": 0
   },
   "phase": {
-    "current": "Backend: Write Job Workers",
-    "id": 1,
+    "current": "Backend: Async Endpoints",
+    "id": 2,
     "total": 2
   },
   "workers": {
@@ -18,8 +18,8 @@
     "max": 1
   },
   "session": {
-    "number": 3,
+    "number": 4,
     "started_at": "2026-05-10T03:10:52.302625"
   },
-  "last_update": "2026-05-10T03:16:20.302710"
+  "last_update": "2026-05-10T03:18:37.740733"
 }
