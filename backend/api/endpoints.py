@@ -398,9 +398,91 @@ def write_cells():
     except json.JSONDecodeError:
         return jsonify({"error": "Invalid JSON in updates"}), 400
 
+    # ── Async mode ──────────────────────────────────────────────────────────
+    if request.args.get('async') == 'true' or request.form.get('async') == 'true':
+        email = _current_email()
+        plan  = _get_user_plan(email)
+        max_jobs = plan.get('max_concurrent_jobs', 1)
+        active   = job_store.count_active(email)
+        if active >= max_jobs:
+            return jsonify({
+                "error": "job_limit",
+                "message": f"لديك {active} مهمة قيد التشغيل (الحد الأقصى للخطة {max_jobs}). انتظر اكتمالها أو قم بالترقية.",
+                "message_en": f"You have {active} active job(s). Your plan allows {max_jobs}. Wait or upgrade.",
+            }), 429
+
+        job = job_store.create(
+            owner_email=email,
+            job_type='write',
+            params={'filename': filename, 'updates': updates, 'sheet_name': sheet_name},
+        )
+        _executor.submit(_do_write_job, job['id'], file_content, filename, updates, sheet_name)
+        return jsonify({"success": True, "job": job}), 202
+
+    # ── Sync mode (original) ────────────────────────────────────────────────
     try:
         result = excel_service.write_cells(file_content=file_content, filename=filename,
                                            updates=updates, sheet_name=sheet_name)
+        modified_bytes = result.pop('_modified_bytes', None)
+
+        # Save result to store (always — templates must not be mutated)
+        result_meta = None
+        source_id = request.form.get('file_id') or request.form.get('result_id') or ''
+        if modified_bytes:
+            result_filename = os.path.splitext(filename)[0] + '_modified.xlsx'
+            result_meta = result_store.save(kind='xlsx', source_file_id=source_id,
+                                            source_file_name=filename,
+                                            filename=result_filename, content=modified_bytes)
+
+        result['result'] = result_meta
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"error": "Internal server error"}), 500
+
+
+@api_bp.route('/write/batch', methods=['POST'])
+@require_auth
+def batch_write_cells():
+    file_content, filename, err = _resolve_file()
+    if err:
+        return jsonify({"error": err[0]}), err[1]
+
+    operations_str = request.form.get('operations')
+    sheet_name = request.form.get('sheet_name')
+    if not operations_str:
+        return jsonify({"error": "operations parameter is required"}), 400
+
+    try:
+        import json
+        operations = json.loads(operations_str)
+    except json.JSONDecodeError:
+        return jsonify({"error": "Invalid JSON in operations"}), 400
+
+    # ── Async mode ──────────────────────────────────────────────────────────
+    if request.args.get('async') == 'true' or request.form.get('async') == 'true':
+        email = _current_email()
+        plan  = _get_user_plan(email)
+        max_jobs = plan.get('max_concurrent_jobs', 1)
+        active   = job_store.count_active(email)
+        if active >= max_jobs:
+            return jsonify({
+                "error": "job_limit",
+                "message": f"لديك {active} مهمة قيد التشغيل (الحد الأقصى للخطة {max_jobs}). انتظر اكتمالها أو قم بالترقية.",
+                "message_en": f"You have {active} active job(s). Your plan allows {max_jobs}. Wait or upgrade.",
+            }), 429
+
+        job = job_store.create(
+            owner_email=email,
+            job_type='batch_write',
+            params={'filename': filename, 'operations': operations, 'sheet_name': sheet_name},
+        )
+        _executor.submit(_do_batch_write_job, job['id'], file_content, filename, operations, sheet_name)
+        return jsonify({"success": True, "job": job}), 202
+
+    # ── Sync mode (original) ────────────────────────────────────────────────
+    try:
+        result = excel_service.batch_write(file_content=file_content, filename=filename,
+                                           operations=operations, sheet_name=sheet_name)
         modified_bytes = result.pop('_modified_bytes', None)
 
         # Save result to store (always — templates must not be mutated)
@@ -443,6 +525,60 @@ def _do_pdf_job(job_id: str, file_content: bytes, filename: str, sheets):
         pdf_bytes = service.convert_excel_to_pdf(file_content, filename, sheets=sheets)
         job_store.save_result(job_id, pdf_bytes, '.pdf', content_type='application/pdf')
         job_store.update_status(job_id, 'done', result_ext='.pdf')
+    except Exception as exc:
+        job_store.update_status(job_id, 'failed', error=str(exc))
+
+
+def _do_write_job(job_id: str, file_content: bytes, filename: str, updates, sheet_name):
+    """Background worker: write cell updates to Excel, save result, update job status."""
+    job_store.update_status(job_id, 'running')
+    try:
+        result = excel_service.write_cells(
+            file_content=file_content,
+            filename=filename,
+            updates=updates,
+            sheet_name=sheet_name,
+        )
+        modified_bytes = result.pop('_modified_bytes', None)
+        if modified_bytes:
+            result_filename = os.path.splitext(filename)[0] + '_modified.xlsx'
+            job_store.save_result(
+                job_id,
+                modified_bytes,
+                '.xlsx',
+                content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            )
+            job_store.update_status(job_id, 'done', result_ext='.xlsx')
+        else:
+            # No modified bytes means write operation had no effect
+            job_store.update_status(job_id, 'done')
+    except Exception as exc:
+        job_store.update_status(job_id, 'failed', error=str(exc))
+
+
+def _do_batch_write_job(job_id: str, file_content: bytes, filename: str,
+                        operations, sheet_name):
+    """Background worker: apply batch write operations to Excel, save result, update job status."""
+    job_store.update_status(job_id, 'running')
+    try:
+        result = excel_service.batch_write(
+            file_content=file_content,
+            filename=filename,
+            operations=operations,
+            sheet_name=sheet_name,
+        )
+        modified_bytes = result.pop('_modified_bytes', None)
+        if modified_bytes:
+            result_filename = os.path.splitext(filename)[0] + '_modified.xlsx'
+            job_store.save_result(
+                job_id,
+                modified_bytes,
+                '.xlsx',
+                content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            )
+            job_store.update_status(job_id, 'done', result_ext='.xlsx')
+        else:
+            job_store.update_status(job_id, 'done')
     except Exception as exc:
         job_store.update_status(job_id, 'failed', error=str(exc))
 
@@ -539,7 +675,12 @@ def download_job(job_id):
         return jsonify({"error": "Result file missing"}), 404
 
     ext  = job.get('result_ext', '.pdf')
-    mime = 'application/pdf' if ext == '.pdf' else 'application/octet-stream'
+    if ext == '.pdf':
+        mime = 'application/pdf'
+    elif ext == '.xlsx':
+        mime = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    else:
+        mime = 'application/octet-stream'
     base = job.get('params', {}).get('filename', 'result')
     download_name = os.path.splitext(base)[0] + ext
 
