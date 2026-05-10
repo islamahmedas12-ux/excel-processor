@@ -388,16 +388,34 @@ class ExcelApiService {
   // Verification Tokens
   // -------------------------------------------------------------------------
 
+  /**
+   * Creates a new verification token for granting limited access to a file or result.
+   * @param {'file' | 'result'} resourceType - The type of resource the token grants access to ('file' or 'result').
+   * @param {string} resourceId - The unique identifier of the file or result to create a token for.
+   * @returns {Promise<{token: VerifyToken, existing: boolean}>} An object containing the created VerifyToken and a flag indicating if this token already existed.
+   * @throws {Error} When the resource does not exist or token creation fails.
+   */
   async createToken(resourceType: 'file' | 'result', resourceId: string): Promise<{ token: VerifyToken; existing: boolean }> {
     const res = await this.client.post('/api/v1/tokens', { resource_type: resourceType, resource_id: resourceId });
     return { token: res.data.token, existing: !!res.data.existing };
   }
 
+  /**
+   * Retrieves a list of all verification tokens owned by the authenticated user.
+   * @returns {Promise<VerifyToken[]>} An array of VerifyToken objects representing all active and inactive tokens.
+   * @throws {Error} When the API request fails or authentication is invalid.
+   */
   async listTokens(): Promise<VerifyToken[]> {
     const res = await this.client.get('/api/v1/tokens');
     return res.data.tokens;
   }
 
+  /**
+   * Permanently deletes a verification token and revokes access for anyone holding it.
+   * @param {string} tokenId - The unique identifier of the token to delete.
+   * @returns {Promise<void>} Resolves when the token has been successfully deleted.
+   * @throws {Error} When the token does not exist or deletion fails.
+   */
   async deleteToken(tokenId: string): Promise<void> {
     await this.client.delete(`/api/v1/tokens/${tokenId}`);
   }
