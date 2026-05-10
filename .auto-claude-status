@@ -3,7 +3,7 @@
   "spec": "003-add-async-job-support-for-write-and-batch-write-op",
   "state": "building",
   "subtasks": {
-    "completed": 2,
+    "completed": 3,
     "total": 6,
     "in_progress": 1,
     "failed": 0
@@ -18,8 +18,8 @@
     "max": 1
   },
   "session": {
-    "number": 4,
+    "number": 5,
     "started_at": "2026-05-10T03:10:52.302625"
   },
-  "last_update": "2026-05-10T03:18:37.740733"
+  "last_update": "2026-05-10T03:20:42.249291"
 }
