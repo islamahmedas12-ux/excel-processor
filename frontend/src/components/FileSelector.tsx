@@ -134,7 +134,7 @@ export const FileSelector: React.FC<FileSelectorProps> = ({ lang, onChange }) =>
           </div>
 
           {files.length === 0 ? (
-            <p className="text-sm text-gray-400 text-center py-8 px-4">{t.empty}</p>
+            <p className="text-sm text-gray-500 text-center py-8 px-4">{t.empty}</p>
           ) : (
             <div className="max-h-80 overflow-y-auto">
               {grouped.map(({ cat, files: groupFiles }) => (
@@ -148,7 +148,7 @@ export const FileSelector: React.FC<FileSelectorProps> = ({ lang, onChange }) =>
                     <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
                       {cat?.name ?? t.uncategorized}
                     </span>
-                    <span className="text-xs text-gray-400 ml-auto">{groupFiles.length}</span>
+                    <span className="text-xs text-gray-500 ml-auto">{groupFiles.length}</span>
                   </div>
 
                   {/* Files in group */}
@@ -169,7 +169,7 @@ export const FileSelector: React.FC<FileSelectorProps> = ({ lang, onChange }) =>
 
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-gray-800 truncate">{file.name}</p>
-                        <p className="text-xs text-gray-400">{formatSize(file.size)}</p>
+                        <p className="text-xs text-gray-500">{formatSize(file.size)}</p>
                       </div>
 
                       <div className="flex items-center gap-1.5 flex-shrink-0">
