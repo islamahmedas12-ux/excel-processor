@@ -354,3 +354,121 @@ class TestErrorsIntegration:
         response = handle_exception(Exception("Unknown"), lang="en")
 
         assert 'نجاح' in response or 'error' in response
+
+
+class TestTemplateStoreIntegration:
+    """اختبارات تكامل TemplateStore"""
+
+    def test_find_by_sha256_and_owner_not_found(self):
+        """اختبار البحث عن قالب غير موجود"""
+        from backend.services.template_store import find_by_sha256_and_owner
+
+        result = find_by_sha256_and_owner(
+            sha256="nonexistent_sha256_hash_1234567890abcdef",
+            owner_email="test@example.com"
+        )
+
+        assert result is None
+
+    def test_find_by_sha256_and_owner_different_sha(self):
+        """اختبار البحث بخاطئ SHA مختلف"""
+        from backend.services.template_store import find_by_sha256_and_owner
+
+        result = find_by_sha256_and_owner(
+            sha256="aaaa_sha256_hash_1234567890abcdef",
+            owner_email="test@example.com"
+        )
+
+        assert result is None
+
+    def test_find_by_sha256_and_owner_different_owner(self):
+        """اختبار البحث بمالك مختلف"""
+        from backend.services.template_store import find_by_sha256_and_owner
+
+        result = find_by_sha256_and_owner(
+            sha256="nonexistent_sha256_hash_1234567890abcdef",
+            owner_email="different@example.com"
+        )
+
+        assert result is None
+
+    def test_duplicate_detection_returns_existing(self, temp_dir):
+        """اختبار اكتشاف التكرار يعيد القالب الموجود"""
+        from backend.services.template_store import save, find_by_sha256_and_owner
+        from openpyxl import Workbook
+
+        # Create Excel content
+        wb = Workbook()
+        ws = wb.active
+        ws['A1'] = "Test Template"
+        ws['B1'] = 100
+
+        buffer = BytesIO()
+        wb.save(buffer)
+        buffer.seek(0)
+        content = buffer.getvalue()
+
+        # Save the first template
+        owner_email = "duplicate_test@example.com"
+        first_result = save(
+            owner_email=owner_email,
+            filename="test_template.xlsx",
+            content=content,
+            name="Test Template",
+            description="Test description"
+        )
+
+        assert first_result is not None
+        assert 'id' in first_result
+        first_id = first_result['id']
+
+        # Save the same content again (should return existing)
+        second_result = save(
+            owner_email=owner_email,
+            filename="test_template.xlsx",
+            content=content,
+            name="Test Template 2",
+            description="Different description"
+        )
+
+        # Should return the existing template, not create a new one
+        assert second_result is not None
+        assert second_result['id'] == first_id
+        assert second_result['name'] == "Test Template"
+
+    def test_duplicate_detection_different_owner(self, temp_dir):
+        """اختبار اكتشاف التكرار مع مالك مختلف"""
+        from backend.services.template_store import save
+        from openpyxl import Workbook
+
+        # Create Excel content
+        wb = Workbook()
+        ws = wb.active
+        ws['A1'] = "Same Content"
+
+        buffer = BytesIO()
+        wb.save(buffer)
+        buffer.seek(0)
+        content = buffer.getvalue()
+
+        # Save for first owner
+        result1 = save(
+            owner_email="owner1@example.com",
+            filename="same_file.xlsx",
+            content=content,
+            name="Same File"
+        )
+
+        # Save same content for different owner (should create new)
+        result2 = save(
+            owner_email="owner2@example.com",
+            filename="same_file.xlsx",
+            content=content,
+            name="Same File"
+        )
+
+        # Should create a new template for different owner
+        assert result1 is not None
+        assert result2 is not None
+        assert result1['id'] != result2['id']
+        assert result1['owner_email'] != result2['owner_email']
