@@ -123,18 +123,11 @@ def subscriptions():
 
 
 @admin_bp.route('/subscriptions/<sub_id>/proof', methods=['GET'])
+@require_role('admin')
 def proof_image(sub_id: str):
-    """Serve proof image — accepts token via Authorization header or ?token= query param."""
+    """Serve proof image — requires Authorization header with admin JWT."""
     from io import BytesIO
-    from ..services.auth_service import verify_token
     from ..services.subscription_store import get_proof_bytes
-
-    token = request.args.get('token') or (request.headers.get('Authorization', '')[7:] or None)
-    if not token:
-        return jsonify({"error": "Authentication required"}), 401
-    payload = verify_token(token)
-    if not payload or payload.get('role') != 'admin':
-        return jsonify({"error": "Forbidden"}), 403
 
     result = get_proof_bytes(sub_id)
     if not result:
