@@ -282,6 +282,18 @@ class ExcelApiService {
   // Image & QR Injection
   // -------------------------------------------------------------------------
 
+  /**
+   * Inserts an image into an Excel file at a specified cell position.
+   * @param {Object} options - The insertion options.
+   * @param {string} options.fileId - The unique identifier of the target Excel file.
+   * @param {File} options.image - The image file to insert (PNG, JPG, or other supported formats).
+   * @param {string} [options.cell] - The cell reference where the image should be placed (e.g., "A1"). Defaults to top-left corner.
+   * @param {string} [options.sheetName] - The name of the sheet to insert the image into. Defaults to the first active sheet.
+   * @param {number} [options.widthPx] - The desired width of the image in pixels. If omitted, uses original image width.
+   * @param {number} [options.heightPx] - The desired height of the image in pixels. If omitted, uses original image height.
+   * @returns {Promise<any>} An object containing the result of the image insertion operation.
+   * @throws {Error} When the file does not exist, image format is unsupported, or insertion fails.
+   */
   async insertImage(options: {
     fileId: string;
     image: File;
@@ -301,6 +313,18 @@ class ExcelApiService {
     return res.data;
   }
 
+  /**
+   * Generates and inserts a QR code into an Excel file at a specified cell position.
+   * @param {Object} options - The QR code insertion options.
+   * @param {string} options.fileId - The unique identifier of the target Excel file.
+   * @param {string} [options.qrData] - The data string to encode in the QR code (text, URL, or any encodeable content).
+   * @param {string} [options.accessCode] - An optional access code to include in the QR code payload.
+   * @param {string} [options.cell] - The cell reference where the QR code should be placed (e.g., "A1"). Defaults to top-left corner.
+   * @param {string} [options.sheetName] - The name of the sheet to insert the QR code into. Defaults to the first active sheet.
+   * @param {number} [options.sizePx] - The desired size of the QR code in pixels (both width and height). Defaults to a standard size.
+   * @returns {Promise<any>} An object containing the result of the QR code insertion operation.
+   * @throws {Error} When the file does not exist, QR data is invalid, or insertion fails.
+   */
   async insertQr(options: {
     fileId: string;
     qrData?: string;
