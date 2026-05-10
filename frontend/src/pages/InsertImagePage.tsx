@@ -206,7 +206,7 @@ export const InsertImagePage: React.FC<InsertImagePageProps> = ({ lang }) => {
                   {imagePreview
                     ? <img src={imagePreview} alt="" className="max-h-28 mx-auto rounded-lg object-contain" />
                     : (
-                      <div className="flex flex-col items-center gap-2 text-gray-400">
+                      <div className="flex flex-col items-center gap-2 text-gray-500">
                         <Upload className="w-8 h-8" />
                         <p className="text-sm">{t.drop}</p>
                       </div>
@@ -243,7 +243,7 @@ export const InsertImagePage: React.FC<InsertImagePageProps> = ({ lang }) => {
                   />
                 </div>
               )}
-              <p className="text-xs text-gray-400 -mt-2">{t.qrNote}</p>
+              <p className="text-xs text-gray-500 -mt-2">{t.qrNote}</p>
               {field(t.sizePx,
                 <input type="number" value={sizePx} onChange={e => setSizePx(+e.target.value)}
                   min={40} max={400} className={inputCls} />
