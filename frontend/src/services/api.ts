@@ -553,21 +553,47 @@ class ExcelApiService {
   // Categories
   // -------------------------------------------------------------------------
 
+  /**
+   * Retrieves a list of all categories owned by the authenticated user.
+   * @returns {Promise<any[]>} An array of category objects containing id, name, color, and metadata.
+   * @throws {Error} When the API request fails or authentication is invalid.
+   */
   async listCategories(): Promise<any[]> {
     const res = await this.client.get('/api/v1/categories');
     return res.data.categories || [];
   }
 
+  /**
+   * Creates a new category with the specified name and color.
+   * @param {string} name - The display name for the new category.
+   * @param {string} color - The hex color code for the category (e.g., "#FF5733" or "blue").
+   * @returns {Promise<any>} The created category object with server-assigned id and metadata.
+   * @throws {Error} When the name is empty, color format is invalid, or creation fails.
+   */
   async createCategory(name: string, color: string): Promise<any> {
     const res = await this.client.post('/api/v1/categories', { name, color });
     return res.data.category;
   }
 
+  /**
+   * Updates the name and/or color of an existing category.
+   * @param {string} id - The unique identifier of the category to update.
+   * @param {string} name - The new display name for the category.
+   * @param {string} color - The new hex color code for the category (e.g., "#FF5733" or "blue").
+   * @returns {Promise<any>} The updated category object with modified metadata.
+   * @throws {Error} When the category does not exist or update fails.
+   */
   async updateCategory(id: string, name: string, color: string): Promise<any> {
     const res = await this.client.put(`/api/v1/categories/${id}`, { name, color });
     return res.data.category;
   }
 
+  /**
+   * Permanently deletes a category from the system.
+   * @param {string} id - The unique identifier of the category to delete.
+   * @returns {Promise<void>} Resolves when the category has been successfully deleted.
+   * @throws {Error} When the category does not exist or deletion fails.
+   */
   async deleteCategory(id: string): Promise<void> {
     await this.client.delete(`/api/v1/categories/${id}`);
   }
