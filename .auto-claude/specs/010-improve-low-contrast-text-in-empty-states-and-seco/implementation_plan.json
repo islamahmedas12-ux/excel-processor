@@ -1,0 +1,437 @@
+{
+  "feature": "Improve low-contrast text in empty states and secondary text",
+  "workflow_type": "simple",
+  "workflow_rationale": "Frontend-only accessibility fix - single service, well-scoped changes to CSS classes across multiple components. No dependencies between subtasks.",
+  "phases": [
+    {
+      "id": "phase-1-ui-components",
+      "name": "UI Components Accessibility Fix",
+      "type": "implementation",
+      "description": "Update text contrast in shared UI components (ui.tsx, FileSelector.tsx, SheetSelector.tsx)",
+      "depends_on": [],
+      "parallel_safe": false,
+      "subtasks": [
+        {
+          "id": "subtask-1-1",
+          "description": "Fix empty state icons in ui.tsx - change text-gray-300 to text-gray-400 in Table component",
+          "service": "frontend",
+          "files_to_modify": [
+            "frontend/src/components/ui.tsx"
+          ],
+          "files_to_create": [],
+          "patterns_from": [],
+          "verification": {
+            "type": "command",
+            "command": "cd frontend && npm run lint -- --fix 2>&1 | head -20",
+            "expected": "No lint errors"
+          },
+          "status": "completed",
+          "notes": "Changed text-gray-300 to text-gray-400 in Table component's empty state icon (FileSpreadsheet). Commit: bb62763.",
+          "updated_at": "2026-05-10T07:07:34.471001+00:00"
+        },
+        {
+          "id": "subtask-1-2",
+          "description": "Fix secondary text in FileSelector.tsx - update text-gray-400 to text-gray-500 for better contrast",
+          "service": "frontend",
+          "files_to_modify": [
+            "frontend/src/components/FileSelector.tsx"
+          ],
+          "files_to_create": [],
+          "patterns_from": [
+            "frontend/src/components/ui.tsx"
+          ],
+          "verification": {
+            "type": "command",
+            "command": "cd frontend && npm run lint -- --fix 2>&1 | head -20",
+            "expected": "No lint errors"
+          },
+          "status": "completed",
+          "notes": "Updated text-gray-400 to text-gray-500 in 3 places: empty state message, file size in dropdown, and file count. Commit: 83acdb6.",
+          "updated_at": "2026-05-10T10:17:00.000000+00:00"
+        },
+        {
+          "id": "subtask-1-3",
+          "description": "Fix dashed placeholder in SheetSelector.tsx - update text-gray-400 to text-gray-500",
+          "service": "frontend",
+          "files_to_modify": [
+            "frontend/src/components/SheetSelector.tsx"
+          ],
+          "files_to_create": [],
+          "patterns_from": [
+            "frontend/src/components/ui.tsx"
+          ],
+          "verification": {
+            "type": "command",
+            "command": "cd frontend && npm run lint -- --fix 2>&1 | head -20",
+            "expected": "No lint errors"
+          },
+          "status": "completed",
+          "notes": "Updated text-gray-400 to text-gray-500 for the dashed placeholder in SheetSelector.tsx. Commit: a04c222.",
+          "updated_at": "2026-05-10T07:18:48.349185+00:00"
+        }
+      ]
+    },
+    {
+      "id": "phase-2-page-empty-states",
+      "name": "Page Empty States Accessibility Fix",
+      "type": "implementation",
+      "description": "Fix empty state icons and messages in page components (WritePage, ReadPage, BatchWrite, BatchExecute)",
+      "depends_on": [],
+      "parallel_safe": true,
+      "subtasks": [
+        {
+          "id": "subtask-2-1",
+          "description": "Fix WritePage empty state icon - change text-gray-300 to text-gray-400",
+          "service": "frontend",
+          "files_to_modify": [
+            "frontend/src/pages/WritePage.tsx"
+          ],
+          "files_to_create": [],
+          "patterns_from": [
+            "frontend/src/components/ui.tsx"
+          ],
+          "verification": {
+            "type": "command",
+            "command": "cd frontend && npm run lint -- --fix 2>&1 | head -20",
+            "expected": "No lint errors"
+          },
+          "status": "completed",
+          "notes": "Changed text-gray-300 to text-gray-400 in WritePage empty state icon (Edit3). Commit: 031e1da."
+        },
+        {
+          "id": "subtask-2-2",
+          "description": "Fix ReadPage empty state icon - change text-gray-300 to text-gray-400",
+          "service": "frontend",
+          "files_to_modify": [
+            "frontend/src/pages/ReadPage.tsx"
+          ],
+          "files_to_create": [],
+          "patterns_from": [
+            "frontend/src/components/ui.tsx"
+          ],
+          "verification": {
+            "type": "command",
+            "command": "cd frontend && npm run lint -- --fix 2>&1 | head -20",
+            "expected": "No lint errors"
+          },
+          "status": "completed",
+          "notes": "Changed text-gray-300 to text-gray-400 in ReadPage empty state icon (Table). Commit: 5adfc94."
+        },
+        {
+          "id": "subtask-2-3",
+          "description": "Fix BatchWritePage empty state icon - change text-gray-300 to text-gray-400",
+          "service": "frontend",
+          "files_to_modify": [
+            "frontend/src/pages/BatchWritePage.tsx"
+          ],
+          "files_to_create": [],
+          "patterns_from": [
+            "frontend/src/components/ui.tsx"
+          ],
+          "verification": {
+            "type": "command",
+            "command": "cd frontend && npm run lint -- --fix 2>&1 | head -20",
+            "expected": "No lint errors"
+          },
+          "status": "completed",
+          "notes": "Changed text-gray-300 to text-gray-400 in BatchWritePage empty state icon (Settings). Commit: 6b217b5.",
+          "updated_at": "2026-05-10T07:27:35.500219+00:00"
+        },
+        {
+          "id": "subtask-2-4",
+          "description": "Fix BatchExecutePage empty state - change text-gray-400 to text-gray-500 for icon and message",
+          "service": "frontend",
+          "files_to_modify": [
+            "frontend/src/pages/BatchExecutePage.tsx"
+          ],
+          "files_to_create": [],
+          "patterns_from": [
+            "frontend/src/components/ui.tsx"
+          ],
+          "verification": {
+            "type": "command",
+            "command": "cd frontend && npm run lint -- --fix 2>&1 | head -20",
+            "expected": "No lint errors"
+          },
+          "status": "completed",
+          "notes": "Changed text-gray-400 to text-gray-500 for both the FileSpreadsheet icon (line 115) and the noJobs message (line 155) in BatchExecutePage.tsx. Lint passes with no errors.",
+          "updated_at": "2026-05-10T07:30:18.007650+00:00"
+        }
+      ]
+    },
+    {
+      "id": "phase-3-secondary-text",
+      "name": "Secondary Text Elements Accessibility Fix",
+      "type": "implementation",
+      "description": "Fix secondary text and table cells in secondary pages (Templates, Jobs, Files, InsertImage, MergePdf, ExportPdf, VerifyTokens)",
+      "depends_on": [],
+      "parallel_safe": true,
+      "subtasks": [
+        {
+          "id": "subtask-3-1",
+          "description": "Fix TemplatesPage - update empty state and secondary text from gray-400 to gray-500",
+          "service": "frontend",
+          "files_to_modify": [
+            "frontend/src/pages/TemplatesPage.tsx"
+          ],
+          "files_to_create": [],
+          "patterns_from": [
+            "frontend/src/pages/ReadPage.tsx"
+          ],
+          "verification": {
+            "type": "command",
+            "command": "cd frontend && npm run lint -- --fix 2>&1 | head -20",
+            "expected": "No lint errors"
+          },
+          "status": "completed",
+          "notes": "Fixed empty state text (gray-400 → gray-500), description text (gray-400 → gray-500), and size/date text (gray-400 → gray-500). Lint passes.",
+          "updated_at": "2026-05-10T07:33:08.551559+00:00"
+        },
+        {
+          "id": "subtask-3-2",
+          "description": "Fix JobsPage - update empty state and secondary text from gray-400/gray-300 to gray-500",
+          "service": "frontend",
+          "files_to_modify": [
+            "frontend/src/pages/JobsPage.tsx"
+          ],
+          "files_to_create": [],
+          "patterns_from": [
+            "frontend/src/pages/ReadPage.tsx"
+          ],
+          "verification": {
+            "type": "command",
+            "command": "cd frontend && npm run lint -- --fix 2>&1 | head -20",
+            "expected": "No lint errors"
+          },
+          "status": "completed",
+          "notes": "Updated 3 text-gray-400 occurrences to text-gray-500: empty state message (line 165), job type font-mono (line 176), and relative time (line 183). Lint passes."
+        },
+        {
+          "id": "subtask-3-3",
+          "description": "Fix FilesPage - update secondary text from gray-400 to gray-500 (close button, file sizes, empty states)",
+          "service": "frontend",
+          "files_to_modify": [
+            "frontend/src/pages/FilesPage.tsx"
+          ],
+          "files_to_create": [],
+          "patterns_from": [
+            "frontend/src/pages/ReadPage.tsx"
+          ],
+          "verification": {
+            "type": "command",
+            "command": "cd frontend && npm run lint -- --fix 2>&1 | head -20",
+            "expected": "No lint errors"
+          },
+          "status": "completed",
+          "notes": "Updated 7 text-gray-400 occurrences to text-gray-500: close button in modal, file sizes, category dropdown label, file count badges, dropzone placeholder, and empty state container. Lint passes."
+        },
+        {
+          "id": "subtask-3-4",
+          "description": "Fix InsertImagePage - update placeholder text and secondary text from gray-400 to gray-500",
+          "service": "frontend",
+          "files_to_modify": [
+            "frontend/src/pages/InsertImagePage.tsx"
+          ],
+          "files_to_create": [],
+          "patterns_from": [
+            "frontend/src/pages/ReadPage.tsx"
+          ],
+          "verification": {
+            "type": "command",
+            "command": "cd frontend && npm run lint -- --fix 2>&1 | head -20",
+            "expected": "No lint errors"
+          },
+          "status": "completed",
+          "notes": "Committed successfully. Changed text-gray-400 to text-gray-500 for placeholder icon text and QR note text.",
+          "updated_at": "2026-05-10T07:41:25.342182+00:00"
+        },
+        {
+          "id": "subtask-3-5",
+          "description": "Fix MergePdfPage - update secondary text and checkboxes from gray-400/gray-300 to gray-500",
+          "service": "frontend",
+          "files_to_modify": [
+            "frontend/src/pages/MergePdfPage.tsx"
+          ],
+          "files_to_create": [],
+          "patterns_from": [
+            "frontend/src/pages/ReadPage.tsx"
+          ],
+          "verification": {
+            "type": "command",
+            "command": "cd frontend && npm run lint -- --fix 2>&1 | head -20",
+            "expected": "No lint errors"
+          },
+          "status": "completed",
+          "notes": "Updated 7 text elements: empty state icon (gray-200→400), noPdfs message (gray-400→500), checkbox unchecked (gray-300→500), file size (gray-400→500), selected text (gray-400→500), move button (gray-400→500), and remove button (gray-300→500). Lint passes."
+        },
+        {
+          "id": "subtask-3-6",
+          "description": "Fix ExportPdfPage - update secondary text from gray-400/gray-300 to gray-500",
+          "service": "frontend",
+          "files_to_modify": [
+            "frontend/src/pages/ExportPdfPage.tsx"
+          ],
+          "files_to_create": [],
+          "patterns_from": [
+            "frontend/src/pages/ReadPage.tsx"
+          ],
+          "verification": {
+            "type": "command",
+            "command": "cd frontend && npm run lint -- --fix 2>&1 | head -20",
+            "expected": "No lint errors"
+          },
+          "status": "pending"
+        },
+        {
+          "id": "subtask-3-7",
+          "description": "Fix VerifyTokensPage - update empty state and secondary text from gray-400/gray-300 to gray-500",
+          "service": "frontend",
+          "files_to_modify": [
+            "frontend/src/pages/VerifyTokensPage.tsx"
+          ],
+          "files_to_create": [],
+          "patterns_from": [
+            "frontend/src/pages/ReadPage.tsx"
+          ],
+          "verification": {
+            "type": "command",
+            "command": "cd frontend && npm run lint -- --fix 2>&1 | head -20",
+            "expected": "No lint errors"
+          },
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "id": "phase-4-verification",
+      "name": "Verification",
+      "type": "integration",
+      "description": "Verify all changes pass lint and build successfully",
+      "depends_on": [
+        "phase-1-ui-components",
+        "phase-2-page-empty-states",
+        "phase-3-secondary-text"
+      ],
+      "parallel_safe": false,
+      "subtasks": [
+        {
+          "id": "subtask-4-1",
+          "description": "Run linting to ensure no errors",
+          "service": "frontend",
+          "files_to_modify": [],
+          "files_to_create": [],
+          "patterns_from": [],
+          "verification": {
+            "type": "command",
+            "command": "cd frontend && npm run lint 2>&1",
+            "expected": "No lint errors"
+          },
+          "status": "pending"
+        },
+        {
+          "id": "subtask-4-2",
+          "description": "Run build to verify TypeScript compilation",
+          "service": "frontend",
+          "files_to_modify": [],
+          "files_to_create": [],
+          "patterns_from": [],
+          "verification": {
+            "type": "command",
+            "command": "cd frontend && npm run build 2>&1",
+            "expected": "Build successful"
+          },
+          "status": "pending"
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "total_phases": 4,
+    "total_subtasks": 14,
+    "services_involved": [
+      "frontend"
+    ],
+    "parallelism": {
+      "max_parallel_phases": 3,
+      "parallel_groups": [
+        {
+          "phases": [
+            "phase-1-ui-components",
+            "phase-2-page-empty-states",
+            "phase-3-secondary-text"
+          ],
+          "reason": "All phases modify different files (no overlap), all frontend-only, no dependencies between them"
+        }
+      ],
+      "recommended_workers": 1,
+      "speedup_estimate": "Sequential execution is fine - all tasks are small and quick CSS class changes"
+    },
+    "startup_command": "cd frontend && npm run dev"
+  },
+  "verification_strategy": {
+    "risk_level": "low",
+    "skip_validation": false,
+    "test_creation_phase": "none",
+    "test_types_required": [],
+    "security_scanning_required": false,
+    "staging_deployment_required": false,
+    "acceptance_criteria": [
+      "All text-gray-300 changed to text-gray-400 or text-gray-500",
+      "All text-gray-400 text elements (readable content) changed to text-gray-500",
+      "Icon buttons retain their color contrast",
+      "No lint errors after changes",
+      "Build succeeds without errors"
+    ],
+    "verification_steps": [
+      {
+        "name": "Lint Check",
+        "command": "cd frontend && npm run lint",
+        "expected_outcome": "No errors",
+        "type": "command",
+        "required": true,
+        "blocking": true
+      },
+      {
+        "name": "Build Check",
+        "command": "cd frontend && npm run build",
+        "expected_outcome": "Build successful",
+        "type": "command",
+        "required": true,
+        "blocking": true
+      }
+    ],
+    "reasoning": "Low risk CSS class changes - verify lint passes and build compiles"
+  },
+  "qa_acceptance": {
+    "unit_tests": {
+      "required": false,
+      "commands": [],
+      "minimum_coverage": null
+    },
+    "integration_tests": {
+      "required": false,
+      "commands": [],
+      "services_to_test": []
+    },
+    "e2e_tests": {
+      "required": false,
+      "commands": [],
+      "flows": []
+    },
+    "browser_verification": {
+      "required": false,
+      "pages": []
+    },
+    "database_verification": {
+      "required": false,
+      "checks": []
+    }
+  },
+  "qa_signoff": null,
+  "status": "in_progress",
+  "planStatus": "in_progress",
+  "xstateState": "backlog",
+  "executionPhase": "coding",
+  "updated_at": "2026-05-10T07:41:59.219Z",
+  "last_updated": "2026-05-10T07:41:25.342182+00:00"
+}
