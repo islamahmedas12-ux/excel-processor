@@ -37,6 +37,8 @@ def home():
         "endpoints": {
             "POST /api/v1/execute": "Fill inputs → Excel calculates → Return outputs (multipart/form-data)",
             "POST /api/v1/read": "Read specific cells from Excel",
+            "POST /api/v1/read/range": "Read a range of cells from Excel (e.g., A1:D10)",
+            "POST /api/v1/read/all": "Read all data from Excel sheet",
             "POST /api/v1/write": "Write to cells and get updated file",
             "POST /api/v1/sheets": "Get sheet names from Excel file",
             "GET /api/v1/health": "Health check"
