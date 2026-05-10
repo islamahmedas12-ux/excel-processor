@@ -87,3 +87,28 @@ class Template(Base):
     sha256      = Column(String, nullable=False)
     created_at  = Column(DateTime(timezone=True), nullable=False, default=_utc_now)
     updated_at  = Column(DateTime(timezone=True), nullable=False, default=_utc_now)
+
+
+class File(Base):
+    __tablename__ = 'files'
+    id          = Column(String, primary_key=True)
+    owner_email = Column(String, nullable=False, index=True)
+    name        = Column(String, nullable=False)
+    size_bytes  = Column(Integer, nullable=False, default=0)
+    category_id = Column(String)
+    created_at  = Column(DateTime(timezone=True), nullable=False, default=_utc_now)
+    expires_at  = Column(DateTime(timezone=True))
+
+
+class Result(Base):
+    __tablename__ = 'results'
+    id             = Column(String, primary_key=True)
+    owner_email    = Column(String, nullable=False, index=True)
+    kind           = Column(String, nullable=False)  # 'xlsx' or 'pdf'
+    source_file_id = Column(String, nullable=False)
+    source_file_name = Column(String, nullable=False)
+    name           = Column(String, nullable=False)
+    size_bytes     = Column(Integer, nullable=False, default=0)
+    created_at     = Column(DateTime(timezone=True), nullable=False, default=_utc_now)
+    updated_at     = Column(DateTime(timezone=True), nullable=False, default=_utc_now)
+    expires_at     = Column(DateTime(timezone=True))
