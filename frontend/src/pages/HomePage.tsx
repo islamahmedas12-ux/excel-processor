@@ -1,23 +1,24 @@
-import React, { useState } from 'react';
+import React, { useState, lazy } from 'react';
 import { Layout } from '../components/Layout';
 import { FilesProvider } from '../context/FilesContext';
 import { CategoriesProvider } from '../context/CategoriesContext';
 import { ResultsProvider } from '../context/ResultsContext';
-import { ReadPage } from './ReadPage';
-import { WritePage } from './WritePage';
-import { BatchWritePage } from './BatchWritePage';
-import { ExportPdfPage } from './ExportPdfPage';
-import { BatchExecutePage } from './BatchExecutePage';
-import { FilesPage } from './FilesPage';
-import { MergePdfPage } from './MergePdfPage';
-import { InsertImagePage } from './InsertImagePage';
-import { TemplatesPage } from './TemplatesPage';
-import { JobsPage } from './JobsPage';
-import { VerifyTokensPage } from './VerifyTokensPage';
-import { PlansPage } from './PlansPage';
-import { ResultsPage } from './ResultsPage';
-import { DashboardPage } from './DashboardPage';
-import { ProfilePage } from './ProfilePage';
+
+const ReadPage = lazy(() => import('./ReadPage').then(m => ({ default: m.ReadPage })));
+const WritePage = lazy(() => import('./WritePage').then(m => ({ default: m.WritePage })));
+const BatchWritePage = lazy(() => import('./BatchWritePage').then(m => ({ default: m.BatchWritePage })));
+const ExportPdfPage = lazy(() => import('./ExportPdfPage').then(m => ({ default: m.ExportPdfPage })));
+const BatchExecutePage = lazy(() => import('./BatchExecutePage').then(m => ({ default: m.BatchExecutePage })));
+const FilesPage = lazy(() => import('./FilesPage').then(m => ({ default: m.FilesPage })));
+const MergePdfPage = lazy(() => import('./MergePdfPage').then(m => ({ default: m.MergePdfPage })));
+const InsertImagePage = lazy(() => import('./InsertImagePage').then(m => ({ default: m.InsertImagePage })));
+const TemplatesPage = lazy(() => import('./TemplatesPage').then(m => ({ default: m.TemplatesPage })));
+const JobsPage = lazy(() => import('./JobsPage').then(m => ({ default: m.JobsPage })));
+const VerifyTokensPage = lazy(() => import('./VerifyTokensPage').then(m => ({ default: m.VerifyTokensPage })));
+const PlansPage = lazy(() => import('./PlansPage').then(m => ({ default: m.PlansPage })));
+const ResultsPage = lazy(() => import('./ResultsPage').then(m => ({ default: m.ResultsPage })));
+const DashboardPage = lazy(() => import('./DashboardPage').then(m => ({ default: m.DashboardPage })));
+const ProfilePage = lazy(() => import('./ProfilePage').then(m => ({ default: m.ProfilePage })));
 
 interface HomePageProps {
   lang: 'ar' | 'en';
