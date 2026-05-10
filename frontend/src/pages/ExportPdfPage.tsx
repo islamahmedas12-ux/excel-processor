@@ -169,7 +169,7 @@ export const ExportPdfPage: React.FC<ExportPdfPageProps> = ({ lang, onTabChange 
                     {sheets.map(sheet => (
                       <label key={sheet} className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors border-b border-gray-100 last:border-0">
                         <span className="text-primary-600">
-                          {selected.has(sheet) ? <CheckSquare className="w-4 h-4" /> : <Square className="w-4 h-4 text-gray-300" />}
+                          {selected.has(sheet) ? <CheckSquare className="w-4 h-4" /> : <Square className="w-4 h-4 text-gray-500" />}
                         </span>
                         <input type="checkbox" checked={selected.has(sheet)} onChange={() => toggle(sheet)} className="hidden" />
                         <span className="text-sm text-gray-800">{sheet}</span>
@@ -210,7 +210,7 @@ export const ExportPdfPage: React.FC<ExportPdfPageProps> = ({ lang, onTabChange 
       {/* Saved PDFs panel */}
       <Card title={`${t.savedResults} (${savedPdfs.length})`} icon={<BookMarked className="w-5 h-5" />}>
         {savedPdfs.length === 0 ? (
-          <p className="text-center text-gray-400 py-8 text-sm">{t.noSavedResults}</p>
+          <p className="text-center text-gray-500 py-8 text-sm">{t.noSavedResults}</p>
         ) : (
           <div className="divide-y divide-gray-100 -mx-6">
             {savedPdfs.map(r => (
@@ -218,7 +218,7 @@ export const ExportPdfPage: React.FC<ExportPdfPageProps> = ({ lang, onTabChange 
                 <FileText className="w-5 h-5 text-red-400 flex-shrink-0" />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-800 truncate">{r.filename}</p>
-                  <p className="text-xs text-gray-400">{formatSize(r.size)} · {formatDate(r.created_at, lang)}</p>
+                  <p className="text-xs text-gray-500">{formatSize(r.size)} · {formatDate(r.created_at, lang)}</p>
                 </div>
                 <button onClick={() => downloadResult(r.id, r.filename)}
                   className="p-1.5 text-gray-400 hover:text-indigo-600 transition-colors">
