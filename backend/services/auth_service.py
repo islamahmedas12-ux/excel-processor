@@ -10,7 +10,15 @@ from typing import Optional
 from functools import wraps
 from flask import request, jsonify
 
-SECRET_KEY     = os.getenv('JWT_SECRET_KEY', 'excel-processor-secret-key-change-in-production')
+# Required validation: JWT_SECRET_KEY must be set and not use the insecure default
+_raw_secret = os.getenv('JWT_SECRET_KEY', '')
+if not _raw_secret or _raw_secret == 'excel-processor-secret-key-change-in-production':
+    raise ValueError(
+        'JWT_SECRET_KEY environment variable is required and must not be the default value. '
+        'Set a secure random secret key in production.'
+    )
+SECRET_KEY = _raw_secret
+
 EXPIRY_HOURS   = int(os.getenv('TOKEN_EXPIRY_HOURS', '24'))
 ADMIN_USERNAME = os.getenv('ADMIN_USERNAME', 'admin')
 ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD', 'admin123')
