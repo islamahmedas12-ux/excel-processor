@@ -111,6 +111,7 @@ export const WritePage: React.FC<WritePageProps> = ({ lang }) => {
             placeholder={t.valuePlaceholder}
             value={value}
             onChange={e => setValue(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleSubmit(); } }}
           />
 
           <SheetSelector lang={lang} value={sheetName} onChange={setSheetName} />

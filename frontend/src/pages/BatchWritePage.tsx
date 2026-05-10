@@ -196,6 +196,7 @@ export const BatchWritePage: React.FC<BatchWritePageProps> = ({ lang }) => {
             <textarea
               value={updatesText}
               onChange={e => handleJsonChange(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey && (e.ctrlKey || e.metaKey)) { e.preventDefault(); handleSubmit(); } }}
               placeholder={t.updatesPlaceholder}
               rows={6}
               className={`w-full px-4 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent font-mono ${

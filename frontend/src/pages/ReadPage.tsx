@@ -98,6 +98,7 @@ export const ReadPage: React.FC<ReadPageProps> = ({ lang }) => {
               placeholder={t.coordinatesPlaceholder}
               value={coordinates}
               onChange={e => setCoordinates(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleRead(); } }}
             />
             <p className="mt-1 text-xs text-gray-500">{t.coordinatesHelp}</p>
           </div>
