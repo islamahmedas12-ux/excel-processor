@@ -1,10 +1,10 @@
 {
   "active": true,
   "spec": "005-add-barcode-injection-endpoint-alongside-existing-",
-  "state": "planning",
+  "state": "building",
   "subtasks": {
-    "completed": 0,
-    "total": 0,
+    "completed": 1,
+    "total": 4,
     "in_progress": 1,
     "failed": 0
   },
@@ -18,8 +18,8 @@
     "max": 1
   },
   "session": {
-    "number": 2,
+    "number": 3,
     "started_at": "2026-05-10T03:56:13.944268"
   },
-  "last_update": "2026-05-10T03:59:05.880151"
+  "last_update": "2026-05-10T04:01:13.171144"
 }

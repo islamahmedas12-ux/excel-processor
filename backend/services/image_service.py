@@ -3,6 +3,7 @@ Image & QR code injection into Excel files using openpyxl.
 
 insert_image  — place any PNG/JPG bytes into a worksheet at a given cell anchor
 insert_qr     — generate a QR code and insert it (optionally embedding the verify URL)
+insert_barcode — generate a barcode and embed it into an Excel file at a given cell
 """
 from __future__ import annotations
 
@@ -27,6 +28,19 @@ def _make_qr_png(data: str, box_size: int = 6, border: int = 2) -> bytes:
     img = qr.make_image(image_factory=PilImage)
     buf = io.BytesIO()
     img.save(buf, format='PNG')
+    return buf.getvalue()
+
+
+# ── Barcode generation ───────────────────────────────────────────────────────
+
+def _make_barcode_png(data: str) -> bytes:
+    import barcode
+    from barcode.writer import ImageWriter
+
+    code = barcode.get_barcode_class('code128')
+    bc = code(data, writer=ImageWriter())
+    buf = io.BytesIO()
+    bc.write(buf)
     return buf.getvalue()
 
 
@@ -90,3 +104,17 @@ def insert_qr(
     """
     qr_png = _make_qr_png(qr_data)
     return insert_image(excel_bytes, qr_png, cell, sheet_name, size_px, size_px)
+
+
+def insert_barcode(
+    excel_bytes: bytes,
+    barcode_data: str,
+    cell: str = 'A1',
+    sheet_name: Optional[str] = None,
+) -> bytes:
+    """
+    Generate a barcode for barcode_data and embed it into the Excel file at cell.
+    Returns the modified Excel bytes.
+    """
+    barcode_png = _make_barcode_png(barcode_data)
+    return insert_image(excel_bytes, barcode_png, cell, sheet_name, 200, 60)
