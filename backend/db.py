@@ -8,10 +8,14 @@ from contextlib import contextmanager
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 
-DATABASE_URL = os.getenv(
-    'DATABASE_URL',
-    'postgresql://excel:dev@localhost:5432/excel_processor',
-)
+from excel_processor.errors import DatabaseConnectionError
+
+DATABASE_URL = os.getenv('DATABASE_URL')
+if not DATABASE_URL:
+    raise DatabaseConnectionError(
+        "DATABASE_URL environment variable is not set. "
+        "Set the DATABASE_URL environment variable with your PostgreSQL connection string."
+    )
 
 engine = create_engine(
     DATABASE_URL,

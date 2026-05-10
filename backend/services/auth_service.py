@@ -10,13 +10,14 @@ from typing import Optional
 from functools import wraps
 from flask import request, jsonify
 
-SECRET_KEY     = os.getenv('JWT_SECRET_KEY')
+SECRET_KEY     = os.getenv('JWT_SECRET_KEY', '')
 EXPIRY_HOURS   = int(os.getenv('TOKEN_EXPIRY_HOURS', '24'))
 ADMIN_USERNAME = os.getenv('ADMIN_USERNAME', 'admin')
-ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD')
+ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD', '')
 
-if not SECRET_KEY:
-    raise ValueError('JWT_SECRET_KEY must be set')
+# Reject empty values and the known-bad legacy default.
+if not SECRET_KEY or SECRET_KEY == 'excel-processor-secret-key-change-in-production':
+    raise ValueError('JWT_SECRET_KEY must be set to a strong random value')
 
 if not ADMIN_PASSWORD:
     raise ValueError('ADMIN_PASSWORD must be set')
