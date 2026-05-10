@@ -1,6 +1,20 @@
+"""
+Postgres-backed per-user file store.
+Files live for FILE_TTL_HOURS then are pruned by cleanup_expired().
+File content lives in MinIO ('files' bucket, key = '<safe_owner_email>/<file_id>.xlsx').
+Metadata (name, category_id, size, timestamps) lives in the 'files' Postgres table.
+"""
+
+from __future__ import annotations
+
 import uuid
-from datetime import datetime
-from typing import Dict, List, Optional
+from datetime import datetime, timedelta, timezone
+from typing import Optional
+from sqlalchemy import select, func, delete
+
+from ..db import session_scope
+from ..models import File
+from . import storage
 
 FILE_TTL_HOURS = 24
 
@@ -11,84 +25,133 @@ def _key(owner_email: str, file_id: str) -> str:
     return f"{safe}/{file_id}.xlsx"
 
 
-class FileStore:
-    """In-memory file repository — files stored per owner until server restart."""
+def _now_dt():
+    return datetime.now(timezone.utc)
 
-    def __init__(self):
-        self._files: Dict[str, dict] = {}
 
-    # ── Write ─────────────────────────────────────────────────────────────────
+def _iso(dt):
+    if not dt:
+        return None
+    if isinstance(dt, str):
+        return dt
+    return dt.isoformat()
 
-    def upload(self, filename: str, content: bytes,
-               owner_email: str = '',
-               category_id: Optional[str] = None) -> dict:
-        file_id = str(uuid.uuid4())
-        entry = {
-            'id':          file_id,
-            'name':        filename,
-            'size':        len(content),
-            'uploaded_at': datetime.utcnow().isoformat() + 'Z',
-            'category_id': category_id,
-            'owner_email': owner_email.lower(),
-            'content':     content,
-        }
-        self._files[file_id] = entry
-        return self._public(entry)
 
-    def set_category(self, file_id: str, category_id: Optional[str],
-                     owner_email: str = '') -> bool:
-        entry = self._files.get(file_id)
-        if not entry:
+def _to_dict(f: File) -> dict:
+    return {
+        'id':          f.id,
+        'owner_email': f.owner_email,
+        'name':        f.name,
+        'size_bytes':  f.size_bytes,
+        'category_id': f.category_id,
+        'created_at':  _iso(f.created_at),
+        'expires_at':  _iso(f.expires_at),
+    }
+
+
+# ── Write ─────────────────────────────────────────────────────────────────────
+
+def upload(
+    filename: str,
+    content: bytes,
+    owner_email: str = '',
+    category_id: Optional[str] = None,
+) -> dict:
+    file_id = str(uuid.uuid4())
+    now = _now_dt()
+    expires_at = datetime.now(timezone.utc) + timedelta(hours=FILE_TTL_HOURS)
+
+    storage.put(
+        storage.BUCKET_FILES,
+        _key(owner_email, file_id),
+        content,
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    )
+
+    with session_scope() as s:
+        f = File(
+            id          = file_id,
+            owner_email = owner_email.lower(),
+            name        = filename,
+            size_bytes  = len(content),
+            category_id = category_id,
+            created_at  = now,
+            expires_at  = expires_at,
+        )
+        s.add(f)
+        s.flush()
+        return _to_dict(f)
+
+
+def set_category(file_id: str, category_id: Optional[str], owner_email: str = '') -> bool:
+    with session_scope() as s:
+        f = s.get(File, file_id)
+        if not f:
             return False
-        if owner_email and entry['owner_email'] != owner_email.lower():
+        if owner_email and f.owner_email != owner_email.lower():
             return False
-        entry['category_id'] = category_id
+        f.category_id = category_id
+        s.flush()
         return True
 
-    def delete(self, file_id: str, owner_email: str = '') -> bool:
-        entry = self._files.get(file_id)
-        if not entry:
+
+def delete_file(file_id: str, owner_email: str = '') -> bool:
+    with session_scope() as s:
+        f = s.get(File, file_id)
+        if not f:
             return False
-        if owner_email and entry['owner_email'] != owner_email.lower():
+        if owner_email and f.owner_email != owner_email.lower():
             return False
-        del self._files[file_id]
-        return True
+        storage.delete(storage.BUCKET_FILES, _key(f.owner_email, file_id))
+        s.delete(f)
+    return True
 
-    # ── Read ──────────────────────────────────────────────────────────────────
 
-    def get_content(self, file_id: str, owner_email: str = '') -> Optional[bytes]:
-        entry = self._files.get(file_id)
-        if not entry:
-            return None
-        if owner_email and entry['owner_email'] != owner_email.lower():
-            return None
-        return entry['content']
+# ── Read ──────────────────────────────────────────────────────────────────────
 
-    def get_meta(self, file_id: str, owner_email: str = '') -> Optional[dict]:
-        entry = self._files.get(file_id)
-        if not entry:
-            return None
-        if owner_email and entry['owner_email'] != owner_email.lower():
-            return None
-        return self._public(entry)
+def get_content(file_id: str, owner_email: str = '') -> Optional[bytes]:
+    meta = get_meta(file_id, owner_email)
+    if not meta:
+        return None
+    return storage.get(storage.BUCKET_FILES, _key(meta['owner_email'], file_id))
 
-    def list_all(self, owner_email: str = '') -> List[dict]:
-        entries = self._files.values()
+
+def get_meta(file_id: str, owner_email: str = '') -> Optional[dict]:
+    with session_scope() as s:
+        f = s.get(File, file_id)
+        if not f:
+            return None
+        if owner_email and f.owner_email != owner_email.lower():
+            return None
+        return _to_dict(f)
+
+
+def list_all(owner_email: str = '') -> list[dict]:
+    with session_scope() as s:
+        q = select(File).order_by(File.created_at.desc())
         if owner_email:
-            entries = [e for e in entries if e['owner_email'] == owner_email.lower()]
-        return [self._public(e) for e in entries]
-
-    def usage(self, owner_email: str) -> dict:
-        """Return file count and total bytes for an owner."""
-        entries = [e for e in self._files.values()
-                   if e['owner_email'] == owner_email.lower()]
-        return {
-            'file_count':   len(entries),
-            'total_bytes':  sum(e['size'] for e in entries),
-        }
-
-    def _public(self, entry: dict) -> dict:
-        return {k: v for k, v in entry.items() if k != 'content'}
+            q = q.where(File.owner_email == owner_email.lower())
+        rows = s.execute(q).scalars().all()
+        return [_to_dict(f) for f in rows]
 
 
-file_store = FileStore()
+def usage(owner_email: str) -> dict:
+    """Return file count and total bytes for an owner."""
+    with session_scope() as s:
+        row = s.execute(
+            select(func.count(), func.coalesce(func.sum(File.size_bytes), 0))
+            .where(File.owner_email == owner_email.lower())
+        ).one()
+        return {'file_count': int(row[0] or 0), 'total_bytes': int(row[1] or 0)}
+
+
+# ── Cleanup ──────────────────────────────────────────────────────────────────
+
+def cleanup_expired():
+    """Delete expired files from both MinIO and Postgres."""
+    cutoff = datetime.now(timezone.utc) - timedelta(hours=FILE_TTL_HOURS)
+    with session_scope() as s:
+        old = s.execute(select(File).where(File.created_at < cutoff)).scalars().all()
+        for f in old:
+            storage.delete(storage.BUCKET_FILES, _key(f.owner_email, f.id))
+        s.execute(delete(File).where(File.created_at < cutoff))
