@@ -507,8 +507,8 @@ def _do_write_job(job_id: str, file_content: bytes, filename: str, updates, shee
                 modified_bytes,
                 '.xlsx',
                 content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                filename=result_filename,
             )
+            job_store.update_status(job_id, 'done', result_ext='.xlsx')
         else:
             # No modified bytes means write operation had no effect
             job_store.update_status(job_id, 'done')
@@ -535,8 +535,8 @@ def _do_batch_write_job(job_id: str, file_content: bytes, filename: str,
                 modified_bytes,
                 '.xlsx',
                 content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                filename=result_filename,
             )
+            job_store.update_status(job_id, 'done', result_ext='.xlsx')
         else:
             job_store.update_status(job_id, 'done')
     except Exception as exc:
@@ -635,7 +635,12 @@ def download_job(job_id):
         return jsonify({"error": "Result file missing"}), 404
 
     ext  = job.get('result_ext', '.pdf')
-    mime = 'application/pdf' if ext == '.pdf' else 'application/octet-stream'
+    if ext == '.pdf':
+        mime = 'application/pdf'
+    elif ext == '.xlsx':
+        mime = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    else:
+        mime = 'application/octet-stream'
     base = job.get('params', {}).get('filename', 'result')
     download_name = os.path.splitext(base)[0] + ext
 
