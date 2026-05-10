@@ -98,3 +98,13 @@ class File(Base):
     category_id = Column(String)
     created_at  = Column(DateTime(timezone=True), nullable=False, default=_utc_now)
     expires_at  = Column(DateTime(timezone=True))
+
+
+class Result(Base):
+    __tablename__ = 'results'
+    id          = Column(String, primary_key=True)
+    owner_email = Column(String, nullable=False, index=True)
+    name        = Column(String, nullable=False)
+    size_bytes  = Column(Integer, nullable=False, default=0)
+    created_at  = Column(DateTime(timezone=True), nullable=False, default=_utc_now)
+    expires_at  = Column(DateTime(timezone=True))
