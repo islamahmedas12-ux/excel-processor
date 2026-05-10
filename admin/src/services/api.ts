@@ -65,8 +65,7 @@ export const adminApi = {
   },
 
   proofImageUrl(id: string): string {
-    const token = localStorage.getItem(TOKEN_KEY) ?? '';
-    return `/api/v1/admin/subscriptions/${id}/proof?token=${token}`;
+    return `/api/v1/admin/subscriptions/${id}/proof`;
   },
 
   async listPlans(): Promise<Record<string, any>> {

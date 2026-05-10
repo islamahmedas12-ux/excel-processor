@@ -1,0 +1,39 @@
+{
+  "sandbox": {
+    "enabled": true,
+    "autoAllowBashIfSandboxed": true
+  },
+  "permissions": {
+    "defaultMode": "acceptEdits",
+    "allow": [
+      "Read(./**)",
+      "Write(./**)",
+      "Edit(./**)",
+      "Glob(./**)",
+      "Grep(./**)",
+      "Read(C:\\Users\\Islam\\Documents\\excel-processor\\.auto-claude\\worktrees\\tasks\\013-jwt-bearer-token-exposed-as-url-query-parameter-fo/**)",
+      "Write(C:\\Users\\Islam\\Documents\\excel-processor\\.auto-claude\\worktrees\\tasks\\013-jwt-bearer-token-exposed-as-url-query-parameter-fo/**)",
+      "Edit(C:\\Users\\Islam\\Documents\\excel-processor\\.auto-claude\\worktrees\\tasks\\013-jwt-bearer-token-exposed-as-url-query-parameter-fo/**)",
+      "Glob(C:\\Users\\Islam\\Documents\\excel-processor\\.auto-claude\\worktrees\\tasks\\013-jwt-bearer-token-exposed-as-url-query-parameter-fo/**)",
+      "Grep(C:\\Users\\Islam\\Documents\\excel-processor\\.auto-claude\\worktrees\\tasks\\013-jwt-bearer-token-exposed-as-url-query-parameter-fo/**)",
+      "Read(C:\\Users\\Islam\\Documents\\excel-processor\\.auto-claude\\worktrees\\tasks\\013-jwt-bearer-token-exposed-as-url-query-parameter-fo\\.auto-claude\\specs\\013-jwt-bearer-token-exposed-as-url-query-parameter-fo/**)",
+      "Write(C:\\Users\\Islam\\Documents\\excel-processor\\.auto-claude\\worktrees\\tasks\\013-jwt-bearer-token-exposed-as-url-query-parameter-fo\\.auto-claude\\specs\\013-jwt-bearer-token-exposed-as-url-query-parameter-fo/**)",
+      "Edit(C:\\Users\\Islam\\Documents\\excel-processor\\.auto-claude\\worktrees\\tasks\\013-jwt-bearer-token-exposed-as-url-query-parameter-fo\\.auto-claude\\specs\\013-jwt-bearer-token-exposed-as-url-query-parameter-fo/**)",
+      "Read(C:\\Users\\Islam\\Documents\\excel-processor\\.auto-claude/**)",
+      "Write(C:\\Users\\Islam\\Documents\\excel-processor\\.auto-claude/**)",
+      "Edit(C:\\Users\\Islam\\Documents\\excel-processor\\.auto-claude/**)",
+      "Glob(C:\\Users\\Islam\\Documents\\excel-processor\\.auto-claude/**)",
+      "Grep(C:\\Users\\Islam\\Documents\\excel-processor\\.auto-claude/**)",
+      "Bash(*)",
+      "WebFetch(*)",
+      "WebSearch(*)",
+      "mcp__context7__resolve-library-id(*)",
+      "mcp__context7__query-docs(*)",
+      "mcp__graphiti-memory__search_nodes(*)",
+      "mcp__graphiti-memory__search_facts(*)",
+      "mcp__graphiti-memory__add_episode(*)",
+      "mcp__graphiti-memory__get_episodes(*)",
+      "mcp__graphiti-memory__get_entity_edge(*)"
+    ]
+  }
+}

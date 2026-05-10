@@ -1,0 +1,25 @@
+{
+  "active": true,
+  "spec": "013-jwt-bearer-token-exposed-as-url-query-parameter-fo",
+  "state": "planning",
+  "subtasks": {
+    "completed": 0,
+    "total": 0,
+    "in_progress": 1,
+    "failed": 0
+  },
+  "phase": {
+    "current": "Security Fix - Remove JWT from URL query parameters",
+    "id": null,
+    "total": 2
+  },
+  "workers": {
+    "active": 0,
+    "max": 1
+  },
+  "session": {
+    "number": 2,
+    "started_at": "2026-05-10T10:54:25.438277"
+  },
+  "last_update": "2026-05-10T10:58:44.060520"
+}
