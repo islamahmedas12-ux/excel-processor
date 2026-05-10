@@ -153,6 +153,18 @@ class EmptyFileError(ExcelProcessorError):
         )
 
 
+class DatabaseConnectionError(ExcelProcessorError):
+    """خطأ الاتصال بقاعدة البيانات"""
+
+    def __init__(self, detail: str = ""):
+        detail_msg = f" - {detail}" if detail else ""
+        super().__init__(
+            message_ar=f"خطأ في الاتصال بقاعدة البيانات{detail_msg}. تأكد من تعيين متغير البيئة DATABASE_URL بشكل صحيح.",
+            message_en=f"Database connection error{detail_msg}. Ensure DATABASE_URL environment variable is set correctly.",
+            error_code="DATABASE_CONNECTION_ERROR"
+        )
+
+
 def get_error_response(error: ExcelProcessorError, lang: str = 'ar') -> dict:
     """
     الحصول على استجابة خطأ موحدة
