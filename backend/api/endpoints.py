@@ -10,6 +10,7 @@ from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from flask import Blueprint, request, jsonify, send_file
 from io import BytesIO
+import mimetypes
 import os
 
 from ..services.excel_service import ExcelService
@@ -859,7 +860,7 @@ def subscribe():
 
     plan   = request.form.get('plan', '').lower()
     months = int(request.form.get('months', 1))
-    proof  = request.files.get('proof')
+    proof = request.files.get('proof')
 
     if plan not in PLANS:
         return jsonify({"error": f"Invalid plan"}), 400
@@ -867,6 +868,15 @@ def subscribe():
         return jsonify({"error": "Free plan needs no subscription"}), 400
     if not proof:
         return jsonify({"error": "Transfer proof image is required"}), 400
+
+    # Validate proof image using magic bytes (prevents polyglot attacks)
+    from ..utils.file_validation import validate_image_mime_type
+    proof_bytes = proof.read()
+    if not validate_image_mime_type(proof_bytes):
+        return jsonify({
+            "error": "invalid_file_type",
+            "message": "Proof image must be a valid image file",
+        }), 400
 
     # Get user info from JWT
     from sqlalchemy import select
@@ -879,7 +889,7 @@ def subscribe():
         ).scalar() or email
 
     ext   = '.' + (proof.filename.rsplit('.', 1)[-1] if '.' in proof.filename else 'jpg')
-    entry = create_request(email, username, plan, months, proof.read(), ext)
+    entry = create_request(email, username, plan, months, proof_bytes, ext)
 
     try:
         send_subscription_request_email(username, email, plan, months, entry['id'])

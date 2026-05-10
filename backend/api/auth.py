@@ -222,6 +222,10 @@ def upload_avatar():
     image_bytes = file.read()
     if len(image_bytes) > 5 * 1024 * 1024:
         return jsonify({"error": "Avatar must be under 5 MB"}), 400
+    # Validate actual file content using magic bytes (prevents polyglot attacks)
+    from ..utils.file_validation import validate_image_mime_type
+    if not validate_image_mime_type(image_bytes):
+        return jsonify({"error": "Invalid image file type"}), 400
     # Convert to PNG via Pillow (handles jpg/webp/etc)
     try:
         from io import BytesIO
