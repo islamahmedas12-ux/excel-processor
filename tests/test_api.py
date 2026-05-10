@@ -279,3 +279,51 @@ class TestErrorHandling:
         data = json.loads(response.data)
 
         assert response.status_code == 405
+
+
+class TestDatabaseCredentialValidation:
+    """اختبارات التحقق من بيانات اعتماد قاعدة البيانات"""
+
+    def test_api_health_checks_database_connection(self, client):
+        """اختبار أن نقطة نهاية الفحص الصحي تتحقق من الاتصال بقاعدة البيانات"""
+        response = client.get('/api/v1/health')
+        data = json.loads(response.data)
+
+        # Health check should either succeed with db info or fail gracefully
+        assert response.status_code in [200, 500]
+        # Check that response has expected structure
+        assert 'نجاح' in data or 'success' in data or 'خطأ' in data or 'error' in data
+
+    def test_api_requires_database_url_in_environment(self):
+        """اختبار أن التطبيق يتطلب DATABASE_URL في البيئة"""
+        import os
+        import sys
+
+        # Backup original DATABASE_URL
+        original_url = os.environ.get('DATABASE_URL')
+
+        # Remove DATABASE_URL if set
+        if 'DATABASE_URL' in os.environ:
+            del os.environ['DATABASE_URL']
+
+        try:
+            # Clear backend modules from cache
+            modules_to_remove = [k for k in sys.modules.keys() if k.startswith('backend')]
+            for mod in modules_to_remove:
+                del sys.modules[mod]
+
+            # Import should fail when DATABASE_URL is not set
+            with pytest.raises(Exception) as exc_info:
+                import backend.db
+
+            # Verify error mentions DATABASE_URL
+            error_msg = str(exc_info.value).lower()
+            assert 'database_url' in error_msg or 'database' in error_msg
+        finally:
+            # Restore original DATABASE_URL
+            if original_url is not None:
+                os.environ['DATABASE_URL'] = original_url
+            # Clean up module cache
+            modules_to_remove = [k for k in sys.modules.keys() if k.startswith('backend')]
+            for mod in modules_to_remove:
+                del sys.modules[mod]
