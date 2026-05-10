@@ -102,9 +102,13 @@ class File(Base):
 
 class Result(Base):
     __tablename__ = 'results'
-    id          = Column(String, primary_key=True)
-    owner_email = Column(String, nullable=False, index=True)
-    name        = Column(String, nullable=False)
-    size_bytes  = Column(Integer, nullable=False, default=0)
-    created_at  = Column(DateTime(timezone=True), nullable=False, default=_utc_now)
-    expires_at  = Column(DateTime(timezone=True))
+    id             = Column(String, primary_key=True)
+    owner_email    = Column(String, nullable=False, index=True)
+    kind           = Column(String, nullable=False)  # 'xlsx' or 'pdf'
+    source_file_id = Column(String, nullable=False)
+    source_file_name = Column(String, nullable=False)
+    name           = Column(String, nullable=False)
+    size_bytes     = Column(Integer, nullable=False, default=0)
+    created_at     = Column(DateTime(timezone=True), nullable=False, default=_utc_now)
+    updated_at     = Column(DateTime(timezone=True), nullable=False, default=_utc_now)
+    expires_at     = Column(DateTime(timezone=True))
