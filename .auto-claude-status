@@ -3,7 +3,7 @@
   "spec": "007-fix-decorative-only-sidebar-search-bar",
   "state": "building",
   "subtasks": {
-    "completed": 1,
+    "completed": 3,
     "total": 4,
     "in_progress": 1,
     "failed": 0
@@ -18,8 +18,8 @@
     "max": 1
   },
   "session": {
-    "number": 3,
+    "number": 5,
     "started_at": "2026-05-10T08:55:06.702316"
   },
-  "last_update": "2026-05-10T09:04:03.932385"
+  "last_update": "2026-05-10T09:18:45.568766"
 }

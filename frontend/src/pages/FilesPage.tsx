@@ -238,14 +238,13 @@ function CategoryGroup({ title, color, files, lang, categories, selectedFile, on
 // ─── FilesPage ───────────────────────────────────────────────────────────────
 
 export const FilesPage: React.FC<FilesPageProps> = ({ lang }) => {
-  const { files, selectedFile, setSelectedFile, uploadFile, deleteFile, assignCategory } = useFiles();
+  const { files, selectedFile, setSelectedFile, uploadFile, deleteFile, assignCategory, searchQuery, setSearchQuery } = useFiles();
   const { categories } = useCategories();
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [showCatModal, setShowCatModal] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
   const t = lang === 'ar' ? {

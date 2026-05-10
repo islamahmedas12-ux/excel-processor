@@ -6,6 +6,7 @@ import {
   LayoutDashboard, Archive, UserCircle,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useFiles } from '../context/FilesContext';
 import { StorageBar } from './StorageBar';
 import apiService from '../services/api';
 
@@ -42,9 +43,8 @@ export const Layout: React.FC<LayoutProps> = ({
 }) => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [avatarUrl, setAvatarUrl]   = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [_debouncedQuery, setDebouncedQuery] = useState('');
   const { user, logout } = useAuth();
+  const { searchQuery, setSearchQuery } = useFiles();
   const isRtl = lang === 'ar';
   const dir   = isRtl ? 'rtl' : 'ltr';
 
@@ -65,18 +65,8 @@ export const Layout: React.FC<LayoutProps> = ({
     }).catch(() => setAvatarUrl(null));
   }, [activeTab]);
 
-  // Debounce search input (300ms delay)
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedQuery(searchQuery);
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
-
   const activeItem = NAV.find(n => n.id === activeTab);
   const pageTitle  = activeItem ? (isRtl ? activeItem.ar : activeItem.en) : '';
-
-  /* ─── shared sidebar body ─────────────────────────────────────────── */
   const SidebarBody = () => (
     <div className="flex flex-col h-full" dir={dir}>
 
