@@ -15,6 +15,7 @@ load_dotenv()
 from backend.api.endpoints import api_bp
 from backend.api.auth import auth_bp
 from backend.api.admin import admin_bp
+from backend.security_headers import init_app as init_security_headers
 
 
 app = Flask(__name__)
@@ -25,6 +26,9 @@ if origins:
     CORS(app, resources={"/api/*": {"origins": origins}})
 else:
     CORS(app)
+
+# Initialize security headers
+init_security_headers(app)
 
 
 @app.route('/')

@@ -11,6 +11,8 @@ from flasgger import Swagger, swag_from
 from typing import Any, Dict, Tuple
 import os
 
+from backend.security_headers import init_app as init_security_headers
+
 from .file_reader import ExcelReader
 from .file_editor import ExcelEditor
 from .errors import (
@@ -26,6 +28,7 @@ from .swagger_templates import SWAGGER_TEMPLATE, EXAMPLE_RESPONSES, create_endpo
 
 app = Flask(__name__)
 CORS(app)
+init_security_headers(app)
 
 swagger_config = {
     "headers": [],
