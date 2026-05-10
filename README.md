@@ -123,7 +123,8 @@ excel-processor/
 ├── tests/                      # 测试
 ├── scripts/                    # 工具脚本
 ├── main.py                     # 应用入口
-└── requirements.txt
+├── requirements.txt
+└── docker-compose.yml          # Docker 容器编排
 ```
 
 ### 服务架构
@@ -140,8 +141,12 @@ excel-processor/
 ## 🔧 技术栈
 
 - **后端：** Flask, Python
-- **Excel 处理：** openpyxl, xlrd
-- **CORS：** flask-cors
+- **Excel 处理：** openpyxl, xlrd, xlwt, xlutils
+- **数据库：** PostgreSQL, SQLAlchemy (ORM)
+- **文件存储：** MinIO (S3 兼容对象存储), boto3
+- **容器化：** Docker, Docker Compose
+- **API 文档：** Flasgger (Swagger)
+- **认证：** JWT (PyJWT)
 
 ## 👨‍💻 开发者
 

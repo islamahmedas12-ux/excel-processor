@@ -1,10 +1,10 @@
 {
   "active": true,
   "spec": "016-root-readme-is-severely-outdated-describes-old-arc",
-  "state": "planning",
+  "state": "building",
   "subtasks": {
-    "completed": 0,
-    "total": 0,
+    "completed": 1,
+    "total": 5,
     "in_progress": 1,
     "failed": 0
   },
@@ -18,8 +18,8 @@
     "max": 1
   },
   "session": {
-    "number": 2,
+    "number": 3,
     "started_at": "2026-05-10T15:25:23.938529"
   },
-  "last_update": "2026-05-10T15:29:15.441688"
+  "last_update": "2026-05-10T15:31:54.109833"
 }
