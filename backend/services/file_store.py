@@ -49,7 +49,7 @@ def _to_dict(f: File) -> dict:
     }
 
 
-# ── Write ─────────────────────────────────────────────────────────────────────
+# ── Module-level functions (primary API) ─────────────────────────────────────
 
 def upload(
     filename: str,
@@ -107,8 +107,6 @@ def delete_file(file_id: str, owner_email: str = '') -> bool:
     return True
 
 
-# ── Read ──────────────────────────────────────────────────────────────────────
-
 def get_content(file_id: str, owner_email: str = '') -> Optional[bytes]:
     meta = get_meta(file_id, owner_email)
     if not meta:
@@ -145,8 +143,6 @@ def usage(owner_email: str) -> dict:
         return {'file_count': int(row[0] or 0), 'total_bytes': int(row[1] or 0)}
 
 
-# ── Cleanup ──────────────────────────────────────────────────────────────────
-
 def cleanup_expired():
     """Delete expired files from both MinIO and Postgres."""
     cutoff = datetime.now(timezone.utc) - timedelta(hours=FILE_TTL_HOURS)
@@ -155,3 +151,35 @@ def cleanup_expired():
         for f in old:
             storage.delete(storage.BUCKET_FILES, _key(f.owner_email, f.id))
         s.execute(delete(File).where(File.created_at < cutoff))
+
+
+# ── Backward-compatibility shim (deprecated — use module functions directly) ──
+
+class _FileStore:
+    """Thin shim over module functions for backward compatibility with old file_store usage."""
+
+    def upload(self, filename: str, content: bytes,
+               owner_email: str = '', category_id: Optional[str] = None) -> dict:
+        return upload(filename, content, owner_email=owner_email, category_id=category_id)
+
+    def set_category(self, file_id: str, category_id: Optional[str],
+                     owner_email: str = '') -> bool:
+        return set_category(file_id, category_id, owner_email=owner_email)
+
+    def delete(self, file_id: str, owner_email: str = '') -> bool:
+        return delete_file(file_id, owner_email=owner_email)
+
+    def get_content(self, file_id: str, owner_email: str = '') -> Optional[bytes]:
+        return get_content(file_id, owner_email=owner_email)
+
+    def get_meta(self, file_id: str, owner_email: str = '') -> Optional[dict]:
+        return get_meta(file_id, owner_email=owner_email)
+
+    def list_all(self, owner_email: str = '') -> list[dict]:
+        return list_all(owner_email=owner_email)
+
+    def usage(self, owner_email: str) -> dict:
+        return usage(owner_email)
+
+
+file_store = _FileStore()
