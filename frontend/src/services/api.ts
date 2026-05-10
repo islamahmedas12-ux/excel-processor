@@ -500,16 +500,34 @@ class ExcelApiService {
   // Profile
   // -------------------------------------------------------------------------
 
+  /**
+   * Retrieves the profile information of the authenticated user.
+   * @returns {Promise<any>} The user's profile object containing username, email, bio, and avatar information.
+   * @throws {Error} When the API request fails or authentication is invalid.
+   */
   async getProfile(): Promise<any> {
     const res = await this.client.get('/api/v1/auth/profile');
     return res.data.profile;
   }
 
+  /**
+   * Updates the profile information of the authenticated user.
+   * @param {string} [username] - Optional new username to set for the profile.
+   * @param {string} [bio] - Optional new biography or description to set for the profile.
+   * @returns {Promise<any>} The updated profile object with modified fields.
+   * @throws {Error} When the update fails or validation errors occur.
+   */
   async updateProfile(username?: string, bio?: string): Promise<any> {
     const res = await this.client.patch('/api/v1/auth/profile', { username, bio });
     return res.data.profile;
   }
 
+  /**
+   * Uploads a new avatar image for the authenticated user.
+   * @param {File} file - The image file to use as the new avatar (from input[type="file"]).
+   * @returns {Promise<string>} The URL of the newly uploaded avatar image.
+   * @throws {Error} When the upload fails, file format is unsupported, or file exceeds size limits.
+   */
   async uploadAvatar(file: File): Promise<string> {
     const formData = new FormData();
     formData.append('avatar', file);
@@ -517,6 +535,13 @@ class ExcelApiService {
     return res.data.avatar_url;
   }
 
+  /**
+   * Changes the password for the authenticated user.
+   * @param {string} oldPassword - The user's current password for verification.
+   * @param {string} newPassword - The new password to set for the account.
+   * @returns {Promise<void>} Resolves when the password has been successfully changed.
+   * @throws {Error} When the old password is incorrect or the new password fails validation.
+   */
   async changePassword(oldPassword: string, newPassword: string): Promise<void> {
     await this.client.post('/api/v1/auth/change-password', {
       old_password: oldPassword,
