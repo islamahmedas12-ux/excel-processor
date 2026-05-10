@@ -23,17 +23,43 @@ API: 更新输入单元格 → Excel 自动计算 → 读取输出结果
 
 ## 🚀 快速开始
 
-### 1. 安装依赖
+### 前置要求
+
+- Docker & Docker Compose
+- 或者直接使用 `docker compose` (Docker Desktop 内置)
+
+### 1. 配置环境变量
+
+复制环境变量示例文件：
 
 ```bash
-pip install -r requirements.txt
+cp .env.example .env
 ```
 
-### 2. 运行服务器
+编辑 `.env` 文件配置数据库和存储：
+
+### 2. 启动服务
+
+使用 Docker Compose 启动所有服务：
 
 ```bash
-python main.py
+docker-compose up -d
 ```
+
+或使用新版 Docker Compose：
+
+```bash
+docker compose up -d
+```
+
+### 3. 访问服务
+
+| 服务 | URL |
+|------|-----|
+| API (后端) | http://localhost:5000 |
+| 用户界面 | http://localhost:3000 |
+| 管理后台 | http://localhost:3100 |
+| 落地页 | http://localhost:4200 |
 
 API 文档地址：`http://localhost:5000/`
 
@@ -98,24 +124,82 @@ curl -X POST http://localhost:5000/api/v1/write \
 
 ```
 excel-processor/
-├── backend/
-│   └── api/
-│       └── endpoints.py      # API 路由
-├── excel_processor/          # Excel 处理核心模块
-│   ├── file_reader.py       # 读取 Excel
-│   ├── file_editor.py       # 编辑 Excel
-│   ├── errors.py            # 错误处理
-│   └── validators.py        # 验证
-├── tests/                   # 单元测试
-├── main.py                 # 应用入口
-└── requirements.txt
+├── backend/                     # Flask API 服务
+│   ├── api/
+│   │   ├── endpoints.py        # API 端点路由
+│   │   ├── admin.py            # 管理后台 API
+│   │   └── auth.py             # 认证 API
+│   ├── services/               # 业务服务层
+│   │   ├── auth_service.py     # 认证服务
+│   │   ├── excel_service.py    # Excel 处理服务
+│   │   ├── file_store.py       # 文件存储
+│   │   ├── pdf_export_service.py
+│   │   └── *.py                # 其他服务
+│   ├── db.py                   # 数据库连接
+│   └── models.py               # 数据模型
+├── excel_processor/            # Excel 处理核心库
+│   ├── api_service.py          # API 服务
+│   ├── file_reader.py          # 读取 Excel
+│   ├── file_editor.py          # 编辑 Excel
+│   ├── errors.py               # 错误处理
+│   └── validators.py           # 验证
+├── frontend/                    # 用户前端 (React/Vite)
+├── admin/                      # 管理后台 (React/Vite)
+├── landing/                    # 落地页 (Next.js)
+├── tests/                      # 测试
+├── scripts/                    # 工具脚本
+├── main.py                     # 应用入口
+├── requirements.txt
+└── docker-compose.yml          # Docker 容器编排
+```
+
+### 服务架构
+
+| 服务 | 描述 | 端口 |
+|------|------|------|
+| `backend` | Flask API 服务 | 5000 |
+| `frontend` | 用户界面 | 3000 |
+| `admin` | 管理后台 | 3100 |
+| `landing` | 营销落地页 | 4200 |
+| `postgres` | PostgreSQL 数据库 | 5433 |
+| `minio` | S3 兼容对象存储 | 9100 |
+
+## 🛠️ 服务概述
+
+| 服务 | 镜像/构建 | 端口 | 描述 |
+|------|-----------|------|------|
+| `postgres` | `postgres:16-alpine` | 5433 | PostgreSQL 数据库 - 存储应用数据 |
+| `minio` | `minio/minio:latest` | 9100/9101 | S3 兼容对象存储 - 存储 Excel 文件 |
+| `backend` | `./` (Dockerfile) | 5000 | Flask API 服务 - 核心业务逻辑 |
+| `frontend` | `./frontend` | 3000 | React 用户界面 - 用户交互 |
+| `admin` | `./admin` | 3100 | React 管理后台 - 系统管理 |
+| `landing` | `./landing` | 4200 | Next.js 落地页 - 营销展示 |
+
+所有服务通过 `excel-net` Docker 网络相互通信。
+
+### 服务依赖关系
+
+```
+postgres (数据库)
+    ↑
+minio (对象存储)
+    ↑
+backend (API 服务)
+    ↓
+┌───────┼───────┬────────┐
+↓       ↓       ↓        ↓
+frontend  admin  landing  (前端服务)
 ```
 
 ## 🔧 技术栈
 
 - **后端：** Flask, Python
-- **Excel 处理：** openpyxl, xlrd
-- **CORS：** flask-cors
+- **Excel 处理：** openpyxl, xlrd, xlwt, xlutils
+- **数据库：** PostgreSQL, SQLAlchemy (ORM)
+- **文件存储：** MinIO (S3 兼容对象存储), boto3
+- **容器化：** Docker, Docker Compose
+- **API 文档：** Flasgger (Swagger)
+- **认证：** JWT (PyJWT)
 
 ## 👨‍💻 开发者
 
