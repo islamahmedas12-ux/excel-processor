@@ -348,6 +348,18 @@ class ExcelApiService {
   // PDF Merge
   // -------------------------------------------------------------------------
 
+  /**
+   * Merges multiple PDF result files into a single PDF with an optional cover page.
+   * @param {Object} options - The merge options.
+   * @param {string[]} options.resultIds - An array of result IDs to merge, in the desired order.
+   * @param {string} [options.coverTitle] - Optional title text to display on the cover page.
+   * @param {string} [options.coverSubtitle] - Optional subtitle text to display on the cover page.
+   * @param {string} [options.coverDate] - Optional date text to display on the cover page.
+   * @param {string} [options.outputName] - Optional custom name for the merged output file.
+   * @param {boolean} [options.saveResult] - When true, saves the merged PDF to the server and returns metadata instead of a Blob.
+   * @returns {Promise<Blob | { result: any }>} Returns a Blob of the merged PDF if saveResult is false; otherwise returns server metadata.
+   * @throws {Error} When one or more result IDs are invalid, no results are found, or the merge operation fails.
+   */
   async mergePdfs(options: {
     resultIds: string[];
     coverTitle?: string;
