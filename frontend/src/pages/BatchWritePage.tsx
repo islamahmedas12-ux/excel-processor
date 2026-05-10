@@ -177,7 +177,7 @@ export const BatchWritePage: React.FC<BatchWritePageProps> = ({ lang }) => {
           </div>
         ) : (
           <div className="text-center py-12">
-            <Settings className="w-16 h-16 mx-auto text-gray-300 mb-4" />
+            <Settings className="w-16 h-16 mx-auto text-gray-400 mb-4" />
             <p className="text-gray-500">{lang === 'ar' ? 'لم يتم تعديل أي خلية بعد' : 'No cells modified yet'}</p>
           </div>
         )}
