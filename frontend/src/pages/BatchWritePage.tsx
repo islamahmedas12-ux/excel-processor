@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Settings, FileSpreadsheet, CheckCircle, Download, FileText } from 'lucide-react';
-import { Card, Button, Alert, LoadingSpinner } from '../components/ui';
+import { Settings, FileSpreadsheet, CheckCircle, Download, FileText, Loader2 } from 'lucide-react';
+import { Card, Button, Alert, LoadingSpinner, Badge } from '../components/ui';
 import { FileSelector } from '../components/FileSelector';
 import { SheetSelector } from '../components/SheetSelector';
 import { useFiles } from '../context/FilesContext';
@@ -22,6 +22,8 @@ export const BatchWritePage: React.FC<BatchWritePageProps> = ({ lang }) => {
   const [jsonValid, setJsonValid] = useState<boolean | null>(null);
   const [jsonError, setJsonError] = useState<string | null>(null);
   const [parsedJson, setParsedJson] = useState<Record<string, any> | null>(null);
+  const [isValidating, setIsValidating] = useState(false);
+  const [validationTimeout, setValidationTimeout] = useState<ReturnType<typeof setTimeout> | null>(null);
 
   const handleJsonChange = (text: string) => {
     setUpdatesText(text);
@@ -29,18 +31,27 @@ export const BatchWritePage: React.FC<BatchWritePageProps> = ({ lang }) => {
       setJsonValid(null);
       setJsonError(null);
       setParsedJson(null);
+      setIsValidating(false);
       return;
     }
-    try {
-      const parsed = JSON.parse(text);
-      setJsonValid(true);
-      setJsonError(null);
-      setParsedJson(parsed);
-    } catch (err: any) {
-      setJsonValid(false);
-      setJsonError(err.message);
-      setParsedJson(null);
-    }
+
+    setIsValidating(true);
+    if (validationTimeout) clearTimeout(validationTimeout);
+    const timeout = setTimeout(() => {
+      try {
+        const parsed = JSON.parse(text);
+        setJsonValid(true);
+        setJsonError(null);
+        setParsedJson(parsed);
+      } catch (err: any) {
+        setJsonValid(false);
+        setJsonError(err.message);
+        setParsedJson(null);
+      } finally {
+        setIsValidating(false);
+      }
+    }, 300);
+    setValidationTimeout(timeout);
   };
 
   const t = {
@@ -61,6 +72,7 @@ export const BatchWritePage: React.FC<BatchWritePageProps> = ({ lang }) => {
       oldValue: 'القديمة',
       newValue: 'الجديدة',
       noFileError: 'الرجاء اختيار ملف من المستودع',
+      validating: 'جارٍ التحقق من JSON...',
     },
     en: {
       title: 'Batch Edit',
@@ -79,6 +91,7 @@ export const BatchWritePage: React.FC<BatchWritePageProps> = ({ lang }) => {
       oldValue: 'Old',
       newValue: 'New',
       noFileError: 'Please select a file from the repository',
+      validating: 'Validating JSON...',
     },
   }[lang];
 
@@ -126,7 +139,32 @@ export const BatchWritePage: React.FC<BatchWritePageProps> = ({ lang }) => {
           <SheetSelector lang={lang} value={sheetName} onChange={setSheetName} />
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">{t.updates}</label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-sm font-medium text-gray-700">{t.updates}</label>
+              <div className="flex items-center gap-2">
+                {isValidating && (
+                  <span className="flex items-center gap-1 text-xs text-gray-500">
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                    {t.validating}
+                  </span>
+                )}
+                {jsonValid === true && (
+                  <Badge variant="success">
+                    {lang === 'ar' ? 'صالح' : 'Valid'}
+                  </Badge>
+                )}
+                {jsonValid === false && (
+                  <Badge variant="error">
+                    {lang === 'ar' ? 'غير صالح' : 'Invalid'}
+                  </Badge>
+                )}
+                {jsonValid === null && !isValidating && (
+                  <Badge variant="default">
+                    {lang === 'ar' ? 'في انتظار الإدخال' : 'Awaiting Input'}
+                  </Badge>
+                )}
+              </div>
+            </div>
             <textarea
               value={updatesText}
               onChange={e => handleJsonChange(e.target.value)}

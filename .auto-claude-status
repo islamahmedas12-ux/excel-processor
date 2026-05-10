@@ -1,0 +1,25 @@
+{
+  "active": true,
+  "spec": "006-add-live-json-validation-feedback-on-batch-edit-pa",
+  "state": "building",
+  "subtasks": {
+    "completed": 1,
+    "total": 4,
+    "in_progress": 1,
+    "failed": 0
+  },
+  "phase": {
+    "current": "Frontend Implementation",
+    "id": null,
+    "total": 4
+  },
+  "workers": {
+    "active": 0,
+    "max": 1
+  },
+  "session": {
+    "number": 3,
+    "started_at": "2026-05-10T03:57:18.229302"
+  },
+  "last_update": "2026-05-10T04:06:17.980287"
+}
