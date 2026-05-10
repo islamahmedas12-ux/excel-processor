@@ -92,7 +92,7 @@ function CategoryModal({ lang, onClose }: { lang: 'ar' | 'en'; onClose: () => vo
           {/* List */}
           <div className="space-y-2 max-h-60 overflow-y-auto">
             {categories.length === 0
-              ? <p className="text-sm text-gray-400 text-center py-4">{t.noCats}</p>
+              ? <p className="text-sm text-gray-500 text-center py-4">{t.noCats}</p>
               : categories.map(cat => (
                 <div key={cat.id} className="flex items-center gap-3 px-3 py-2.5 bg-gray-50 rounded-lg">
                   <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: cat.color }} />
@@ -137,7 +137,7 @@ function FileCard({ file, lang, categories, isSelected, onSelect, onDelete, onAs
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-gray-800 truncate leading-tight">{file.name}</p>
-            <p className="text-xs text-gray-400 mt-0.5">{formatSize(file.size)}</p>
+            <p className="text-xs text-gray-500 mt-0.5">{formatSize(file.size)}</p>
           </div>
           {isSelected && <CheckCircle className="w-4 h-4 text-indigo-500 flex-shrink-0 mt-0.5" />}
         </div>
@@ -165,12 +165,12 @@ function FileCard({ file, lang, categories, isSelected, onSelect, onDelete, onAs
           {/* Category assign */}
           <div className="relative">
             <button onClick={() => setCatOpen(o => !o)}
-              className="p-1.5 text-gray-400 hover:text-indigo-500 bg-gray-100 rounded-lg transition-colors">
+              className="p-1.5 text-gray-500 hover:text-indigo-500 bg-gray-100 rounded-lg transition-colors">
               <Tag className="w-3.5 h-3.5" />
             </button>
             {catOpen && (
               <div className="absolute bottom-full mb-1 left-0 bg-white border border-gray-200 rounded-lg shadow-xl z-20 min-w-36 py-1 text-sm">
-                <p className="px-3 py-1 text-xs text-gray-400 font-medium uppercase">{t.move}</p>
+                <p className="px-3 py-1 text-xs text-gray-500 font-medium uppercase">{t.move}</p>
                 <button onClick={() => { onAssignCategory(null); setCatOpen(false); }}
                   className="w-full text-left px-3 py-2 hover:bg-gray-50 text-gray-500 text-xs flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-gray-200" />{t.unassign}
@@ -213,7 +213,7 @@ function CategoryGroup({ title, color, files, lang, categories, selectedFile, on
       >
         <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: color }} />
         <span className="font-semibold text-gray-700">{title}</span>
-        <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{files.length}</span>
+        <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">{files.length}</span>
         <span className="ml-auto text-gray-400 group-hover:text-gray-600">
           {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
         </span>
@@ -336,7 +336,7 @@ export const FilesPage: React.FC<FilesPageProps> = ({ lang }) => {
           <input ref={inputRef} type="file" accept=".xlsx,.xls" className="hidden"
             onChange={e => handleFiles(e.target.files)} />
           <Upload className="w-10 h-10 mx-auto text-gray-300 mb-3" />
-          <p className="text-sm text-gray-400">{t.dropzone}</p>
+          <p className="text-sm text-gray-500">{t.dropzone}</p>
         </div>
 
         <div className="mt-4 flex items-center gap-3">
@@ -351,7 +351,7 @@ export const FilesPage: React.FC<FilesPageProps> = ({ lang }) => {
 
       {/* Files grouped by category */}
       {files.length === 0 ? (
-        <div className="text-center py-20 text-gray-400">
+        <div className="text-center py-20 text-gray-500">
           <FileSpreadsheet className="w-14 h-14 mx-auto mb-4 opacity-30" />
           <p className="text-sm">{t.noFiles}</p>
         </div>
