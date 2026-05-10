@@ -64,6 +64,8 @@ export const BatchWritePage: React.FC<BatchWritePageProps> = ({ lang }) => {
       updates: 'التحديثات',
       updatesPlaceholder: '{"A1": "قيمة1", "B2": 100, "C3": "قيمة3"}',
       updatesHelp: 'أدخل الإحداثيات والقيم بتنسيق JSON',
+      preview: 'معاينة JSON',
+      previewEmpty: 'أدخل JSON صالح لعرض المعاينة',
       submit: 'تعديل الكل',
       resultTitle: 'نتيجة التعديل',
       updatedCount: 'تم تعديل',
@@ -83,6 +85,8 @@ export const BatchWritePage: React.FC<BatchWritePageProps> = ({ lang }) => {
       updates: 'Updates',
       updatesPlaceholder: '{"A1": "value1", "B2": 100, "C3": "value3"}',
       updatesHelp: 'Enter coordinates and values in JSON format',
+      preview: 'JSON Preview',
+      previewEmpty: 'Enter valid JSON to see preview',
       submit: 'Modify All',
       resultTitle: 'Edit Result',
       updatedCount: 'Updated',
@@ -184,6 +188,36 @@ export const BatchWritePage: React.FC<BatchWritePageProps> = ({ lang }) => {
               </p>
             )}
           </div>
+
+          {jsonValid === true && parsedJson && (
+            <div className="mt-3">
+              <div className="flex items-center gap-2 mb-2">
+                <FileText className="w-4 h-4 text-gray-400" />
+                <span className="text-sm font-medium text-gray-700">{t.preview}</span>
+              </div>
+              <div className="bg-slate-800 rounded-lg p-4 overflow-auto max-h-48">
+                <pre className="text-xs text-slate-100 font-mono whitespace-pre-wrap">
+                  {JSON.stringify(parsedJson, null, 2)}
+                </pre>
+              </div>
+            </div>
+          )}
+
+          {jsonValid === false && (
+            <div className="mt-3">
+              <div className="bg-slate-800 rounded-lg p-4">
+                <pre className="text-xs text-red-400 font-mono">
+                  {updatesText}
+                </pre>
+              </div>
+            </div>
+          )}
+
+          {jsonValid === null && !isValidating && updatesText.trim() === '' && (
+            <div className="mt-3 p-4 bg-gray-50 rounded-lg border border-dashed border-gray-300">
+              <p className="text-sm text-gray-500 text-center">{t.previewEmpty}</p>
+            </div>
+          )}
 
           {error && <Alert type="error" message={error} onClose={() => setError(null)} />}
 
