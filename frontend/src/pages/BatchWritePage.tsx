@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Settings, FileSpreadsheet, CheckCircle, Download, FileText } from 'lucide-react';
-import { Card, Button, Alert, LoadingSpinner } from '../components/ui';
+import { Settings, FileSpreadsheet, CheckCircle, Download, FileText, Loader2 } from 'lucide-react';
+import { Card, Button, Alert, LoadingSpinner, Badge } from '../components/ui';
 import { FileSelector } from '../components/FileSelector';
 import { SheetSelector } from '../components/SheetSelector';
 import { useFiles } from '../context/FilesContext';
@@ -19,6 +19,40 @@ export const BatchWritePage: React.FC<BatchWritePageProps> = ({ lang }) => {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+  const [jsonValid, setJsonValid] = useState<boolean | null>(null);
+  const [jsonError, setJsonError] = useState<string | null>(null);
+  const [parsedJson, setParsedJson] = useState<Record<string, any> | null>(null);
+  const [isValidating, setIsValidating] = useState(false);
+  const [validationTimeout, setValidationTimeout] = useState<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleJsonChange = (text: string) => {
+    setUpdatesText(text);
+    if (!text.trim()) {
+      setJsonValid(null);
+      setJsonError(null);
+      setParsedJson(null);
+      setIsValidating(false);
+      return;
+    }
+
+    setIsValidating(true);
+    if (validationTimeout) clearTimeout(validationTimeout);
+    const timeout = setTimeout(() => {
+      try {
+        const parsed = JSON.parse(text);
+        setJsonValid(true);
+        setJsonError(null);
+        setParsedJson(parsed);
+      } catch (err: any) {
+        setJsonValid(false);
+        setJsonError(err.message);
+        setParsedJson(null);
+      } finally {
+        setIsValidating(false);
+      }
+    }, 300);
+    setValidationTimeout(timeout);
+  };
 
   const t = {
     ar: {
@@ -30,6 +64,8 @@ export const BatchWritePage: React.FC<BatchWritePageProps> = ({ lang }) => {
       updates: 'التحديثات',
       updatesPlaceholder: '{"A1": "قيمة1", "B2": 100, "C3": "قيمة3"}',
       updatesHelp: 'أدخل الإحداثيات والقيم بتنسيق JSON',
+      preview: 'معاينة JSON',
+      previewEmpty: 'أدخل JSON صالح لعرض المعاينة',
       submit: 'تعديل الكل',
       resultTitle: 'نتيجة التعديل',
       updatedCount: 'تم تعديل',
@@ -38,6 +74,19 @@ export const BatchWritePage: React.FC<BatchWritePageProps> = ({ lang }) => {
       oldValue: 'القديمة',
       newValue: 'الجديدة',
       noFileError: 'الرجاء اختيار ملف من المستودع',
+      validating: 'جارٍ التحقق من JSON...',
+      validJson: 'صالح',
+      invalidJson: 'غير صالح',
+      awaitingInput: 'في انتظار الإدخال',
+      validJsonMessage: '✓ JSON صالح',
+      entries: 'إدخال',
+      downloadModified: 'تحميل الملف المعدّل',
+      exportPdf: 'تصدير PDF',
+      modifying: 'جاري التعديل...',
+      noCellsModified: 'لم يتم تعديل أي خلية بعد',
+      enterUpdatesError: 'الرجاء إدخال التحديثات',
+      invalidJsonFormat: 'صيغة JSON غير صالحة',
+      errorOccurred: 'حدث خطأ',
     },
     en: {
       title: 'Batch Edit',
@@ -48,6 +97,8 @@ export const BatchWritePage: React.FC<BatchWritePageProps> = ({ lang }) => {
       updates: 'Updates',
       updatesPlaceholder: '{"A1": "value1", "B2": 100, "C3": "value3"}',
       updatesHelp: 'Enter coordinates and values in JSON format',
+      preview: 'JSON Preview',
+      previewEmpty: 'Enter valid JSON to see preview',
       submit: 'Modify All',
       resultTitle: 'Edit Result',
       updatedCount: 'Updated',
@@ -56,21 +107,31 @@ export const BatchWritePage: React.FC<BatchWritePageProps> = ({ lang }) => {
       oldValue: 'Old',
       newValue: 'New',
       noFileError: 'Please select a file from the repository',
+      validating: 'Validating JSON...',
+      validJson: 'Valid',
+      invalidJson: 'Invalid',
+      awaitingInput: 'Awaiting Input',
+      validJsonMessage: '✓ Valid JSON',
+      entries: 'entries',
+      downloadModified: 'Download Modified File',
+      exportPdf: 'Export PDF',
+      modifying: 'Modifying...',
+      noCellsModified: 'No cells modified yet',
+      enterUpdatesError: 'Please enter updates',
+      invalidJsonFormat: 'Invalid JSON format',
+      errorOccurred: 'An error occurred',
     },
   }[lang];
 
   const handleSubmit = async () => {
     if (!selectedFile) { setError(t.noFileError); return; }
     if (!updatesText) {
-      setError(lang === 'ar' ? 'الرجاء إدخال التحديثات' : 'Please enter updates');
+      setError(t.enterUpdatesError);
       return;
     }
 
-    let updates: Record<string, any>;
-    try {
-      updates = JSON.parse(updatesText);
-    } catch {
-      setError(lang === 'ar' ? 'صيغة JSON غير صالحة' : 'Invalid JSON format');
+    if (jsonValid === false || !parsedJson) {
+      setError(t.invalidJsonFormat);
       return;
     }
 
@@ -79,14 +140,14 @@ export const BatchWritePage: React.FC<BatchWritePageProps> = ({ lang }) => {
     setResult(null);
 
     try {
-      const response = await apiService.writeCells(selectedFile.id, updates, sheetName || undefined, lang);
+      const response = await apiService.writeCells(selectedFile.id, parsedJson, sheetName || undefined, lang);
       if (response.success) {
         setResult({ ...response, _resultMeta: response.result });
       } else {
-        setError(response.error || (lang === 'ar' ? 'حدث خطأ' : 'An error occurred'));
+        setError(response.error || t.errorOccurred);
       }
     } catch (err: any) {
-      setError(err.response?.data?.error || err.message || (lang === 'ar' ? 'حدث خطأ' : 'An error occurred'));
+      setError(err.response?.data?.error || err.message || t.errorOccurred);
     } finally {
       setLoading(false);
     }
@@ -106,16 +167,81 @@ export const BatchWritePage: React.FC<BatchWritePageProps> = ({ lang }) => {
           <SheetSelector lang={lang} value={sheetName} onChange={setSheetName} />
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">{t.updates}</label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-sm font-medium text-gray-700">{t.updates}</label>
+              <div className="flex items-center gap-2">
+                {isValidating && (
+                  <span className="flex items-center gap-1 text-xs text-gray-500">
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                    {t.validating}
+                  </span>
+                )}
+                {jsonValid === true && (
+                  <Badge variant="success">
+                    {t.validJson}
+                  </Badge>
+                )}
+                {jsonValid === false && (
+                  <Badge variant="error">
+                    {t.invalidJson}
+                  </Badge>
+                )}
+                {jsonValid === null && !isValidating && (
+                  <Badge variant="default">
+                    {t.awaitingInput}
+                  </Badge>
+                )}
+              </div>
+            </div>
             <textarea
               value={updatesText}
-              onChange={e => setUpdatesText(e.target.value)}
+              onChange={e => handleJsonChange(e.target.value)}
               placeholder={t.updatesPlaceholder}
               rows={6}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent font-mono"
+              className={`w-full px-4 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent font-mono ${
+                jsonValid === false ? 'border-red-300 bg-red-50' : jsonValid === true ? 'border-green-300' : 'border-gray-300'
+              }`}
             />
             <p className="mt-1 text-xs text-gray-500">{t.updatesHelp}</p>
+            {jsonValid === false && jsonError && (
+              <p className="mt-1 text-xs text-red-600">{jsonError}</p>
+            )}
+            {jsonValid === true && parsedJson && (
+              <p className="mt-1 text-xs text-green-600">
+                {t.validJsonMessage} - {Object.keys(parsedJson).length} {t.entries}
+              </p>
+            )}
           </div>
+
+          {jsonValid === true && parsedJson && (
+            <div className="mt-3">
+              <div className="flex items-center gap-2 mb-2">
+                <FileText className="w-4 h-4 text-gray-400" />
+                <span className="text-sm font-medium text-gray-700">{t.preview}</span>
+              </div>
+              <div className="bg-slate-800 rounded-lg p-4 overflow-auto max-h-48">
+                <pre className="text-xs text-slate-100 font-mono whitespace-pre-wrap">
+                  {JSON.stringify(parsedJson, null, 2)}
+                </pre>
+              </div>
+            </div>
+          )}
+
+          {jsonValid === false && (
+            <div className="mt-3">
+              <div className="bg-slate-800 rounded-lg p-4">
+                <pre className="text-xs text-red-400 font-mono">
+                  {updatesText}
+                </pre>
+              </div>
+            </div>
+          )}
+
+          {jsonValid === null && !isValidating && updatesText.trim() === '' && (
+            <div className="mt-3 p-4 bg-gray-50 rounded-lg border border-dashed border-gray-300">
+              <p className="text-sm text-gray-500 text-center">{t.previewEmpty}</p>
+            </div>
+          )}
 
           {error && <Alert type="error" message={error} onClose={() => setError(null)} />}
 
@@ -128,7 +254,7 @@ export const BatchWritePage: React.FC<BatchWritePageProps> = ({ lang }) => {
       <Card title={t.resultTitle} icon={<FileSpreadsheet className="w-5 h-5" />}>
         {loading ? (
           <div className="flex justify-center py-12">
-            <LoadingSpinner text={lang === 'ar' ? 'جاري التعديل...' : 'Modifying...'} />
+            <LoadingSpinner text={t.modifying} />
           </div>
         ) : result ? (
           <div className="space-y-4">
@@ -158,7 +284,7 @@ export const BatchWritePage: React.FC<BatchWritePageProps> = ({ lang }) => {
                   className="flex-1 flex items-center justify-center gap-2 py-2 text-sm font-medium bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-lg transition-colors"
                 >
                   <Download className="w-4 h-4" />
-                  {lang === 'ar' ? 'تحميل الملف المعدّل' : 'Download Modified File'}
+                  {t.downloadModified}
                 </button>
                 <button
                   onClick={async () => {
@@ -170,7 +296,7 @@ export const BatchWritePage: React.FC<BatchWritePageProps> = ({ lang }) => {
                   className="flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium bg-red-50 text-red-600 hover:bg-red-100 rounded-lg transition-colors"
                 >
                   <FileText className="w-4 h-4" />
-                  {lang === 'ar' ? 'تصدير PDF' : 'Export PDF'}
+                  {t.exportPdf}
                 </button>
               </div>
             )}
@@ -178,7 +304,7 @@ export const BatchWritePage: React.FC<BatchWritePageProps> = ({ lang }) => {
         ) : (
           <div className="text-center py-12">
             <Settings className="w-16 h-16 mx-auto text-gray-300 mb-4" />
-            <p className="text-gray-500">{lang === 'ar' ? 'لم يتم تعديل أي خلية بعد' : 'No cells modified yet'}</p>
+            <p className="text-gray-500">{t.noCellsModified}</p>
           </div>
         )}
       </Card>
