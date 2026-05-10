@@ -116,6 +116,15 @@ class ExcelApiService {
   // Excel Operations (use file_id from repository)
   // -------------------------------------------------------------------------
 
+  /**
+   * Reads cell values from an Excel file.
+   * @param {string} fileId - The unique identifier of the file to read from.
+   * @param {string} cells - The cell reference or range to read (e.g., "A1" or "A1:C5").
+   * @param {string} [sheetName] - Optional name of the sheet to read from. Defaults to the first active sheet.
+   * @param {'ar' | 'en'} [lang='ar'] - The language for error messages ('ar' for Arabic, 'en' for English).
+   * @returns {Promise<any>} An object containing the cell values and any error information.
+   * @throws {Error} When the file does not exist, cells format is invalid, or the read operation fails.
+   */
   async readCells(fileId: string, cells: string, sheetName?: string, lang: 'ar' | 'en' = 'ar'): Promise<any> {
     const formData = new FormData();
     formData.append('file_id', fileId);
@@ -125,6 +134,15 @@ class ExcelApiService {
     return res.data;
   }
 
+  /**
+   * Writes or updates cell values in an Excel file.
+   * @param {string} fileId - The unique identifier of the file to write to.
+   * @param {Record<string, any>} updates - An object mapping cell references to their new values (e.g., { "A1": "Hello", "B2": 42 }).
+   * @param {string} [sheetName] - Optional name of the target sheet. Defaults to the first active sheet.
+   * @param {'ar' | 'en'} [lang='ar'] - The language for error messages ('ar' for Arabic, 'en' for English).
+   * @returns {Promise<any>} An object containing the result of the write operation and any errors.
+   * @throws {Error} When the file does not exist, cell references are invalid, or the write operation fails.
+   */
   async writeCells(fileId: string, updates: Record<string, any>, sheetName?: string, lang: 'ar' | 'en' = 'ar'): Promise<any> {
     const formData = new FormData();
     formData.append('file_id', fileId);
@@ -134,6 +152,12 @@ class ExcelApiService {
     return res.data;
   }
 
+  /**
+   * Retrieves a list of sheet names from an Excel file.
+   * @param {string} fileId - The unique identifier of the file to inspect.
+   * @returns {Promise<string[]>} An array of sheet names available in the file.
+   * @throws {Error} When the file does not exist or cannot be parsed as an Excel file.
+   */
   async getSheets(fileId: string): Promise<string[]> {
     const formData = new FormData();
     formData.append('file_id', fileId);
@@ -141,6 +165,16 @@ class ExcelApiService {
     return res.data.data?.sheets || [];
   }
 
+  /**
+   * Executes a batch of Excel operations (read/write) defined by inputs and outputs configuration.
+   * @param {string} fileId - The unique identifier of the file to operate on.
+   * @param {Record<string, any>} inputs - An object defining input cell references and their expected transformations.
+   * @param {string[]} outputs - An array of output cell references that should be computed/updated.
+   * @param {string} [sheetName] - Optional name of the sheet to operate on. Defaults to the first active sheet.
+   * @param {'ar' | 'en'} [lang='ar'] - The language for error messages ('ar' for Arabic, 'en' for English).
+   * @returns {Promise<any>} An object containing the execution results and any errors.
+   * @throws {Error} When the file does not exist, configuration is invalid, or execution fails.
+   */
   async execute(fileId: string, inputs: Record<string, any>, outputs: string[], sheetName?: string, lang: 'ar' | 'en' = 'ar'): Promise<any> {
     const formData = new FormData();
     formData.append('file_id', fileId);
@@ -151,6 +185,13 @@ class ExcelApiService {
     return res.data;
   }
 
+  /**
+   * Exports the specified sheets of an Excel file to a PDF and returns the file as a Blob.
+   * @param {string} fileId - The unique identifier of the file to export.
+   * @param {string[] | 'all'} [sheets='all'] - An array of sheet names to export, or 'all' to export every sheet.
+   * @returns {Promise<Blob>} A Blob containing the PDF data, suitable for downloading or displaying.
+   * @throws {Error} When the file does not exist, specified sheets are not found, or PDF generation fails.
+   */
   async exportPdf(fileId: string, sheets: string[] | 'all' = 'all'): Promise<Blob> {
     const formData = new FormData();
     formData.append('file_id', fileId);
@@ -159,6 +200,13 @@ class ExcelApiService {
     return res.data;
   }
 
+  /**
+   * Exports the specified sheets of an Excel file to a PDF and saves the result to the server.
+   * @param {string} fileId - The unique identifier of the file to export.
+   * @param {string[] | 'all'} [sheets='all'] - An array of sheet names to export, or 'all' to export every sheet.
+   * @returns {Promise<any>} An object containing metadata about the saved PDF result.
+   * @throws {Error} When the file does not exist, specified sheets are not found, or saving fails.
+   */
   async exportPdfSave(fileId: string, sheets: string[] | 'all' = 'all'): Promise<any> {
     const formData = new FormData();
     formData.append('file_id', fileId);
@@ -168,6 +216,14 @@ class ExcelApiService {
     return res.data;
   }
 
+  /**
+   * Initiates an asynchronous PDF export job for an Excel file. The job runs in the background
+   * and can be polled for status using the returned Job object.
+   * @param {string} fileId - The unique identifier of the file to export.
+   * @param {string[] | 'all'} [sheets='all'] - An array of sheet names to export, or 'all' to export every sheet.
+   * @returns {Promise<Job>} The created Job object representing the background export task.
+   * @throws {Error} When the file does not exist or job creation fails.
+   */
   async exportPdfAsync(fileId: string, sheets: string[] | 'all' = 'all'): Promise<Job> {
     const formData = new FormData();
     formData.append('file_id', fileId);
