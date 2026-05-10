@@ -3,6 +3,11 @@
   "pages": [
     "index",
     "authentication",
+    "admin-authentication",
+    "admin-stats",
+    "admin-users",
+    "admin-plans",
+    "admin-subscriptions",
     "upload-files",
     "read-cells",
     "edit-cells",
