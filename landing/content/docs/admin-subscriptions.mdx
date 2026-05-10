@@ -1,0 +1,122 @@
+---
+title: Admin - Subscription Management
+description: List, approve, reject subscriptions, and view proof documents
+---
+
+# Admin - Subscription Management
+
+All endpoints require admin authentication. Include the admin token in the Authorization header:
+
+```
+Authorization: Bearer <admin_token>
+```
+
+---
+
+## List Subscription Requests
+
+Retrieve subscription requests with optional status filtering.
+
+**GET** `/api/v1/admin/subscriptions`
+
+**Query Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `status` | string | Filter by status: `pending`, `approved`, `rejected` |
+
+**Response**
+
+```json
+{
+  "success": true,
+  "requests": [
+    {
+      "id": "req_abc123",
+      "email": "john@example.com",
+      "username": "John Doe",
+      "plan": "pro",
+      "months": 3,
+      "status": "pending",
+      "created_at": "2024-01-15T10:30:00Z",
+      "notes": ""
+    }
+  ]
+}
+```
+
+---
+
+## View Proof Document
+
+Retrieve the payment proof image for a subscription request.
+
+**GET** `/api/v1/admin/subscriptions/{sub_id}/proof`
+
+**Headers**
+
+| Header | Description |
+|--------|-------------|
+| `Authorization` | Bearer token with admin role |
+| `token` | Alternative: pass token via query parameter `?token=<token>` |
+
+**Response**
+
+Returns the proof image file (JPEG, PNG, etc.).
+
+Returns 404 if the subscription request is not found.
+
+---
+
+## Approve Subscription
+
+Approve a subscription request and activate the user's plan.
+
+**POST** `/api/v1/admin/subscriptions/{sub_id}/approve`
+
+**Response**
+
+```json
+{
+  "success": true,
+  "plan": "pro",
+  "expires_at": "2024-04-15T10:30:00+00:00"
+}
+```
+
+This endpoint:
+- Sets the user's plan to the requested plan
+- Sets the plan expiration date based on the requested months
+- Sends a plan activation email to the user
+
+Returns 404 if the subscription request is not found.
+
+---
+
+## Reject Subscription
+
+Reject a subscription request.
+
+**POST** `/api/v1/admin/subscriptions/{sub_id}/reject`
+
+**Request Body**
+
+```json
+{
+  "notes": "Payment proof was unclear"
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `notes` | string | Optional rejection reason or notes |
+
+**Response**
+
+```json
+{
+  "success": true
+}
+```
+
+Returns 404 if the subscription request is not found.
