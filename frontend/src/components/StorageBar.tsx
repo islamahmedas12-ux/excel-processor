@@ -65,6 +65,13 @@ export const StorageBar: React.FC<Props> = ({ lang, onUpgradePlan }) => {
             style={{ width: `${pctFiles}%` }}
           />
         </div>
+        <div className={`text-[10px] mt-0.5 ${pctFiles >= 90 ? 'text-red-500' : pctFiles >= 70 ? 'text-amber-500' : 'text-emerald-600'}`}>
+          {pctFiles >= 90
+            ? (isRtl ? 'اقترب الامتلاء' : 'Nearly full')
+            : pctFiles >= 70
+              ? (isRtl ? 'المساحة تنخفض' : 'Running low')
+              : (isRtl ? 'الملفات كافية' : 'Files OK')}
+        </div>
       </div>
 
       {/* Storage bar */}
@@ -78,6 +85,13 @@ export const StorageBar: React.FC<Props> = ({ lang, onUpgradePlan }) => {
             className={`h-full rounded-full transition-all duration-500 ${pctStorage >= 90 ? 'bg-red-500' : pctStorage >= 70 ? 'bg-amber-400' : 'bg-emerald-500'}`}
             style={{ width: `${pctStorage}%` }}
           />
+        </div>
+        <div className={`text-[10px] mt-0.5 ${pctStorage >= 90 ? 'text-red-500' : pctStorage >= 70 ? 'text-amber-500' : 'text-emerald-600'}`}>
+          {pctStorage >= 90
+            ? (isRtl ? 'اقترب الامتلاء' : 'Nearly full')
+            : pctStorage >= 70
+              ? (isRtl ? 'المساحة تنخفض' : 'Running low')
+              : (isRtl ? 'المساحة كافية' : 'Storage OK')}
         </div>
       </div>
     </div>
