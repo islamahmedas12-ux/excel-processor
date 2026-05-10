@@ -5,6 +5,12 @@ from typing import Dict, List, Optional
 FILE_TTL_HOURS = 24
 
 
+def _key(owner_email: str, file_id: str) -> str:
+    """Generate MinIO object key for a file: <safe_owner_email>/<file_id>.xlsx"""
+    safe = owner_email.replace('/', '_').replace('\\', '_')
+    return f"{safe}/{file_id}.xlsx"
+
+
 class FileStore:
     """In-memory file repository — files stored per owner until server restart."""
 
