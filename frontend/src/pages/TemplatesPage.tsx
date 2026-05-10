@@ -250,7 +250,7 @@ export const TemplatesPage: React.FC<TemplatesPageProps> = ({ lang, onTabChange 
         ) : templates.length === 0 ? (
           <div className="text-center py-16">
             <BookTemplate className="w-12 h-12 text-gray-200 mx-auto mb-3" />
-            <p className="text-sm text-gray-400">{t.empty}</p>
+            <p className="text-sm text-gray-500">{t.empty}</p>
           </div>
         ) : (
           <div className="divide-y divide-gray-100 -mx-6">
@@ -283,9 +283,9 @@ export const TemplatesPage: React.FC<TemplatesPageProps> = ({ lang, onTabChange 
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-gray-800 truncate">{tpl.name}</p>
                       {tpl.description && (
-                        <p className="text-xs text-gray-400 truncate">{tpl.description}</p>
+                        <p className="text-xs text-gray-500 truncate">{tpl.description}</p>
                       )}
-                      <p className="text-xs text-gray-400 mt-0.5">
+                      <p className="text-xs text-gray-500 mt-0.5">
                         {t.size(tpl.size_bytes)} · {formatDate(tpl.created_at, lang)}
                       </p>
                     </div>
