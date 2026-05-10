@@ -1,0 +1,25 @@
+{
+  "active": true,
+  "spec": "009-add-keyboard-shortcut-enter-support-for-form-submi",
+  "state": "building",
+  "subtasks": {
+    "completed": 1,
+    "total": 3,
+    "in_progress": 1,
+    "failed": 0
+  },
+  "phase": {
+    "current": "Add Enter key support to input fields",
+    "id": null,
+    "total": 3
+  },
+  "workers": {
+    "active": 0,
+    "max": 1
+  },
+  "session": {
+    "number": 3,
+    "started_at": "2026-05-10T08:55:06.673407"
+  },
+  "last_update": "2026-05-10T09:02:36.244711"
+}
