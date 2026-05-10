@@ -57,7 +57,7 @@ export const StorageBar: React.FC<Props> = ({ lang, onUpgradePlan }) => {
       <div>
         <div className="flex items-center justify-between text-[11px] text-slate-500 mb-1">
           <span>{isRtl ? 'الملفات' : 'Files'}</span>
-          <span>{data.file_count} / {data.max_files}</span>
+          <span>{Math.round(pctFiles)}% ({data.file_count}/{data.max_files})</span>
         </div>
         <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
           <div
@@ -65,19 +65,33 @@ export const StorageBar: React.FC<Props> = ({ lang, onUpgradePlan }) => {
             style={{ width: `${pctFiles}%` }}
           />
         </div>
+        <div className={`text-[10px] mt-0.5 ${pctFiles >= 90 ? 'text-red-500' : pctFiles >= 70 ? 'text-amber-500' : 'text-emerald-600'}`}>
+          {pctFiles >= 90
+            ? (isRtl ? 'اقترب الامتلاء' : 'Nearly full')
+            : pctFiles >= 70
+              ? (isRtl ? 'المساحة تنخفض' : 'Running low')
+              : (isRtl ? 'الملفات كافية' : 'Files OK')}
+        </div>
       </div>
 
       {/* Storage bar */}
       <div>
         <div className="flex items-center justify-between text-[11px] text-slate-500 mb-1">
           <span>{isRtl ? 'المساحة' : 'Storage'}</span>
-          <span>{fmt(data.used_bytes)} / {fmt(data.max_bytes)}</span>
+          <span>{Math.round(pctStorage)}% ({fmt(data.used_bytes)}/{fmt(data.max_bytes)})</span>
         </div>
         <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
           <div
             className={`h-full rounded-full transition-all duration-500 ${pctStorage >= 90 ? 'bg-red-500' : pctStorage >= 70 ? 'bg-amber-400' : 'bg-emerald-500'}`}
             style={{ width: `${pctStorage}%` }}
           />
+        </div>
+        <div className={`text-[10px] mt-0.5 ${pctStorage >= 90 ? 'text-red-500' : pctStorage >= 70 ? 'text-amber-500' : 'text-emerald-600'}`}>
+          {pctStorage >= 90
+            ? (isRtl ? 'اقترب الامتلاء' : 'Nearly full')
+            : pctStorage >= 70
+              ? (isRtl ? 'المساحة تنخفض' : 'Running low')
+              : (isRtl ? 'المساحة كافية' : 'Storage OK')}
         </div>
       </div>
     </div>
