@@ -57,7 +57,7 @@ export const StorageBar: React.FC<Props> = ({ lang, onUpgradePlan }) => {
       <div>
         <div className="flex items-center justify-between text-[11px] text-slate-500 mb-1">
           <span>{isRtl ? 'الملفات' : 'Files'}</span>
-          <span>{data.file_count} / {data.max_files}</span>
+          <span>{Math.round(pctFiles)}% ({data.file_count}/{data.max_files})</span>
         </div>
         <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
           <div
@@ -71,7 +71,7 @@ export const StorageBar: React.FC<Props> = ({ lang, onUpgradePlan }) => {
       <div>
         <div className="flex items-center justify-between text-[11px] text-slate-500 mb-1">
           <span>{isRtl ? 'المساحة' : 'Storage'}</span>
-          <span>{fmt(data.used_bytes)} / {fmt(data.max_bytes)}</span>
+          <span>{Math.round(pctStorage)}% ({fmt(data.used_bytes)}/{fmt(data.max_bytes)})</span>
         </div>
         <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
           <div
