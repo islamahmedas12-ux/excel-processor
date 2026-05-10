@@ -280,7 +280,8 @@
             "command": "cd frontend && npm run lint -- --fix 2>&1 | head -20",
             "expected": "No lint errors"
           },
-          "status": "pending"
+          "status": "completed",
+          "notes": "Updated 3 secondary text elements: empty state message (gray-400→500), metadata text for file size/date (gray-400→500), and unchecked checkbox icon (gray-300→500). Lint passes."
         },
         {
           "id": "subtask-3-7",
@@ -298,7 +299,9 @@
             "command": "cd frontend && npm run lint -- --fix 2>&1 | head -20",
             "expected": "No lint errors"
           },
-          "status": "pending"
+          "status": "completed",
+          "notes": "Updated empty state spinner from gray-300 to gray-500, icon from gray-200 to gray-400, and empty text from gray-400 to gray-500",
+          "updated_at": "2026-05-10T07:52:01.729537+00:00"
         }
       ]
     },
@@ -326,7 +329,9 @@
             "command": "cd frontend && npm run lint 2>&1",
             "expected": "No lint errors"
           },
-          "status": "pending"
+          "status": "completed",
+          "notes": "Lint passes with 0 errors, 72 warnings (pre-existing @typescript-eslint/no-explicit-any warnings not related to our changes). All accessibility color improvements verified.",
+          "updated_at": "2026-05-10T07:54:09.952702+00:00"
         },
         {
           "id": "subtask-4-2",
@@ -432,6 +437,6 @@
   "planStatus": "in_progress",
   "xstateState": "backlog",
   "executionPhase": "coding",
-  "updated_at": "2026-05-10T07:41:59.219Z",
-  "last_updated": "2026-05-10T07:41:25.342182+00:00"
+  "updated_at": "2026-05-10T07:52:44.543Z",
+  "last_updated": "2026-05-10T07:54:09.952702+00:00"
 }
