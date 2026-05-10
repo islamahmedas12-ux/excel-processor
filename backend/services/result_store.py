@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime, timezone
-from typing import Optional
+from typing import Optional, Literal
 from sqlalchemy import select, func
 
 from ..db import session_scope
@@ -15,7 +15,7 @@ from ..models import Result
 from . import storage
 
 
-ResultKind = 'xlsx' | 'pdf'
+ResultKind = Literal['xlsx', 'pdf']
 
 
 def _now_dt():
@@ -145,3 +145,34 @@ def usage(owner_email: str) -> dict:
             .where(Result.owner_email == owner_email)
         ).one()
         return {'count': int(row[0] or 0), 'bytes': int(row[1] or 0)}
+
+
+# ── Backward-compatibility shim (deprecated — use module functions directly) ──
+
+class _ResultStore:
+    """Thin shim over module functions for backward compatibility with old result_store usage."""
+
+    def save(self, owner_email: str, kind: ResultKind, source_file_id: str,
+             source_file_name: str, name: str, content: bytes) -> dict:
+        return save(owner_email, kind, source_file_id, source_file_name, name, content)
+
+    def get(self, result_id: str) -> Optional[dict]:
+        return get(result_id)
+
+    def get_content(self, result_id: str) -> Optional[bytes]:
+        return get_content(result_id)
+
+    def list_all(self, kind: Optional[ResultKind] = None) -> list[dict]:
+        return list_all(kind)
+
+    def delete(self, result_id: str, owner_email: Optional[str] = None) -> bool:
+        return delete(result_id, owner_email)
+
+    def count(self, owner_email: str) -> int:
+        return count(owner_email)
+
+    def usage(self, owner_email: str) -> dict:
+        return usage(owner_email)
+
+
+result_store = _ResultStore()
