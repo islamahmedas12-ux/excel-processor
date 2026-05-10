@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   Download, Trash2, FileText, FileSpreadsheet,
-  RefreshCw, Filter, FileOutput,
+  RefreshCw, Filter, FileOutput, Search, X,
 } from 'lucide-react';
 import { useResults, ResultEntry } from '../context/ResultsContext';
 
@@ -33,6 +33,7 @@ const L = {
     actions: 'إجراءات',
     confirmDelete: 'هل تريد حذف هذا الملف؟',
     exporting: 'جارٍ التصدير...',
+    searchPlaceholder: 'ابحث في النتائج...',
   },
   en: {
     title: 'Saved Results',
@@ -54,6 +55,7 @@ const L = {
     actions: 'Actions',
     confirmDelete: 'Delete this file?',
     exporting: 'Exporting...',
+    searchPlaceholder: 'Search results...',
   },
 };
 
@@ -70,12 +72,20 @@ function fmtDate(iso: string): string {
 export const ResultsPage: React.FC<ResultsPageProps> = ({ lang }) => {
   const { results, refresh, deleteResult, downloadResult, exportResultToPdf } = useResults();
   const [kindFilter, setKindFilter] = useState<KindFilter>('all');
+  const [searchQuery, setSearchQuery] = useState('');
   const [exportingId, setExportingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const tr = L[lang];
   const isRtl = lang === 'ar';
 
-  const filtered = kindFilter === 'all' ? results : results.filter(r => r.kind === kindFilter);
+  const filtered = results.filter(r => {
+    const matchesKind = kindFilter === 'all' || r.kind === kindFilter;
+    const query = searchQuery.trim().toLowerCase();
+    const matchesSearch = !query ||
+      r.filename.toLowerCase().includes(query) ||
+      (r.source_file_name && r.source_file_name.toLowerCase().includes(query));
+    return matchesKind && matchesSearch;
+  });
 
   const handleRefresh = async () => {
     setLoading(true);
@@ -125,6 +135,28 @@ export const ResultsPage: React.FC<ResultsPageProps> = ({ lang }) => {
           <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           {tr.refresh}
         </button>
+      </div>
+
+      {/* Search bar */}
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm px-4 py-3">
+        <div className="flex items-center gap-3">
+          <Search className="w-4 h-4 text-slate-400 flex-shrink-0" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            placeholder={tr.searchPlaceholder}
+            className="flex-1 bg-transparent text-sm text-slate-600 placeholder-slate-400 outline-none"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="text-slate-400 hover:text-slate-600 transition-colors"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Table */}

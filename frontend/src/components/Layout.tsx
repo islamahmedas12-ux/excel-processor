@@ -6,6 +6,7 @@ import {
   LayoutDashboard, Archive, UserCircle,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useFiles } from '../context/FilesContext';
 import { StorageBar } from './StorageBar';
 import apiService from '../services/api';
 
@@ -43,6 +44,7 @@ export const Layout: React.FC<LayoutProps> = ({
   const [mobileOpen, setMobileOpen] = useState(false);
   const [avatarUrl, setAvatarUrl]   = useState<string | null>(null);
   const { user, logout } = useAuth();
+  const { searchQuery, setSearchQuery } = useFiles();
   const isRtl = lang === 'ar';
   const dir   = isRtl ? 'rtl' : 'ltr';
 
@@ -65,8 +67,6 @@ export const Layout: React.FC<LayoutProps> = ({
 
   const activeItem = NAV.find(n => n.id === activeTab);
   const pageTitle  = activeItem ? (isRtl ? activeItem.ar : activeItem.en) : '';
-
-  /* ─── shared sidebar body ─────────────────────────────────────────── */
   const SidebarBody = () => (
     <div className="flex flex-col h-full" dir={dir}>
 
@@ -217,9 +217,19 @@ export const Layout: React.FC<LayoutProps> = ({
               <Search className="w-4 h-4 text-slate-400 flex-shrink-0" />
               <input
                 type="text"
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
                 placeholder={isRtl ? 'بحث...' : 'Search...'}
                 className="bg-transparent text-sm text-slate-600 placeholder-slate-400 outline-none w-full"
               />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="text-slate-400 hover:text-slate-600 transition-colors"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
             </div>
           </div>
 

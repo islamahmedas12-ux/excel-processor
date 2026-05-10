@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import {
-  FileSpreadsheet, Trash2, Upload, CheckCircle, Plus, Tag, Pencil, X, ChevronDown, ChevronRight
+  FileSpreadsheet, Trash2, Upload, CheckCircle, Plus, Tag, Pencil, X, ChevronDown, ChevronRight, Search
 } from 'lucide-react';
 import { Button, Alert } from '../components/ui';
 import { useFiles, FileEntry } from '../context/FilesContext';
@@ -238,7 +238,7 @@ function CategoryGroup({ title, color, files, lang, categories, selectedFile, on
 // ─── FilesPage ───────────────────────────────────────────────────────────────
 
 export const FilesPage: React.FC<FilesPageProps> = ({ lang }) => {
-  const { files, selectedFile, setSelectedFile, uploadFile, deleteFile, assignCategory } = useFiles();
+  const { files, selectedFile, setSelectedFile, uploadFile, deleteFile, assignCategory, searchQuery, setSearchQuery } = useFiles();
   const { categories } = useCategories();
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -252,13 +252,13 @@ export const FilesPage: React.FC<FilesPageProps> = ({ lang }) => {
     upload: 'ارفع ملف', uploading: 'جاري الرفع...', dropzone: 'اسحب .xlsx أو .xls هنا أو انقر للاختيار',
     manageCats: 'إدارة التصنيفات', noFiles: 'لا توجد ملفات — ارفع أول ملف لديك',
     uncategorized: 'غير مصنّف', uploadSuccess: (n: string) => `تم رفع "${n}"`,
-    deleteConfirm: (n: string) => `حذف "${n}"؟`,
+    deleteConfirm: (n: string) => `حذف "${n}"؟`, searchPlaceholder: 'ابحث في الملفات...',
   } : {
     title: 'File Repository', description: 'Upload Excel files as templates — used across all tools without modification',
     upload: 'Upload File', uploading: 'Uploading...', dropzone: 'Drop .xlsx or .xls here or click to browse',
     manageCats: 'Manage Categories', noFiles: 'No files yet — upload your first file',
     uncategorized: 'Uncategorized', uploadSuccess: (n: string) => `"${n}" uploaded`,
-    deleteConfirm: (n: string) => `Delete "${n}"?`,
+    deleteConfirm: (n: string) => `Delete "${n}"?`, searchPlaceholder: 'Search files...',
   };
 
   const handleFiles = async (fileList: FileList | null) => {
@@ -297,13 +297,18 @@ export const FilesPage: React.FC<FilesPageProps> = ({ lang }) => {
     try { await deleteFile(id); } catch { setError(lang === 'ar' ? 'فشل الحذف' : 'Delete failed'); }
   };
 
+  // Filter files by search query
+  const filteredFiles = searchQuery.trim()
+    ? files.filter(f => f.name.toLowerCase().includes(searchQuery.toLowerCase().trim()))
+    : files;
+
   // Group files by category
   const grouped: Array<{ cat: Category | null; files: FileEntry[] }> = [];
   categories.forEach(cat => {
-    const catFiles = files.filter(f => f.category_id === cat.id);
+    const catFiles = filteredFiles.filter(f => f.category_id === cat.id);
     if (catFiles.length > 0) grouped.push({ cat, files: catFiles });
   });
-  const uncategorized = files.filter(f => !f.category_id || !categories.find(c => c.id === f.category_id));
+  const uncategorized = filteredFiles.filter(f => !f.category_id || !categories.find(c => c.id === f.category_id));
 
   return (
     <div className="space-y-6">
@@ -349,11 +354,33 @@ export const FilesPage: React.FC<FilesPageProps> = ({ lang }) => {
         {success && <div className="mt-3"><Alert type="success" message={success} onClose={() => setSuccess(null)} /></div>}
       </div>
 
+      {/* Search bar */}
+      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm px-4 py-3">
+        <div className="flex items-center gap-3">
+          <Search className="w-4 h-4 text-gray-400 flex-shrink-0" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            placeholder={t.searchPlaceholder}
+            className="flex-1 bg-transparent text-sm text-gray-600 placeholder-gray-400 outline-none"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
+      </div>
+
       {/* Files grouped by category */}
-      {files.length === 0 ? (
+      {filteredFiles.length === 0 ? (
         <div className="text-center py-20 text-gray-400">
           <FileSpreadsheet className="w-14 h-14 mx-auto mb-4 opacity-30" />
-          <p className="text-sm">{t.noFiles}</p>
+          <p className="text-sm">{searchQuery ? (lang === 'ar' ? 'لا توجد نتائج' : 'No results found') : t.noFiles}</p>
         </div>
       ) : (
         <div>

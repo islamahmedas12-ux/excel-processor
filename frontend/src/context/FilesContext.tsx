@@ -18,6 +18,8 @@ interface FilesContextType {
   deleteFile: (id: string) => Promise<void>;
   assignCategory: (fileId: string, categoryId: string | null) => Promise<void>;
   loading: boolean;
+  searchQuery: string;
+  setSearchQuery: (query: string) => void;
 }
 
 const FilesContext = createContext<FilesContextType | null>(null);
@@ -26,6 +28,7 @@ export const FilesProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [files, setFiles] = useState<FileEntry[]>([]);
   const [selectedFile, setSelectedFile] = useState<FileEntry | null>(null);
   const [loading, setLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const refreshFiles = useCallback(async () => {
     const list = await apiService.listFiles();
@@ -55,7 +58,7 @@ export const FilesProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, [refreshFiles]);
 
   return (
-    <FilesContext.Provider value={{ files, selectedFile, setSelectedFile, refreshFiles, uploadFile, deleteFile, assignCategory, loading }}>
+    <FilesContext.Provider value={{ files, selectedFile, setSelectedFile, refreshFiles, uploadFile, deleteFile, assignCategory, loading, searchQuery, setSearchQuery }}>
       {children}
     </FilesContext.Provider>
   );
