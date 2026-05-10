@@ -98,18 +98,44 @@ curl -X POST http://localhost:5000/api/v1/write \
 
 ```
 excel-processor/
-├── backend/
-│   └── api/
-│       └── endpoints.py      # API 路由
-├── excel_processor/          # Excel 处理核心模块
-│   ├── file_reader.py       # 读取 Excel
-│   ├── file_editor.py       # 编辑 Excel
-│   ├── errors.py            # 错误处理
-│   └── validators.py        # 验证
-├── tests/                   # 单元测试
-├── main.py                 # 应用入口
+├── backend/                     # Flask API 服务
+│   ├── api/
+│   │   ├── endpoints.py        # API 端点路由
+│   │   ├── admin.py            # 管理后台 API
+│   │   └── auth.py             # 认证 API
+│   ├── services/               # 业务服务层
+│   │   ├── auth_service.py     # 认证服务
+│   │   ├── excel_service.py    # Excel 处理服务
+│   │   ├── file_store.py       # 文件存储
+│   │   ├── pdf_export_service.py
+│   │   └── *.py                # 其他服务
+│   ├── db.py                   # 数据库连接
+│   └── models.py               # 数据模型
+├── excel_processor/            # Excel 处理核心库
+│   ├── api_service.py          # API 服务
+│   ├── file_reader.py          # 读取 Excel
+│   ├── file_editor.py          # 编辑 Excel
+│   ├── errors.py               # 错误处理
+│   └── validators.py           # 验证
+├── frontend/                    # 用户前端 (React/Vite)
+├── admin/                      # 管理后台 (React/Vite)
+├── landing/                    # 落地页 (Next.js)
+├── tests/                      # 测试
+├── scripts/                    # 工具脚本
+├── main.py                     # 应用入口
 └── requirements.txt
 ```
+
+### 服务架构
+
+| 服务 | 描述 | 端口 |
+|------|------|------|
+| `backend` | Flask API 服务 | 5000 |
+| `frontend` | 用户界面 | 3000 |
+| `admin` | 管理后台 | 3100 |
+| `landing` | 营销落地页 | 4200 |
+| `postgres` | PostgreSQL 数据库 | 5433 |
+| `minio` | S3 兼容对象存储 | 9100 |
 
 ## 🔧 技术栈
 
