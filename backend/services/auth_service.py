@@ -21,7 +21,14 @@ SECRET_KEY = _raw_secret
 
 EXPIRY_HOURS   = int(os.getenv('TOKEN_EXPIRY_HOURS', '24'))
 ADMIN_USERNAME = os.getenv('ADMIN_USERNAME', 'admin')
-ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD', 'admin123')
+# Required validation: ADMIN_PASSWORD must be set
+_admin_password = os.getenv('ADMIN_PASSWORD', '')
+if not _admin_password:
+    raise ValueError(
+        'ADMIN_PASSWORD environment variable is required. '
+        'Set a secure password for the admin account.'
+    )
+ADMIN_PASSWORD = _admin_password
 
 
 def verify_credentials(email: str, password: str) -> dict | None:
