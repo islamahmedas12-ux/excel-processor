@@ -136,7 +136,7 @@ export const ReadPage: React.FC<ReadPageProps> = ({ lang }) => {
           </div>
         ) : (
           <div className="text-center py-12">
-            <Table className="w-16 h-16 mx-auto text-gray-300 mb-4" />
+            <Table className="w-16 h-16 mx-auto text-gray-400 mb-4" />
             <p className="text-gray-500">{t.noResult}</p>
           </div>
         )}

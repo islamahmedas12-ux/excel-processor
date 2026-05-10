@@ -162,7 +162,7 @@ export const JobsPage: React.FC<JobsPageProps> = ({ lang }) => {
         ) : jobs.length === 0 ? (
           <div className="text-center py-16">
             <BriefcaseIcon className="w-12 h-12 text-gray-200 mx-auto mb-3" />
-            <p className="text-sm text-gray-400">{t.empty}</p>
+            <p className="text-sm text-gray-500">{t.empty}</p>
           </div>
         ) : (
           <div className="divide-y divide-gray-100 -mx-6">
@@ -173,14 +173,14 @@ export const JobsPage: React.FC<JobsPageProps> = ({ lang }) => {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap mb-1">
                     {statusBadge(job.status, t.status)}
-                    <span className="text-xs text-gray-400 font-mono">
+                    <span className="text-xs text-gray-500 font-mono">
                       {(t.type as any)[job.job_type] ?? job.job_type}
                     </span>
                   </div>
                   <p className="text-sm font-medium text-gray-800 truncate">
                     {job.params?.filename ?? job.id}
                   </p>
-                  <p className="text-xs text-gray-400 mt-0.5">
+                  <p className="text-xs text-gray-500 mt-0.5">
                     {relativeTime(job.created_at, t.ago)}
                   </p>
                   {job.status === 'failed' && job.error && (

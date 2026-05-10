@@ -112,7 +112,7 @@ export const BatchExecutePage: React.FC<BatchExecutePageProps> = ({ lang }) => {
               id="batch-file-input"
             />
             <label htmlFor="batch-file-input" className="cursor-pointer">
-              <FileSpreadsheet className="w-10 h-10 mx-auto text-gray-400 mb-3" />
+              <FileSpreadsheet className="w-10 h-10 mx-auto text-gray-500 mb-3" />
               <p className="text-gray-600 text-sm">{t.dropzone}</p>
             </label>
           </div>
@@ -152,7 +152,7 @@ export const BatchExecutePage: React.FC<BatchExecutePageProps> = ({ lang }) => {
         )}
 
         {jobs.length === 0 && !loading && (
-          <p className="text-center text-gray-400 text-sm py-8">{t.noJobs}</p>
+          <p className="text-center text-gray-500 text-sm py-8">{t.noJobs}</p>
         )}
       </Card>
     </div>

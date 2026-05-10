@@ -67,7 +67,7 @@ export const SheetSelector: React.FC<SheetSelectorProps> = ({ lang, value, onCha
           {t.loading}
         </div>
       ) : !selectedFile ? (
-        <div className="px-4 py-2.5 border border-dashed border-gray-200 rounded-lg text-sm text-gray-400">
+        <div className="px-4 py-2.5 border border-dashed border-gray-200 rounded-lg text-sm text-gray-500">
           {t.noFile}
         </div>
       ) : error ? (

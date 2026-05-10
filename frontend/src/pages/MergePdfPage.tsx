@@ -138,8 +138,8 @@ export const MergePdfPage: React.FC<MergePdfPageProps> = ({ lang }) => {
 
         {savedPdfs.length === 0 ? (
           <div className="text-center py-12">
-            <FileText className="w-12 h-12 text-gray-200 mx-auto mb-3" />
-            <p className="text-sm text-gray-400">{t.noPdfs}</p>
+            <FileText className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+            <p className="text-sm text-gray-500">{t.noPdfs}</p>
           </div>
         ) : (
           <>
@@ -149,21 +149,21 @@ export const MergePdfPage: React.FC<MergePdfPageProps> = ({ lang }) => {
                 return (
                   <label key={r.id}
                     className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-0 transition-colors">
-                    <span className={`flex-shrink-0 ${checked ? 'text-indigo-600' : 'text-gray-300'}`}>
+                    <span className={`flex-shrink-0 ${checked ? 'text-indigo-600' : 'text-gray-500'}`}>
                       {checked ? <CheckSquare className="w-4 h-4" /> : <Square className="w-4 h-4" />}
                     </span>
                     <input type="checkbox" checked={checked} onChange={() => toggle(r.id)} className="hidden" />
                     <FileText className="w-4 h-4 text-red-400 flex-shrink-0" />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-gray-800 truncate">{r.filename}</p>
-                      <p className="text-xs text-gray-400">{formatSize(r.size)}</p>
+                      <p className="text-xs text-gray-500">{formatSize(r.size)}</p>
                     </div>
                   </label>
                 );
               })}
             </div>
             {selected.length > 0 && (
-              <p className="text-xs text-gray-400">{t.selected(selected.length)} · {t.order}</p>
+              <p className="text-xs text-gray-500">{t.selected(selected.length)} · {t.order}</p>
             )}
           </>
         )}
@@ -182,11 +182,11 @@ export const MergePdfPage: React.FC<MergePdfPageProps> = ({ lang }) => {
                 <p className="flex-1 text-sm font-medium text-gray-800 truncate">{r.filename}</p>
                 <div className="flex gap-1">
                   <button onClick={() => moveUp(idx)} disabled={idx === 0}
-                    className="p-1 rounded text-gray-400 hover:text-indigo-600 disabled:opacity-20 transition-colors">
+                    className="p-1 rounded text-gray-500 hover:text-indigo-600 disabled:opacity-20 transition-colors">
                     <GripVertical className="w-4 h-4" />
                   </button>
                   <button onClick={() => remove(r.id)}
-                    className="p-1 rounded text-gray-300 hover:text-red-500 transition-colors">
+                    className="p-1 rounded text-gray-500 hover:text-red-500 transition-colors">
                     <X className="w-4 h-4" />
                   </button>
                 </div>

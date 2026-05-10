@@ -182,13 +182,13 @@ export const VerifyTokensPage: React.FC<VerifyTokensPageProps> = ({ lang }) => {
         </div>
 
         {loading && tokens.length === 0 ? (
-          <div className="flex items-center justify-center py-16 text-gray-300">
+          <div className="flex items-center justify-center py-16 text-gray-500">
             <Loader className="w-6 h-6 animate-spin" />
           </div>
         ) : tokens.length === 0 ? (
           <div className="text-center py-16">
-            <ShieldCheck className="w-12 h-12 text-gray-200 mx-auto mb-3" />
-            <p className="text-sm text-gray-400">{t.empty}</p>
+            <ShieldCheck className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+            <p className="text-sm text-gray-500">{t.empty}</p>
           </div>
         ) : (
           <div className="divide-y divide-gray-100 -mx-6">
