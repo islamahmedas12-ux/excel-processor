@@ -424,6 +424,14 @@ class ExcelApiService {
   // Template Library
   // -------------------------------------------------------------------------
 
+  /**
+   * Uploads a file to the template library, optionally with a custom name and description.
+   * @param {File} file - The file object to upload as a template (from input[type="file"]).
+   * @param {string} [name] - Optional custom name for the template. If not provided, the original filename is used.
+   * @param {string} [description] - Optional description explaining the template's purpose or contents.
+   * @returns {Promise<any>} The created template entry with server-assigned id and metadata.
+   * @throws {Error} When the upload fails, file exceeds size limits, or format is unsupported.
+   */
   async uploadTemplate(file: File, name?: string, description?: string): Promise<any> {
     const formData = new FormData();
     formData.append('file', file);
@@ -433,25 +441,56 @@ class ExcelApiService {
     return res.data.template;
   }
 
+  /**
+   * Retrieves a list of all templates in the library owned by the authenticated user.
+   * @returns {Promise<any[]>} An array of template objects containing id, name, description, and metadata.
+   * @throws {Error} When the API request fails or authentication is invalid.
+   */
   async listTemplates(): Promise<any[]> {
     const res = await this.client.get('/api/v1/templates');
     return res.data.templates;
   }
 
+  /**
+   * Updates the name and/or description of an existing template.
+   * @param {string} id - The unique identifier of the template to update.
+   * @param {string} [name] - Optional new name for the template.
+   * @param {string} [description] - Optional new description for the template.
+   * @returns {Promise<any>} The updated template entry with modified metadata.
+   * @throws {Error} When the template does not exist or update fails.
+   */
   async updateTemplate(id: string, name?: string, description?: string): Promise<any> {
     const res = await this.client.patch(`/api/v1/templates/${id}`, { name, description });
     return res.data.template;
   }
 
+  /**
+   * Permanently deletes a template from the library.
+   * @param {string} id - The unique identifier of the template to delete.
+   * @returns {Promise<void>} Resolves when the template has been successfully deleted.
+   * @throws {Error} When the template does not exist or deletion fails.
+   */
   async deleteTemplate(id: string): Promise<void> {
     await this.client.delete(`/api/v1/templates/${id}`);
   }
 
+  /**
+   * Creates a result by applying a template's configuration to create a new output file.
+   * @param {string} id - The unique identifier of the template to use.
+   * @returns {Promise<any>} The created result object containing the output file information.
+   * @throws {Error} When the template does not exist or result creation fails.
+   */
   async useTemplate(id: string): Promise<any> {
     const res = await this.client.post(`/api/v1/templates/${id}/use`);
     return res.data.result;
   }
 
+  /**
+   * Downloads the original template file as a Blob.
+   * @param {string} id - The unique identifier of the template to download.
+   * @returns {Promise<Blob>} A Blob containing the template file data, suitable for downloading.
+   * @throws {Error} When the template does not exist or download fails.
+   */
   async downloadTemplate(id: string): Promise<Blob> {
     const res = await this.client.get(`/api/v1/templates/${id}/download`, { responseType: 'blob' });
     return res.data;
