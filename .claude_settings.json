@@ -1,0 +1,39 @@
+{
+  "sandbox": {
+    "enabled": true,
+    "autoAllowBashIfSandboxed": true
+  },
+  "permissions": {
+    "defaultMode": "acceptEdits",
+    "allow": [
+      "Read(./**)",
+      "Write(./**)",
+      "Edit(./**)",
+      "Glob(./**)",
+      "Grep(./**)",
+      "Read(C:\\Users\\Islam\\Documents\\excel-processor\\.auto-claude\\worktrees\\tasks\\014-missing-security-http-headers-csp-hsts-x-content-t/**)",
+      "Write(C:\\Users\\Islam\\Documents\\excel-processor\\.auto-claude\\worktrees\\tasks\\014-missing-security-http-headers-csp-hsts-x-content-t/**)",
+      "Edit(C:\\Users\\Islam\\Documents\\excel-processor\\.auto-claude\\worktrees\\tasks\\014-missing-security-http-headers-csp-hsts-x-content-t/**)",
+      "Glob(C:\\Users\\Islam\\Documents\\excel-processor\\.auto-claude\\worktrees\\tasks\\014-missing-security-http-headers-csp-hsts-x-content-t/**)",
+      "Grep(C:\\Users\\Islam\\Documents\\excel-processor\\.auto-claude\\worktrees\\tasks\\014-missing-security-http-headers-csp-hsts-x-content-t/**)",
+      "Read(C:\\Users\\Islam\\Documents\\excel-processor\\.auto-claude\\worktrees\\tasks\\014-missing-security-http-headers-csp-hsts-x-content-t\\.auto-claude\\specs\\014-missing-security-http-headers-csp-hsts-x-content-t/**)",
+      "Write(C:\\Users\\Islam\\Documents\\excel-processor\\.auto-claude\\worktrees\\tasks\\014-missing-security-http-headers-csp-hsts-x-content-t\\.auto-claude\\specs\\014-missing-security-http-headers-csp-hsts-x-content-t/**)",
+      "Edit(C:\\Users\\Islam\\Documents\\excel-processor\\.auto-claude\\worktrees\\tasks\\014-missing-security-http-headers-csp-hsts-x-content-t\\.auto-claude\\specs\\014-missing-security-http-headers-csp-hsts-x-content-t/**)",
+      "Read(C:\\Users\\Islam\\Documents\\excel-processor\\.auto-claude/**)",
+      "Write(C:\\Users\\Islam\\Documents\\excel-processor\\.auto-claude/**)",
+      "Edit(C:\\Users\\Islam\\Documents\\excel-processor\\.auto-claude/**)",
+      "Glob(C:\\Users\\Islam\\Documents\\excel-processor\\.auto-claude/**)",
+      "Grep(C:\\Users\\Islam\\Documents\\excel-processor\\.auto-claude/**)",
+      "Bash(*)",
+      "WebFetch(*)",
+      "WebSearch(*)",
+      "mcp__context7__resolve-library-id(*)",
+      "mcp__context7__query-docs(*)",
+      "mcp__graphiti-memory__search_nodes(*)",
+      "mcp__graphiti-memory__search_facts(*)",
+      "mcp__graphiti-memory__add_episode(*)",
+      "mcp__graphiti-memory__get_episodes(*)",
+      "mcp__graphiti-memory__get_entity_edge(*)"
+    ]
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "active": true,
+  "spec": "014-missing-security-http-headers-csp-hsts-x-content-t",
+  "state": "building",
+  "subtasks": {
+    "completed": 1,
+    "total": 4,
+    "in_progress": 1,
+    "failed": 0
+  },
+  "phase": {
+    "current": "Backend Security Headers",
+    "id": null,
+    "total": 3
+  },
+  "workers": {
+    "active": 0,
+    "max": 1
+  },
+  "session": {
+    "number": 4,
+    "started_at": "2026-05-10T11:30:43.233346"
+  },
+  "last_update": "2026-05-10T12:02:36.251033"
+}
