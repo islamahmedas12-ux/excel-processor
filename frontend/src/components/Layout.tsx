@@ -42,6 +42,8 @@ export const Layout: React.FC<LayoutProps> = ({
 }) => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [avatarUrl, setAvatarUrl]   = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedQuery, setDebouncedQuery] = useState('');
   const { user, logout } = useAuth();
   const isRtl = lang === 'ar';
   const dir   = isRtl ? 'rtl' : 'ltr';
@@ -62,6 +64,14 @@ export const Layout: React.FC<LayoutProps> = ({
       }
     }).catch(() => setAvatarUrl(null));
   }, [activeTab]);
+
+  // Debounce search input (300ms delay)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedQuery(searchQuery);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   const activeItem = NAV.find(n => n.id === activeTab);
   const pageTitle  = activeItem ? (isRtl ? activeItem.ar : activeItem.en) : '';
@@ -217,9 +227,19 @@ export const Layout: React.FC<LayoutProps> = ({
               <Search className="w-4 h-4 text-slate-400 flex-shrink-0" />
               <input
                 type="text"
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
                 placeholder={isRtl ? 'بحث...' : 'Search...'}
                 className="bg-transparent text-sm text-slate-600 placeholder-slate-400 outline-none w-full"
               />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="text-slate-400 hover:text-slate-600 transition-colors"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
             </div>
           </div>
 
