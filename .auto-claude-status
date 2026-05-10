@@ -1,0 +1,25 @@
+{
+  "active": true,
+  "spec": "004-add-template-duplicate-detection-using-existing-sh",
+  "state": "planning",
+  "subtasks": {
+    "completed": 0,
+    "total": 0,
+    "in_progress": 1,
+    "failed": 0
+  },
+  "phase": {
+    "current": "Implementation",
+    "id": null,
+    "total": 2
+  },
+  "workers": {
+    "active": 0,
+    "max": 1
+  },
+  "session": {
+    "number": 2,
+    "started_at": "2026-05-10T03:55:22.609549"
+  },
+  "last_update": "2026-05-10T03:57:32.986694"
+}

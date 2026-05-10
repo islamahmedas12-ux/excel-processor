@@ -51,6 +51,17 @@ def _key(owner_email: str, template_id: str) -> str:
     return f"{safe}/{template_id}.xlsx"
 
 
+def find_by_sha256_and_owner(sha256: str, owner_email: str) -> Optional[dict]:
+    """Find a template by SHA256 hash and owner email (duplicate detection)."""
+    with session_scope() as s:
+        t = s.execute(
+            select(Template)
+            .where(Template.sha256 == sha256, Template.owner_email == owner_email)
+            .limit(1)
+        ).scalar_one_or_none()
+        return _to_dict(t) if t else None
+
+
 # ── CRUD ─────────────────────────────────────────────────────────────────────
 
 def save(
@@ -65,14 +76,23 @@ def save(
     sha  = hashlib.sha256(content).hexdigest()
     name = name.strip() or filename
 
-    storage.put(
-        storage.BUCKET_TEMPLATES,
-        _key(owner_email, template_id),
-        content,
-        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    )
-
     with session_scope() as s:
+        # Check for existing template with same sha256 and owner (duplicate detection)
+        existing = s.execute(
+            select(Template)
+            .where(Template.sha256 == sha, Template.owner_email == owner_email)
+            .limit(1)
+        ).scalar_one_or_none()
+        if existing:
+            return _to_dict(existing)
+
+        storage.put(
+            storage.BUCKET_TEMPLATES,
+            _key(owner_email, template_id),
+            content,
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        )
+
         t = Template(
             id          = template_id,
             owner_email = owner_email,
