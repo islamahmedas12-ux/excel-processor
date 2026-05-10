@@ -100,3 +100,6 @@ roles.mdthoughts/
 .sisyphus/
 frontend/dist/
 roles.md
+
+# Auto Claude data directory
+.auto-claude/
