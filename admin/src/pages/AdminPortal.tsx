@@ -262,9 +262,10 @@ function SubscriptionsTable() {
   return (
     <>
       {preview && (
-        <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4" onClick={() => setPreview(null)}>
+        <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4"
+             onClick={() => { URL.revokeObjectURL(preview); setPreview(null); }}>
           <div className="relative max-w-2xl w-full" onClick={e => e.stopPropagation()}>
-            <button onClick={() => setPreview(null)}
+            <button onClick={() => { URL.revokeObjectURL(preview); setPreview(null); }}
               className="absolute -top-3 -end-3 bg-white rounded-full p-1 shadow-lg text-slate-500 hover:text-slate-800">
               <X className="w-5 h-5" />
             </button>
@@ -310,7 +311,7 @@ function SubscriptionsTable() {
                     {new Date(r.created_at).toLocaleDateString('ar-EG')}
                   </td>
                   <td className="px-4 py-3">
-                    <button onClick={() => setPreview(adminApi.proofImageUrl(r.id))}
+                    <button onClick={async () => setPreview(await adminApi.loadProofImage(r.id))}
                       className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-primary-600 transition-colors">
                       <Eye className="w-4 h-4" />
                     </button>

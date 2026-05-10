@@ -64,9 +64,9 @@ export const adminApi = {
     await client.post(`/api/v1/admin/subscriptions/${id}/reject`, { notes });
   },
 
-  proofImageUrl(id: string): string {
-    const token = localStorage.getItem(TOKEN_KEY) ?? '';
-    return `/api/v1/admin/subscriptions/${id}/proof?token=${token}`;
+  async loadProofImage(id: string): Promise<string> {
+    const res = await client.get(`/api/v1/admin/subscriptions/${id}/proof`, { responseType: 'blob' });
+    return URL.createObjectURL(res.data);
   },
 
   async listPlans(): Promise<Record<string, any>> {
