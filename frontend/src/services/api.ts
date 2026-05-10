@@ -66,11 +66,23 @@ class ExcelApiService {
   // File Repository
   // -------------------------------------------------------------------------
 
+  /**
+   * Retrieves a list of all files owned by the authenticated user.
+   * @returns {Promise<FileEntry[]>} An array of file entries containing id, filename, size, category, and metadata.
+   * @throws {Error} When the API request fails or authentication is invalid.
+   */
   async listFiles(): Promise<FileEntry[]> {
     const res = await this.client.get('/api/v1/files');
     return res.data.files;
   }
 
+  /**
+   * Uploads a file to the server and optionally assigns it to a category.
+   * @param {File} file - The file object to upload (from input[type="file"]).
+   * @param {string | null} [categoryId] - Optional category ID to assign the file to. If not provided, file remains uncategorized.
+   * @returns {Promise<FileEntry>} The created file entry with server-assigned id and metadata.
+   * @throws {Error} When the upload fails, file exceeds size limits, or category does not exist.
+   */
   async uploadFile(file: File, categoryId?: string | null): Promise<FileEntry> {
     const formData = new FormData();
     formData.append('file', file);
@@ -79,10 +91,23 @@ class ExcelApiService {
     return res.data.file;
   }
 
+  /**
+   * Assigns or removes a category assignment for a specific file.
+   * @param {string} fileId - The unique identifier of the file to update.
+   * @param {string | null} categoryId - The category ID to assign, or null to remove any existing category.
+   * @returns {Promise<void>} Resolves when the category has been successfully updated.
+   * @throws {Error} When the file does not exist or category assignment fails.
+   */
   async assignFileCategory(fileId: string, categoryId: string | null): Promise<void> {
     await this.client.patch(`/api/v1/files/${fileId}`, { category_id: categoryId });
   }
 
+  /**
+   * Permanently deletes a file from the repository.
+   * @param {string} id - The unique identifier of the file to delete.
+   * @returns {Promise<void>} Resolves when the file has been successfully deleted.
+   * @throws {Error} When the file does not exist or deletion fails.
+   */
   async deleteFile(id: string): Promise<void> {
     await this.client.delete(`/api/v1/files/${id}`);
   }
