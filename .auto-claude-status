@@ -3,13 +3,13 @@
   "spec": "002-migrate-file-store-and-result-store-from-in-memory",
   "state": "building",
   "subtasks": {
-    "completed": 1,
+    "completed": 2,
     "total": 5,
     "in_progress": 1,
     "failed": 0
   },
   "phase": {
-    "current": "Migrate file_store to MinIO",
+    "current": "Migrate result_store to MinIO",
     "id": null,
     "total": 2
   },
@@ -18,8 +18,8 @@
     "max": 1
   },
   "session": {
-    "number": 3,
+    "number": 4,
     "started_at": "2026-05-10T16:47:58.357038"
   },
-  "last_update": "2026-05-10T16:56:32.661551"
+  "last_update": "2026-05-10T17:09:43.979155"
 }
