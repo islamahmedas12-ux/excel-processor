@@ -36,14 +36,7 @@ API: 更新输入单元格 → Excel 自动计算 → 读取输出结果
 cp .env.example .env
 ```
 
-编辑 `.env` 文件配置您的 Supabase：
-
-```env
-# Supabase Configuration
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_KEY=your-supabase-api-key
-SUPABASE_BUCKET=excel-files
-```
+编辑 `.env` 文件配置数据库和存储：
 
 ### 2. 启动服务
 
