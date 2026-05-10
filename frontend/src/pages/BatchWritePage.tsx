@@ -19,6 +19,29 @@ export const BatchWritePage: React.FC<BatchWritePageProps> = ({ lang }) => {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+  const [jsonValid, setJsonValid] = useState<boolean | null>(null);
+  const [jsonError, setJsonError] = useState<string | null>(null);
+  const [parsedJson, setParsedJson] = useState<Record<string, any> | null>(null);
+
+  const handleJsonChange = (text: string) => {
+    setUpdatesText(text);
+    if (!text.trim()) {
+      setJsonValid(null);
+      setJsonError(null);
+      setParsedJson(null);
+      return;
+    }
+    try {
+      const parsed = JSON.parse(text);
+      setJsonValid(true);
+      setJsonError(null);
+      setParsedJson(parsed);
+    } catch (err: any) {
+      setJsonValid(false);
+      setJsonError(err.message);
+      setParsedJson(null);
+    }
+  };
 
   const t = {
     ar: {
@@ -66,10 +89,7 @@ export const BatchWritePage: React.FC<BatchWritePageProps> = ({ lang }) => {
       return;
     }
 
-    let updates: Record<string, any>;
-    try {
-      updates = JSON.parse(updatesText);
-    } catch {
+    if (jsonValid === false || !parsedJson) {
       setError(lang === 'ar' ? 'صيغة JSON غير صالحة' : 'Invalid JSON format');
       return;
     }
@@ -79,7 +99,7 @@ export const BatchWritePage: React.FC<BatchWritePageProps> = ({ lang }) => {
     setResult(null);
 
     try {
-      const response = await apiService.writeCells(selectedFile.id, updates, sheetName || undefined, lang);
+      const response = await apiService.writeCells(selectedFile.id, parsedJson, sheetName || undefined, lang);
       if (response.success) {
         setResult({ ...response, _resultMeta: response.result });
       } else {
@@ -109,12 +129,22 @@ export const BatchWritePage: React.FC<BatchWritePageProps> = ({ lang }) => {
             <label className="block text-sm font-medium text-gray-700 mb-1">{t.updates}</label>
             <textarea
               value={updatesText}
-              onChange={e => setUpdatesText(e.target.value)}
+              onChange={e => handleJsonChange(e.target.value)}
               placeholder={t.updatesPlaceholder}
               rows={6}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent font-mono"
+              className={`w-full px-4 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent font-mono ${
+                jsonValid === false ? 'border-red-300 bg-red-50' : jsonValid === true ? 'border-green-300' : 'border-gray-300'
+              }`}
             />
             <p className="mt-1 text-xs text-gray-500">{t.updatesHelp}</p>
+            {jsonValid === false && jsonError && (
+              <p className="mt-1 text-xs text-red-600">{jsonError}</p>
+            )}
+            {jsonValid === true && parsedJson && (
+              <p className="mt-1 text-xs text-green-600">
+                {lang === 'ar' ? '✓ JSON صالح' : '✓ Valid JSON'} - {Object.keys(parsedJson).length} {lang === 'ar' ? 'إدخال' : 'entries'}
+              </p>
+            )}
           </div>
 
           {error && <Alert type="error" message={error} onClose={() => setError(null)} />}
