@@ -340,6 +340,46 @@ def read_cells():
         return jsonify({"error": "Internal server error"}), 500
 
 
+@api_bp.route('/read/range', methods=['POST'])
+@require_auth
+def read_range():
+    file_content, filename, err = _resolve_file()
+    if err:
+        return jsonify({"error": err[0]}), err[1]
+
+    start_cell = request.form.get('start_cell')
+    end_cell = request.form.get('end_cell')
+    sheet_name = request.form.get('sheet_name')
+
+    if not start_cell or not end_cell:
+        return jsonify({"error": "start_cell and end_cell parameters are required"}), 400
+
+    try:
+        result = excel_service.read_range(file_content=file_content, filename=filename,
+                                          start_cell=start_cell, end_cell=end_cell,
+                                          sheet_name=sheet_name)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"error": "Internal server error"}), 500
+
+
+@api_bp.route('/read/all', methods=['POST'])
+@require_auth
+def read_all():
+    file_content, filename, err = _resolve_file()
+    if err:
+        return jsonify({"error": err[0]}), err[1]
+
+    sheet_name = request.form.get('sheet_name')
+
+    try:
+        result = excel_service.read_all_data(file_content=file_content, filename=filename,
+                                              sheet_name=sheet_name)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"error": "Internal server error"}), 500
+
+
 @api_bp.route('/write', methods=['POST'])
 @require_auth
 def write_cells():
