@@ -1,0 +1,25 @@
+{
+  "active": true,
+  "spec": "019-admin-api-endpoints-are-completely-undocumented",
+  "state": "building",
+  "subtasks": {
+    "completed": 1,
+    "total": 5,
+    "in_progress": 1,
+    "failed": 0
+  },
+  "phase": {
+    "current": "Admin API Documentation",
+    "id": null,
+    "total": 5
+  },
+  "workers": {
+    "active": 0,
+    "max": 1
+  },
+  "session": {
+    "number": 3,
+    "started_at": "2026-05-10T16:35:48.317300"
+  },
+  "last_update": "2026-05-10T16:41:44.738643"
+}
