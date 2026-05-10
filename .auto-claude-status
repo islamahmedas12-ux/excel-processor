@@ -3,7 +3,7 @@
   "spec": "018-no-architecture-system-documentation-for-the-multi",
   "state": "building",
   "subtasks": {
-    "completed": 3,
+    "completed": 5,
     "total": 6,
     "in_progress": 1,
     "failed": 0
@@ -18,8 +18,8 @@
     "max": 1
   },
   "session": {
-    "number": 5,
+    "number": 7,
     "started_at": "2026-05-10T15:59:49.686457"
   },
-  "last_update": "2026-05-10T16:19:14.641245"
+  "last_update": "2026-05-10T16:35:16.504710"
 }
