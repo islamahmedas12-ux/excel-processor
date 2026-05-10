@@ -1,0 +1,25 @@
+{
+  "active": true,
+  "spec": "010-improve-low-contrast-text-in-empty-states-and-seco",
+  "state": "building",
+  "subtasks": {
+    "completed": 8,
+    "total": 16,
+    "in_progress": 1,
+    "failed": 0
+  },
+  "phase": {
+    "current": "Secondary Text Elements Accessibility Fix",
+    "id": null,
+    "total": 7
+  },
+  "workers": {
+    "active": 0,
+    "max": 1
+  },
+  "session": {
+    "number": 10,
+    "started_at": "2026-05-10T09:59:29.400174"
+  },
+  "last_update": "2026-05-10T10:33:43.958773"
+}

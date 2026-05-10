@@ -1,0 +1,39 @@
+{
+  "sandbox": {
+    "enabled": true,
+    "autoAllowBashIfSandboxed": true
+  },
+  "permissions": {
+    "defaultMode": "acceptEdits",
+    "allow": [
+      "Read(./**)",
+      "Write(./**)",
+      "Edit(./**)",
+      "Glob(./**)",
+      "Grep(./**)",
+      "Read(C:\\Users\\Islam\\Documents\\excel-processor\\.auto-claude\\worktrees\\tasks\\010-improve-low-contrast-text-in-empty-states-and-seco/**)",
+      "Write(C:\\Users\\Islam\\Documents\\excel-processor\\.auto-claude\\worktrees\\tasks\\010-improve-low-contrast-text-in-empty-states-and-seco/**)",
+      "Edit(C:\\Users\\Islam\\Documents\\excel-processor\\.auto-claude\\worktrees\\tasks\\010-improve-low-contrast-text-in-empty-states-and-seco/**)",
+      "Glob(C:\\Users\\Islam\\Documents\\excel-processor\\.auto-claude\\worktrees\\tasks\\010-improve-low-contrast-text-in-empty-states-and-seco/**)",
+      "Grep(C:\\Users\\Islam\\Documents\\excel-processor\\.auto-claude\\worktrees\\tasks\\010-improve-low-contrast-text-in-empty-states-and-seco/**)",
+      "Read(C:\\Users\\Islam\\Documents\\excel-processor\\.auto-claude\\worktrees\\tasks\\010-improve-low-contrast-text-in-empty-states-and-seco\\.auto-claude\\specs\\010-improve-low-contrast-text-in-empty-states-and-seco/**)",
+      "Write(C:\\Users\\Islam\\Documents\\excel-processor\\.auto-claude\\worktrees\\tasks\\010-improve-low-contrast-text-in-empty-states-and-seco\\.auto-claude\\specs\\010-improve-low-contrast-text-in-empty-states-and-seco/**)",
+      "Edit(C:\\Users\\Islam\\Documents\\excel-processor\\.auto-claude\\worktrees\\tasks\\010-improve-low-contrast-text-in-empty-states-and-seco\\.auto-claude\\specs\\010-improve-low-contrast-text-in-empty-states-and-seco/**)",
+      "Read(C:\\Users\\Islam\\Documents\\excel-processor\\.auto-claude/**)",
+      "Write(C:\\Users\\Islam\\Documents\\excel-processor\\.auto-claude/**)",
+      "Edit(C:\\Users\\Islam\\Documents\\excel-processor\\.auto-claude/**)",
+      "Glob(C:\\Users\\Islam\\Documents\\excel-processor\\.auto-claude/**)",
+      "Grep(C:\\Users\\Islam\\Documents\\excel-processor\\.auto-claude/**)",
+      "Bash(*)",
+      "WebFetch(*)",
+      "WebSearch(*)",
+      "mcp__context7__resolve-library-id(*)",
+      "mcp__context7__query-docs(*)",
+      "mcp__graphiti-memory__search_nodes(*)",
+      "mcp__graphiti-memory__search_facts(*)",
+      "mcp__graphiti-memory__add_episode(*)",
+      "mcp__graphiti-memory__get_episodes(*)",
+      "mcp__graphiti-memory__get_entity_edge(*)"
+    ]
+  }
+}
