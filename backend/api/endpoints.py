@@ -836,6 +836,44 @@ def insert_qr():
     return jsonify({"success": True, "result": saved, "qr_data": qr_data})
 
 
+@api_bp.route('/insert/barcode', methods=['POST'])
+@require_auth
+def insert_barcode():
+    """
+    Generate a barcode and embed it into an Excel file.
+    Form fields:
+      file_id / result_id / file  — source Excel
+      barcode_data                — text to encode as barcode (required)
+      cell                        — anchor cell, default A1
+      sheet_name                  — optional
+    Returns a saved xlsx result.
+    """
+    from ..services.image_service import insert_barcode as _insert_barcode
+
+    file_content, filename, err = _resolve_file()
+    if err:
+        return jsonify({"error": err[0]}), err[1]
+
+    barcode_data = request.form.get('barcode_data', '').strip()
+    if not barcode_data:
+        return jsonify({"error": "barcode_data is required"}), 400
+
+    cell       = request.form.get('cell', 'A1').strip() or 'A1'
+    sheet_name = request.form.get('sheet_name') or None
+
+    try:
+        modified = _insert_barcode(file_content, barcode_data, cell, sheet_name)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+    source_id        = request.form.get('file_id') or request.form.get('result_id') or ''
+    result_filename  = os.path.splitext(filename)[0] + '_with_barcode.xlsx'
+    saved = result_store.save(kind='xlsx', source_file_id=source_id,
+                              source_file_name=filename,
+                              filename=result_filename, content=modified)
+    return jsonify({"success": True, "result": saved, "barcode_data": barcode_data})
+
+
 # ---------------------------------------------------------------------------
 # Document Verification Tokens
 # ---------------------------------------------------------------------------
