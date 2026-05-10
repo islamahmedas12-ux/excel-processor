@@ -171,6 +171,33 @@ excel-processor/
 | `postgres` | PostgreSQL 数据库 | 5433 |
 | `minio` | S3 兼容对象存储 | 9100 |
 
+## 🛠️ 服务概述
+
+| 服务 | 镜像/构建 | 端口 | 描述 |
+|------|-----------|------|------|
+| `postgres` | `postgres:16-alpine` | 5433 | PostgreSQL 数据库 - 存储应用数据 |
+| `minio` | `minio/minio:latest` | 9100/9101 | S3 兼容对象存储 - 存储 Excel 文件 |
+| `backend` | `./` (Dockerfile) | 5000 | Flask API 服务 - 核心业务逻辑 |
+| `frontend` | `./frontend` | 3000 | React 用户界面 - 用户交互 |
+| `admin` | `./admin` | 3100 | React 管理后台 - 系统管理 |
+| `landing` | `./landing` | 4200 | Next.js 落地页 - 营销展示 |
+
+所有服务通过 `excel-net` Docker 网络相互通信。
+
+### 服务依赖关系
+
+```
+postgres (数据库)
+    ↑
+minio (对象存储)
+    ↑
+backend (API 服务)
+    ↓
+┌───────┼───────┬────────┐
+↓       ↓       ↓        ↓
+frontend  admin  landing  (前端服务)
+```
+
 ## 🔧 技术栈
 
 - **后端：** Flask, Python
