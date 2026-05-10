@@ -688,16 +688,13 @@ def subscribe():
     if not proof:
         return jsonify({"error": "Transfer proof image is required"}), 400
 
-    # Validate proof image MIME type (magic bytes detection)
-    allowed_mime_types = {'image/jpeg', 'image/png', 'image/webp'}
+    # Validate proof image using magic bytes (prevents polyglot attacks)
+    from ..utils.file_validation import validate_image_mime_type
     proof_bytes = proof.read()
-    mime = mimetypes.guess_type(proof.filename)[0]
-    if mime is None:
-        mime = 'application/octet-stream'
-    if mime not in allowed_mime_types:
+    if not validate_image_mime_type(proof_bytes):
         return jsonify({
-            "error":   "invalid_file_type",
-            "message": "Proof image must be a JPEG, PNG, or WebP file",
+            "error": "invalid_file_type",
+            "message": "Proof image must be a valid image file",
         }), 400
 
     # Get user info from JWT
