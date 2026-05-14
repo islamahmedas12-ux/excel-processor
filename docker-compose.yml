@@ -85,6 +85,11 @@ services:
       - excel-net
 
   landing:
+    # Opt-in: the landing app currently depends on a `lib/` directory (useLang
+    # hook and i18n copy) that is not in the repo, so its build fails.
+    # Start it explicitly with `docker compose --profile landing up -d` once
+    # the missing content is restored.
+    profiles: ["landing"]
     build:
       context: ./landing
       args:

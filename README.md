@@ -59,9 +59,19 @@ docker compose up -d
 | API (后端) | http://localhost:5000 |
 | 用户界面 | http://localhost:3000 |
 | 管理后台 | http://localhost:3100 |
-| 落地页 | http://localhost:4200 |
+| 落地页 | http://localhost:4200 (opt-in, 见下) |
 
 API 文档地址：`http://localhost:5000/`
+
+> **Landing service note:** the `landing` (Next.js marketing site) is
+> currently **opt-in via a compose profile** because it depends on a
+> `lib/` directory (`lib/useLang.ts` + `lib/i18n.ts`) that is not in
+> the repo, so the default build would fail. Once that content is
+> restored, start it with:
+>
+> ```bash
+> docker compose --profile landing up -d
+> ```
 
 ## 📡 API 端点
 
