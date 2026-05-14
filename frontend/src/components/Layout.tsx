@@ -3,32 +3,37 @@ import {
   FileSpreadsheet, FolderOpen, Eye, Edit3, Settings,
   FileText, Play, Globe, Menu, ChevronRight, Bell,
   Search, X, LogOut, CreditCard, BriefcaseIcon, ShieldCheck, Layers, QrCode, BookTemplate,
-  LayoutDashboard, Archive, UserCircle,
+  LayoutDashboard, Archive, UserCircle, ChevronDown, Key,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useFiles } from '../context/FilesContext';
 import { StorageBar } from './StorageBar';
 import apiService from '../services/api';
 
-type TabId = 'dashboard' | 'files' | 'read' | 'write' | 'batch' | 'pdf' | 'execute' | 'merge' | 'insert' | 'templates' | 'jobs' | 'verify' | 'results' | 'plans' | 'profile';
+type TabId = 'apis' | 'files' | 'templates' | 'results' | 'jobs' | 'api_keys' |
+  'dashboard' | 'read' | 'write' | 'batch' | 'pdf' | 'execute' | 'merge' | 'insert' | 'verify' | 'plans' | 'profile';
 
-const NAV: Array<{ id: TabId; ar: string; en: string; icon: React.ElementType; dividerBefore?: boolean }> = [
-  { id: 'dashboard', ar: 'لوحة التحكم',     en: 'Dashboard',     icon: LayoutDashboard },
-  { id: 'files',   ar: 'الملفات',           en: 'Files',         icon: FolderOpen      },
-  { id: 'results', ar: 'النتائج',           en: 'Results',       icon: Archive         },
-  { id: 'read',    ar: 'قراءة البيانات',    en: 'Read Data',     icon: Eye             },
-  { id: 'write',   ar: 'تعديل خلية',       en: 'Edit Cell',     icon: Edit3           },
-  { id: 'batch',   ar: 'تعديل متعدد',      en: 'Batch Edit',    icon: Settings        },
-  { id: 'pdf',     ar: 'تصدير PDF',        en: 'Export PDF',    icon: FileText        },
-  { id: 'execute', ar: 'تنفيذ دفعي',       en: 'Batch Execute', icon: Play            },
-  { id: 'merge',   ar: 'دمج PDF',          en: 'Merge PDF',     icon: Layers,         dividerBefore: true },
-  { id: 'insert',    ar: 'إدراج صورة / QR',  en: 'Insert Image / QR', icon: QrCode        },
-  { id: 'templates', ar: 'مكتبة القوالب',    en: 'Templates',         icon: BookTemplate  },
-  { id: 'jobs',    ar: 'المهام',            en: 'Jobs',          icon: BriefcaseIcon   },
-  { id: 'verify',  ar: 'التحقق من الوثائق',en: 'Verify Docs',   icon: ShieldCheck     },
-  { id: 'plans',   ar: 'الخطط والأسعار',   en: 'Plans',         icon: CreditCard      },
-  { id: 'profile', ar: 'الملف الشخصي',    en: 'Profile',       icon: UserCircle,     dividerBefore: true },
+const MAIN_NAV: Array<{ id: TabId; ar: string; en: string; icon: React.ElementType }> = [
+  { id: 'apis',      ar: 'واجهات API',     en: 'APIs',          icon: Key             },
+  { id: 'files',     ar: 'الملفات',         en: 'Files',         icon: FolderOpen      },
+  { id: 'templates', ar: 'مكتبة القوالب',   en: 'Templates',     icon: BookTemplate   },
+  { id: 'results',  ar: 'النتائج',         en: 'Results',       icon: Archive         },
+  { id: 'jobs',      ar: 'المهام',          en: 'Jobs',          icon: BriefcaseIcon   },
+  { id: 'api_keys', ar: 'مفاتيح API',       en: 'API Keys',      icon: Key            },
 ];
+
+const ADVANCED_NAV: Array<{ id: TabId; ar: string; en: string; icon: React.ElementType }> = [
+  { id: 'read',    ar: 'قراءة البيانات',    en: 'Read Data',       icon: Eye             },
+  { id: 'write',   ar: 'تعديل خلية',       en: 'Edit Cell',       icon: Edit3           },
+  { id: 'batch',   ar: 'تعديل متعدد',       en: 'Batch Edit',     icon: Settings        },
+  { id: 'execute', ar: 'تنفيذ دفعي',       en: 'Batch Execute',  icon: Play            },
+  { id: 'insert',  ar: 'إدراج صورة / QR',  en: 'Insert Image / QR', icon: QrCode        },
+  { id: 'pdf',     ar: 'تصدير PDF',        en: 'Export PDF',     icon: FileText        },
+  { id: 'merge',   ar: 'دمج PDF',           en: 'Merge PDF',      icon: Layers          },
+  { id: 'verify',  ar: 'التحقق من الوثائق', en: 'Verify Docs',   icon: ShieldCheck      },
+];
+
+const ADVANCED_KEY = 'excel_processor_advanced_expanded';
 
 interface LayoutProps {
   lang: 'ar' | 'en';
@@ -43,6 +48,9 @@ export const Layout: React.FC<LayoutProps> = ({
 }) => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [avatarUrl, setAvatarUrl]   = useState<string | null>(null);
+  const [advancedExpanded, setAdvancedExpanded] = useState(
+    () => localStorage.getItem(ADVANCED_KEY) === 'true'
+  );
   const { user, logout } = useAuth();
   const { searchQuery, setSearchQuery } = useFiles();
   const isRtl = lang === 'ar';
@@ -86,16 +94,14 @@ export const Layout: React.FC<LayoutProps> = ({
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto py-5 px-3">
         <p className="px-3 mb-2 text-[10px] font-bold uppercase tracking-widest text-slate-400">
-          {isRtl ? 'الأدوات' : 'Tools'}
+          {isRtl ? 'القائمة' : 'Menu'}
         </p>
 
         <div className="space-y-0.5">
-          {NAV.map(item => {
+          {MAIN_NAV.map(item => {
             const Icon   = item.icon;
             const active = activeTab === item.id;
             return (
-              <React.Fragment key={item.id}>
-              {item.dividerBefore && <div className="my-2 border-t border-slate-100" />}
               <button
                 key={item.id}
                 onClick={() => { onTabChange(item.id); setMobileOpen(false); }}
@@ -112,16 +118,60 @@ export const Layout: React.FC<LayoutProps> = ({
                   ${active ? 'bg-primary-100' : 'bg-slate-100 group-hover:bg-slate-200'}`}>
                   <Icon className={`w-3.5 h-3.5 ${active ? 'text-primary-600' : 'text-slate-500 group-hover:text-slate-700'}`} />
                 </span>
-
                 <span className="flex-1">{isRtl ? item.ar : item.en}</span>
-
                 {active && (
                   <span className="w-1 h-5 rounded-full bg-primary-500 flex-shrink-0" />
                 )}
               </button>
-              </React.Fragment>
             );
           })}
+        </div>
+
+        {/* Advanced section */}
+        <div className="mt-4">
+          <button
+            onClick={() => {
+              const next = !advancedExpanded;
+              setAdvancedExpanded(next);
+              localStorage.setItem(ADVANCED_KEY, String(next));
+            }}
+            className="w-full flex items-center gap-2 px-3 py-2 text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-slate-600 transition-colors"
+          >
+            <span>{isRtl ? 'متقدم' : 'Advanced'}</span>
+            <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${advancedExpanded ? 'rotate-180' : ''}`} />
+          </button>
+
+          {advancedExpanded && (
+            <div className="space-y-0.5 mt-1">
+              {ADVANCED_NAV.map(item => {
+                const Icon   = item.icon;
+                const active = activeTab === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => { onTabChange(item.id); setMobileOpen(false); }}
+                    className={`
+                      w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm
+                      transition-all duration-150 group text-start
+                      ${active
+                        ? 'bg-primary-50 text-primary-700 font-semibold'
+                        : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800 font-medium'
+                      }
+                    `}
+                  >
+                    <span className={`flex-shrink-0 p-1.5 rounded-lg transition-colors
+                      ${active ? 'bg-primary-100' : 'bg-slate-100 group-hover:bg-slate-200'}`}>
+                      <Icon className={`w-3.5 h-3.5 ${active ? 'text-primary-600' : 'text-slate-500 group-hover:text-slate-700'}`} />
+                    </span>
+                    <span className="flex-1">{isRtl ? item.ar : item.en}</span>
+                    {active && (
+                      <span className="w-1 h-5 rounded-full bg-primary-500 flex-shrink-0" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
       </nav>
 

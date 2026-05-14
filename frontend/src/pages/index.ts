@@ -14,3 +14,4 @@ export { VerifyTokensPage } from './VerifyTokensPage';
 export { ResultsPage } from './ResultsPage';
 export { DashboardPage } from './DashboardPage';
 export { ProfilePage } from './ProfilePage';
+export { APIsPage } from './APIsPage';
