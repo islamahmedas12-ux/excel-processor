@@ -134,13 +134,22 @@ export const APIsPage: React.FC<APIsPageProps> = ({ lang, onTabChange }) => {
           </p>
         </div>
         {onTabChange && (
-          <button
-            onClick={() => onTabChange('files')}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium transition-colors"
-          >
-            <Plus className="w-4 h-4" />
-            <span>{t.newApi}</span>
-          </button>
+          <>
+            <button
+              onClick={() => onTabChange('api_builder')}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+              <span>{t.newApi}</span>
+            </button>
+            <button
+              onClick={() => onTabChange('files')}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-600 text-sm font-medium transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+              <span>{isRtl ? 'رفع ملف' : 'Upload file'}</span>
+            </button>
+          </>
         )}
       </div>
 
