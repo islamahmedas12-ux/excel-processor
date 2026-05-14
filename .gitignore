@@ -111,3 +111,8 @@ roles.md
 .worktrees/
 .security-key
 logs/security/
+
+# autobuild state (local only, not tracked)
+.autobuild-goal.md
+.autobuild-progress.md
+.autobuild-order.txt
