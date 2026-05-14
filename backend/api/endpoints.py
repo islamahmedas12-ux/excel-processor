@@ -24,19 +24,33 @@ from ..services import token_store as _token_store
 
 _executor = ThreadPoolExecutor(max_workers=8)
 
-# Simple in-memory rate limiter for the public /verify endpoint
+# Simple in-memory rate limiter keyed by identifier (IP or email)
 _rl_store: dict[str, list[float]] = defaultdict(list)
 _rl_lock  = threading.Lock()
 
-def _rate_limit(ip: str, max_req: int = 20, window_sec: int = 60) -> bool:
+
+def _rate_limit(key: str, max_req: int = 30, window_sec: int = 60) -> tuple[bool, int]:
+    """
+    Token-bucket rate limiter. Returns (allowed, retry_after_seconds).
+    retry_after is non-zero only when disallowed.
+    """
     now = time.time()
     with _rl_lock:
-        ts = _rl_store[ip]
+        ts = _rl_store[key]
         ts[:] = [t for t in ts if now - t < window_sec]
         if len(ts) >= max_req:
-            return False
+            retry_after = int(window_sec - (now - ts[0])) + 1
+            return False, max(retry_after, 1)
         ts.append(now)
-    return True
+    return True, 0
+
+
+def _rate_limit_key() -> str:
+    """Return the rate-limit key: email from JWT, or IP as fallback."""
+    email = _current_email()
+    if email:
+        return f"user:{email}"
+    return f"ip:{request.remote_addr or 'unknown'}"
 
 api_bp = Blueprint('api', __name__, url_prefix='/api/v1')
 
@@ -437,6 +451,12 @@ def run_file(file_id):
     config = meta.get('api_config')
     if not config:
         return jsonify({"error": "No API config set for this file. Use PUT /files/<id>/config first."}), 404
+
+    allowed, retry_after = _rate_limit(_rate_limit_key(), max_req=30, window_sec=60)
+    if not allowed:
+        response = jsonify({"error": "rate_limit_exceeded", "retry_after": retry_after})
+        response.headers['Retry-After'] = str(retry_after)
+        return response, 429
 
     data = request.get_json(silent=True) or {}
     inputs = data.get('inputs', {})
@@ -1639,7 +1659,8 @@ def merge_pdfs():
 def verify_document(access_code):
     from datetime import datetime, timezone as _tz
     ip = (request.headers.get('X-Forwarded-For') or request.remote_addr or '').split(',')[0].strip()
-    if not _rate_limit(ip):
+    allowed, retry_after = _rate_limit(ip, max_req=20, window_sec=60)
+    if not allowed:
         return jsonify({"error": "rate_limited", "message": "Too many requests. Try again in a minute."}), 429
 
     code = (access_code or '').strip().upper()
