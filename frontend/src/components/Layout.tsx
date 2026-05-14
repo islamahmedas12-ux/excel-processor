@@ -3,7 +3,7 @@ import {
   FileSpreadsheet, FolderOpen, Eye, Edit3, Settings,
   FileText, Play, Globe, Menu, ChevronRight, Bell,
   Search, X, LogOut, CreditCard, BriefcaseIcon, ShieldCheck, Layers, QrCode, BookTemplate,
-  LayoutDashboard, Archive, UserCircle, ChevronDown, Key,
+  Archive, UserCircle, ChevronDown, Key,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useFiles } from '../context/FilesContext';
@@ -11,7 +11,7 @@ import { StorageBar } from './StorageBar';
 import apiService from '../services/api';
 
 type TabId = 'apis' | 'files' | 'templates' | 'results' | 'jobs' | 'api_keys' |
-  'dashboard' | 'read' | 'write' | 'batch' | 'pdf' | 'execute' | 'merge' | 'insert' | 'verify' | 'plans' | 'profile';
+  'read' | 'write' | 'batch' | 'pdf' | 'execute' | 'merge' | 'insert' | 'verify' | 'plans' | 'profile';
 
 const MAIN_NAV: Array<{ id: TabId; ar: string; en: string; icon: React.ElementType }> = [
   { id: 'apis',      ar: 'واجهات API',     en: 'APIs',          icon: Key             },
