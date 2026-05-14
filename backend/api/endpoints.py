@@ -189,6 +189,46 @@ def delete_file(file_id):
 @api_bp.route('/files/<file_id>/config', methods=['GET'])
 @require_auth
 def get_file_config(file_id):
+    """
+    Get the API configuration for a file.
+    ---
+    tags:
+      - File Config
+    parameters:
+      - in: path
+        name: file_id
+        type: string
+        required: true
+        description: ID of the file
+    responses:
+      200:
+        description: The file's API configuration
+        schema:
+          type: object
+          properties:
+            success:
+              type: boolean
+            config:
+              type: object
+              properties:
+                inputs:
+                  type: array
+                  items:
+                    type: string
+                  example: ["A1", "B2"]
+                outputs:
+                  type: array
+                  items:
+                    type: string
+                  example: ["C1"]
+                sheet:
+                  type: string
+                  example: "Sheet1"
+      404:
+        description: File not found or no config set
+    security:
+      - Bearer: []
+    """
     email = _current_email()
     meta = file_store.get_meta(file_id, owner_email=email)
     if not meta:
@@ -201,6 +241,68 @@ def get_file_config(file_id):
 @api_bp.route('/files/<file_id>/config', methods=['PUT'])
 @require_auth
 def set_file_config(file_id):
+    """
+    Save or update the API configuration for a file.
+    ---
+    tags:
+      - File Config
+    parameters:
+      - in: path
+        name: file_id
+        type: string
+        required: true
+        description: ID of the file
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          required:
+            - inputs
+            - outputs
+          properties:
+            inputs:
+              type: array
+              items:
+                type: string
+              description: List of input cell coordinates (e.g., ["A1", "B2"])
+              example: ["A1", "B2"]
+            outputs:
+              type: array
+              items:
+                type: string
+              description: List of output cell coordinates (e.g., ["C1"])
+              example: ["C1"]
+            sheet:
+              type: string
+              description: Sheet name to use (optional)
+              example: "Sheet1"
+    responses:
+      200:
+        description: Config saved successfully
+        schema:
+          type: object
+          properties:
+            success:
+              type: boolean
+            config:
+              type: object
+              properties:
+                inputs:
+                  type: array
+                  items:
+                    type: string
+                outputs:
+                  type: array
+                  items:
+                    type: string
+                sheet:
+                  type: string
+      422:
+        description: Validation error (missing fields, invalid cells, etc.)
+    security:
+      - Bearer: []
+    """
     email = _current_email()
     meta = file_store.get_meta(file_id, owner_email=email)
     if not meta:
@@ -249,6 +351,25 @@ def set_file_config(file_id):
 @api_bp.route('/files/<file_id>/config', methods=['DELETE'])
 @require_auth
 def delete_file_config(file_id):
+    """
+    Delete the API configuration for a file, re-applying the standard 24h TTL.
+    ---
+    tags:
+      - File Config
+    parameters:
+      - in: path
+        name: file_id
+        type: string
+        required: true
+        description: ID of the file
+    responses:
+      204:
+        description: Config deleted, TTL re-applied
+      404:
+        description: File not found
+    security:
+      - Bearer: []
+    """
     email = _current_email()
     meta = file_store.get_meta(file_id, owner_email=email)
     if not meta:
@@ -264,6 +385,50 @@ def delete_file_config(file_id):
 @api_bp.route('/files/<file_id>/run', methods=['POST'])
 @require_auth_or_api_key
 def run_file(file_id):
+    """
+    Execute a configured file's API with the given input values.
+    Returns the computed output cell values.
+
+    Supports JWT (portal users) and API key (programmatic access) authentication.
+    ---
+    tags:
+      - File Run
+    parameters:
+      - in: path
+        name: file_id
+        type: string
+        required: true
+        description: ID of the configured file
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          required:
+            - inputs
+          properties:
+            inputs:
+              type: object
+              description: Key-value pairs of input cell coordinates and their values
+              example: {"A1": "John", "B2": 5000}
+    responses:
+      200:
+        description: Computed output cell values
+        schema:
+          type: object
+          properties:
+            outputs:
+              type: object
+              description: Key-value pairs of output cell coordinates and their computed values
+              example: {"C1": "Hello John, total is 5000"}
+      404:
+        description: File not found or has no API config
+      422:
+        description: Input mismatch — missing or unexpected input keys
+    security:
+      - Bearer: []
+      - ApiKeyAuth: []
+    """
     email = _current_email()
     meta = file_store.get_meta(file_id, owner_email=email)
     if not meta:
@@ -1201,6 +1366,45 @@ def insert_barcode():
 @api_bp.route('/auth/api-keys', methods=['GET'])
 @require_auth
 def list_api_keys():
+    """
+    List all API keys for the authenticated user.
+    Never returns the raw key or hash — only metadata.
+    ---
+    tags:
+      - API Keys
+    responses:
+      200:
+        description: List of API keys
+        schema:
+          type: object
+          properties:
+            success:
+              type: boolean
+            api_keys:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  name:
+                    type: string
+                  key_prefix:
+                    type: string
+                  created_at:
+                    type: string
+                    format: date-time
+                  last_used_at:
+                    type: string
+                    format: date-time
+                    nullable: true
+                  revoked_at:
+                    type: string
+                    format: date-time
+                    nullable: true
+    security:
+      - Bearer: []
+    """
     email = _current_email()
     from ..services import api_key_service
     keys = api_key_service.list_by_owner(email)
@@ -1210,6 +1414,55 @@ def list_api_keys():
 @api_bp.route('/auth/api-keys', methods=['POST'])
 @require_auth
 def create_api_key():
+    """
+    Create a new API key for programmatic access.
+    The raw key is returned only in this response — it cannot be retrieved later.
+    ---
+    tags:
+      - API Keys
+    parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          required:
+            - name
+          properties:
+            name:
+              type: string
+              description: Friendly name for the key
+              example: "Production key"
+    responses:
+      201:
+        description: Key created successfully — store the raw key now
+        schema:
+          type: object
+          properties:
+            success:
+              type: boolean
+            warning:
+              type: string
+            api_key:
+              type: object
+              properties:
+                id:
+                  type: string
+                name:
+                  type: string
+                key:
+                  type: string
+                  description: The raw API key (shown only once)
+                key_prefix:
+                  type: string
+                created_at:
+                  type: string
+                  format: date-time
+      422:
+        description: Validation error or key limit (max 10) reached
+    security:
+      - Bearer: []
+    """
     email = _current_email()
     data = request.get_json(silent=True) or {}
     name = (data.get('name') or '').strip()
@@ -1238,6 +1491,25 @@ def create_api_key():
 @api_bp.route('/auth/api-keys/<key_id>', methods=['DELETE'])
 @require_auth
 def revoke_api_key(key_id):
+    """
+    Revoke an API key. Immediately invalidates the key.
+    ---
+    tags:
+      - API Keys
+    parameters:
+      - in: path
+        name: key_id
+        type: string
+        required: true
+        description: ID of the API key to revoke
+    responses:
+      204:
+        description: Key revoked successfully
+      404:
+        description: Key not found
+    security:
+      - Bearer: []
+    """
     email = _current_email()
     from ..services import api_key_service
     api_key_service.revoke(key_id, email)

@@ -17,9 +17,60 @@ from backend.api.auth import auth_bp
 from backend.api.admin import admin_bp
 from backend.security_headers import init_app as init_security_headers
 
+# Initialize Flasgger for Swagger UI
+from flasgger import Swagger
 
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = int(os.getenv('MAX_FILE_SIZE', 50 * 1024 * 1024))
+
+# Swagger configuration with both JWT and API key security schemes
+swagger_config = {
+    "headers": [],
+    "specs": [
+        {
+            "endpoint": "apispec",
+            "route": "/apispec.json",
+            "rule_filter": "all",
+            "model_filter": "all",
+        }
+    ],
+    "static_url_path": "/flasgger_static",
+    "swagger_ui": True,
+    "specs_route": "/swagger/"
+}
+
+swagger_template = {
+    "info": {
+        "title": "Excel Processor API",
+        "description": "Excel as a Backend Service — upload Excel files, fill input cells, "
+                      "get calculated outputs via REST API. Supports both JWT (portal) and "
+                      "API key (programmatic) authentication.",
+        "version": "2.0.0",
+    },
+    "securityDefinitions": {
+        "Bearer": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header",
+            "description": "JWT token. Format: 'Bearer <token>'",
+        },
+        "ApiKeyAuth": {
+            "type": "apiKey",
+            "name": "X-API-Key",
+            "in": "header",
+            "description": "API key for programmatic access. Prefix: ek_live_",
+        },
+    },
+    "tags": [
+        {"name": "Files", "description": "File upload, listing, and deletion"},
+        {"name": "File Config", "description": "API configuration for individual files (inputs/outputs)"},
+        {"name": "File Run", "description": "Execute a configured file's API"},
+        {"name": "API Keys", "description": "Create, list, and revoke API keys"},
+        {"name": "Excel Operations", "description": "Read, write, and execute Excel operations"},
+    ],
+}
+
+Swagger(app, config=swagger_config, template=swagger_template)
 
 origins = os.getenv('CORS_ORIGINS', '').split(',') if os.getenv('CORS_ORIGINS') else []
 if origins:
