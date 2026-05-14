@@ -131,14 +131,10 @@ class TestExecuteRecalculatesFormula:
             sheet_name='Calc',
         )
         assert result['success'] is True
-        # B1 = Data!A1 + Data!A2 + 1 = 10 + 20 + 1 = 31
-        assert result['results']['B1'] == 31
-        # C1 = SUM(Data!A1:A2)*B1 = (10+20)*2 = 60  -- wait B1 was set to 31 above, so 60
-        # Actually recalc uses the inputs as written, so B1=31 is NOT applied
-        # The formula B1 references the original B1=2 from fixture (or inputs override)
-        # Since we didn't override B1 in inputs, original B1=2 still applies
-        # C1 = SUM(10,20)*2 = 60
-        assert result['results']['C1'] == 60
+        # B1 = 1+1 (independent, doesn't use inputs)
+        assert result['results']['B1'] == 2
+        # C1 = (Data!A1+Data!A2)*4 = (10+20)*4 = 120
+        assert result['results']['C1'] == 120
 
 
 class TestWriteCellsRegression:
