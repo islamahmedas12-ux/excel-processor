@@ -113,3 +113,15 @@ class Result(Base):
     created_at     = Column(DateTime(timezone=True), nullable=False, default=_utc_now)
     updated_at     = Column(DateTime(timezone=True), nullable=False, default=_utc_now)
     expires_at     = Column(DateTime(timezone=True))
+
+
+class ApiKey(Base):
+    __tablename__ = 'api_keys'
+    id           = Column(String, primary_key=True)
+    owner_email  = Column(String, nullable=False, index=True)
+    name         = Column(String, nullable=False)
+    key_prefix   = Column(String, unique=True, nullable=False, index=True)
+    key_hash     = Column(String, nullable=False)
+    last_used_at  = Column(DateTime(timezone=True))
+    created_at   = Column(DateTime(timezone=True), nullable=False, default=_utc_now)
+    revoked_at   = Column(DateTime(timezone=True))
