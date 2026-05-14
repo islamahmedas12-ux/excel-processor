@@ -82,7 +82,7 @@ const CopyButton: React.FC<{ code: string }> = ({ code }) => {
 };
 
 export const CodeSnippets: React.FC<CodeSnippetsProps> = ({
-  fileId, endpointBase, inputs, apiKeyPrefix, hasApiKey,
+  fileId, endpointBase, inputs, apiKeyPrefix, hasApiKey, onNavigateToKeys,
 }) => {
   const [activeLang, setActiveLang] = useState<Language>('curl');
   const lang = 'en'; // always show English code snippets
@@ -123,7 +123,19 @@ export const CodeSnippets: React.FC<CodeSnippetsProps> = ({
           <span className="font-medium">No API key yet.</span>
           {' '}
           Use <code className="bg-amber-100 px-1 rounded">ek_live_…YOUR_KEY…</code> as a placeholder.
-          Generate a key in <strong>API Keys</strong> section.
+          {onNavigateToKeys ? (
+            <>
+              {' '}
+              <button
+                onClick={onNavigateToKeys}
+                className="underline hover:no-underline font-medium"
+              >
+                Generate one ▸
+              </button>
+            </>
+          ) : (
+            <>Generate a key in <strong>API Keys</strong> section.</>
+          )}
         </div>
       )}
     </div>

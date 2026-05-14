@@ -57,6 +57,14 @@ export const APIKeysPage: React.FC<APIKeysPageProps> = ({
     }
   };
 
+  useEffect(() => {
+    // Auto-open create dialog if navigated from API Builder Step 3
+    if (sessionStorage.getItem('openCreateDialog') === '1') {
+      sessionStorage.removeItem('openCreateDialog');
+      setShowCreate(true);
+    }
+  }, []);
+
   useEffect(() => { loadKeys(); }, []);
 
   const handleCreate = async () => {
