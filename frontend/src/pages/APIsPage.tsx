@@ -171,7 +171,7 @@ export const APIsPage: React.FC<APIsPageProps> = ({ lang, onTabChange }) => {
           <p className="text-slate-400 text-sm mt-1">{t.emptyHint}</p>
           {onTabChange && (
             <button
-              onClick={() => onTabChange('files')}
+              onClick={() => onTabChange('api_builder')}
               className="mt-5 flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white font-medium transition-colors"
             >
               <Plus className="w-4 h-4" />
