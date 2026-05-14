@@ -3,7 +3,10 @@ FROM python:3.11-slim
 WORKDIR /app
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends build-essential \
+    && apt-get install -y --no-install-recommends \
+        build-essential \
+        libreoffice-core libreoffice-calc libreoffice-writer \
+        fonts-dejavu fonts-liberation \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
