@@ -4,7 +4,6 @@ import { FilesProvider } from '../context/FilesContext';
 import { CategoriesProvider } from '../context/CategoriesContext';
 import { ResultsProvider } from '../context/ResultsContext';
 
-// Loading fallback component for lazy-loaded pages
 const PageLoader: React.FC = () => (
   <div className="flex items-center justify-center h-64">
     <div className="flex flex-col items-center gap-3">
@@ -29,6 +28,7 @@ const PlansPage = lazy(() => import('./PlansPage').then(m => ({ default: m.Plans
 const ResultsPage = lazy(() => import('./ResultsPage').then(m => ({ default: m.ResultsPage })));
 const DashboardPage = lazy(() => import('./DashboardPage').then(m => ({ default: m.DashboardPage })));
 const ProfilePage = lazy(() => import('./ProfilePage').then(m => ({ default: m.ProfilePage })));
+const APIsPage = lazy(() => import('./APIsPage').then(m => ({ default: m.APIsPage })));
 
 interface HomePageProps {
   lang: 'ar' | 'en';
@@ -36,7 +36,7 @@ interface HomePageProps {
 }
 
 export const HomePage: React.FC<HomePageProps> = ({ lang, onLangChange }) => {
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState('apis');
 
   return (
     <FilesProvider>
@@ -49,20 +49,21 @@ export const HomePage: React.FC<HomePageProps> = ({ lang, onLangChange }) => {
             onTabChange={setActiveTab}
           >
             <Suspense fallback={<PageLoader />}>
-              {activeTab === 'dashboard' && <DashboardPage lang={lang} onTabChange={setActiveTab} />}
-              {activeTab === 'files'   && <FilesPage lang={lang} />}
-              {activeTab === 'results' && <ResultsPage lang={lang} />}
-              {activeTab === 'read'    && <ReadPage lang={lang} />}
-              {activeTab === 'write'   && <WritePage lang={lang} />}
-              {activeTab === 'batch'   && <BatchWritePage lang={lang} />}
-              {activeTab === 'pdf'     && <ExportPdfPage lang={lang} onTabChange={setActiveTab} />}
+              {activeTab === 'apis'     && <APIsPage lang={lang} />}
+              {activeTab === 'files'    && <FilesPage lang={lang} />}
+              {activeTab === 'results'  && <ResultsPage lang={lang} />}
+              {activeTab === 'read'     && <ReadPage lang={lang} />}
+              {activeTab === 'write'    && <WritePage lang={lang} />}
+              {activeTab === 'batch'    && <BatchWritePage lang={lang} />}
+              {activeTab === 'pdf'      && <ExportPdfPage lang={lang} onTabChange={setActiveTab} />}
               {activeTab === 'execute' && <BatchExecutePage lang={lang} />}
-              {activeTab === 'merge'   && <MergePdfPage lang={lang} />}
-              {activeTab === 'insert'    && <InsertImagePage lang={lang} />}
+              {activeTab === 'merge'    && <MergePdfPage lang={lang} />}
+              {activeTab === 'insert'   && <InsertImagePage lang={lang} />}
               {activeTab === 'templates' && <TemplatesPage lang={lang} onTabChange={setActiveTab} />}
-              {activeTab === 'jobs'    && <JobsPage lang={lang} />}
-              {activeTab === 'verify'  && <VerifyTokensPage lang={lang} />}
-              {activeTab === 'plans'   && <PlansPage lang={lang} />}
+              {activeTab === 'jobs'     && <JobsPage lang={lang} />}
+              {activeTab === 'api_keys' && <div className="flex items-center justify-center h-64"><p className="text-slate-500">API Keys page — coming soon</p></div>}
+              {activeTab === 'verify'   && <VerifyTokensPage lang={lang} />}
+              {activeTab === 'plans'    && <PlansPage lang={lang} />}
               {activeTab === 'profile' && <ProfilePage lang={lang} />}
             </Suspense>
           </Layout>
