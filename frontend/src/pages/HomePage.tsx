@@ -26,7 +26,6 @@ const JobsPage = lazy(() => import('./JobsPage').then(m => ({ default: m.JobsPag
 const VerifyTokensPage = lazy(() => import('./VerifyTokensPage').then(m => ({ default: m.VerifyTokensPage })));
 const PlansPage = lazy(() => import('./PlansPage').then(m => ({ default: m.PlansPage })));
 const ResultsPage = lazy(() => import('./ResultsPage').then(m => ({ default: m.ResultsPage })));
-const DashboardPage = lazy(() => import('./DashboardPage').then(m => ({ default: m.DashboardPage })));
 const ProfilePage = lazy(() => import('./ProfilePage').then(m => ({ default: m.ProfilePage })));
 const APIsPage = lazy(() => import('./APIsPage').then(m => ({ default: m.APIsPage })));
 const APIKeysPage = lazy(() => import('./APIKeysPage').then(m => ({ default: m.APIKeysPage })));

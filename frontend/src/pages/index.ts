@@ -12,7 +12,6 @@ export { TemplatesPage } from './TemplatesPage';
 export { JobsPage } from './JobsPage';
 export { VerifyTokensPage } from './VerifyTokensPage';
 export { ResultsPage } from './ResultsPage';
-export { DashboardPage } from './DashboardPage';
 export { ProfilePage } from './ProfilePage';
 export { APIsPage } from './APIsPage';
 export { APIKeysPage } from './APIKeysPage';
