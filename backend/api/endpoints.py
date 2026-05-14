@@ -262,7 +262,7 @@ def delete_file_config(file_id):
 # ---------------------------------------------------------------------------
 
 @api_bp.route('/files/<file_id>/run', methods=['POST'])
-@require_auth
+@require_auth_or_api_key
 def run_file(file_id):
     email = _current_email()
     meta = file_store.get_meta(file_id, owner_email=email)
@@ -421,7 +421,7 @@ def export_result_to_pdf(result_id):
 # ---------------------------------------------------------------------------
 
 @api_bp.route('/execute', methods=['POST'])
-@require_auth
+@require_auth_or_api_key
 def execute():
     file_content, filename, err = _resolve_file()
     if err:

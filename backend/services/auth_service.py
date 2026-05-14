@@ -84,7 +84,36 @@ def require_auth(f):
         payload = verify_token(token)
         if not payload:
             return jsonify({"error": "Invalid or expired token"}), 401
+        request.user_email = payload.get('sub', '')
+        request.auth_method = 'jwt'
         return f(*args, **kwargs)
+    return decorated
+
+
+def require_auth_or_api_key(f):
+    """Decorator — accepts either a JWT (Authorization: Bearer) or an API key (X-API-Key)."""
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        # Try JWT first
+        token = _extract_token()
+        if token:
+            payload = verify_token(token)
+            if payload:
+                request.user_email = payload.get('sub', '')
+                request.auth_method = 'jwt'
+                return f(*args, **kwargs)
+
+        # Fall back to API key
+        api_key = request.headers.get('X-API-Key', '').strip()
+        if api_key:
+            from .api_key_service import verify as verify_api_key
+            key_meta = verify_api_key(api_key)
+            if key_meta:
+                request.user_email = key_meta['owner_email']
+                request.auth_method = 'api_key'
+                return f(*args, **kwargs)
+
+        return jsonify({"error": "Authentication required"}), 401
     return decorated
 
 
