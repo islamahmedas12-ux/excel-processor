@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import { Copy, Check } from 'lucide-react';
 
 interface CodeSnippetsProps {
+  lang: 'ar' | 'en';
   fileId: string;
   endpointBase: string;
   inputs: Record<string, any>;
   apiKeyPrefix?: string;
   hasApiKey: boolean;
+  onNavigateToKeys?: () => void;
 }
 
 type Language = 'curl' | 'javascript' | 'python';
@@ -58,8 +60,30 @@ print(response.json()["outputs"])`,
   },
 };
 
-const CopyButton: React.FC<{ code: string }> = ({ code }) => {
+const T = {
+  ar: {
+    copy: 'نسخ',
+    copied: 'تم!',
+    noKeyTitle: 'لا يوجد مفتاح API بعد',
+    noKeyBody: 'استخدم',
+    placeholder: 'كـ placeholder',
+    generateOne: 'إنشاء واحد ▸',
+    orSection: 'أو أنشئ مفتاحاً في قسم',
+  },
+  en: {
+    copy: 'Copy',
+    copied: 'Copied!',
+    noKeyTitle: 'No API key yet.',
+    noKeyBody: 'Use',
+    placeholder: 'as a placeholder.',
+    generateOne: 'Generate one ▸',
+    orSection: 'or generate a key in the',
+  },
+};
+
+const CopyButton: React.FC<{ code: string; lang: 'ar' | 'en' }> = ({ code, lang }) => {
   const [copied, setCopied] = useState(false);
+  const t = T[lang];
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(code);
@@ -73,19 +97,19 @@ const CopyButton: React.FC<{ code: string }> = ({ code }) => {
     <button
       onClick={handleCopy}
       className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors"
-      title="Copy to clipboard"
+      title={lang === 'ar' ? 'نسخ إلى الحافظة' : 'Copy to clipboard'}
     >
       {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-      <span>{copied ? 'Copied!' : 'Copy'}</span>
+      <span>{copied ? t.copied : t.copy}</span>
     </button>
   );
 };
 
 export const CodeSnippets: React.FC<CodeSnippetsProps> = ({
-  fileId, endpointBase, inputs, apiKeyPrefix, hasApiKey, onNavigateToKeys,
+  lang, fileId, endpointBase, inputs, apiKeyPrefix, hasApiKey, onNavigateToKeys,
 }) => {
   const [activeLang, setActiveLang] = useState<Language>('curl');
-  const lang = 'en'; // always show English code snippets
+  const t = T[lang];
   const snippetDef = SNIPPETS[activeLang];
 
   return (
@@ -102,27 +126,29 @@ export const CodeSnippets: React.FC<CodeSnippetsProps> = ({
                 : 'text-slate-500 hover:text-slate-700'
               }`}
           >
-            {SNIPPETS[l].en}
+            {SNIPPETS[l][lang]}
           </button>
         ))}
       </div>
 
       {/* Code + copy */}
       <div className="relative">
-        <pre className="p-4 text-xs text-slate-800 overflow-x-auto bg-white">
+        <pre className="p-4 text-xs text-slate-800 overflow-x-auto bg-white" dir="ltr">
           <code>{snippetDef.code({ fileId, endpointBase, inputs, apiKeyPrefix })}</code>
         </pre>
         <div className="absolute top-3 end-3">
-          <CopyButton code={snippetDef.code({ fileId, endpointBase, inputs, apiKeyPrefix })} />
+          <CopyButton code={snippetDef.code({ fileId, endpointBase, inputs, apiKeyPrefix })} lang={lang} />
         </div>
       </div>
 
       {/* No-key warning */}
       {!hasApiKey && (
         <div className="px-4 py-3 bg-amber-50 border-t border-amber-100 text-xs text-amber-700">
-          <span className="font-medium">No API key yet.</span>
+          <span className="font-medium">{t.noKeyTitle}</span>
           {' '}
-          Use <code className="bg-amber-100 px-1 rounded">ek_live_…YOUR_KEY…</code> as a placeholder.
+          {t.noKeyBody}{' '}
+          <code className="bg-amber-100 px-1 rounded">ek_live_…YOUR_KEY…</code>{' '}
+          {t.placeholder}
           {onNavigateToKeys ? (
             <>
               {' '}
@@ -130,11 +156,13 @@ export const CodeSnippets: React.FC<CodeSnippetsProps> = ({
                 onClick={onNavigateToKeys}
                 className="underline hover:no-underline font-medium"
               >
-                Generate one ▸
+                {t.generateOne}
               </button>
             </>
           ) : (
-            <>Generate a key in <strong>API Keys</strong> section.</>
+            <>
+              {' '}{t.orSection} <strong>API Keys</strong>.
+            </>
           )}
         </div>
       )}
