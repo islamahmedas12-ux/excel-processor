@@ -1,5 +1,11 @@
 import axios, { AxiosInstance } from 'axios';
 import type { FileEntry } from '../context/FilesContext';
+import type {
+  FileConfig,
+  ApiKey,
+  ApiKeyCreateResponse,
+  RunFileResponse,
+} from '../types/api';
 
 export interface VerifyToken {
   id: string;
@@ -647,6 +653,93 @@ class ExcelApiService {
     if (sheets && sheets.length > 0) formData.append('sheets', sheets.join(','));
     const res = await this.client.post(`/api/v1/results/${resultId}/export-pdf`, formData);
     return res.data.result;
+  }
+
+  // ── File API Config ────────────────────────────────────────────────────────────
+
+  /**
+   * Retrieves the API configuration for a specific file.
+   * @param {string} fileId - The unique identifier of the file.
+   * @returns {Promise<FileConfig>} The file's API config (inputs, outputs, sheet).
+   * @throws {Error} When the file is not found or has no config.
+   */
+  async getFileConfig(fileId: string): Promise<FileConfig> {
+    const res = await this.client.get(`/api/v1/files/${fileId}/config`);
+    return res.data.config;
+  }
+
+  /**
+   * Saves or updates the API configuration for a specific file.
+   * @param {string} fileId - The unique identifier of the file.
+   * @param {FileConfig} config - The config to save (inputs, outputs, sheet).
+   * @returns {Promise<FileConfig>} The saved configuration.
+   * @throws {Error} When the file is not found or validation fails.
+   */
+  async saveFileConfig(fileId: string, config: FileConfig): Promise<FileConfig> {
+    const res = await this.client.put(`/api/v1/files/${fileId}/config`, config);
+    return res.data.config;
+  }
+
+  /**
+   * Deletes the API configuration for a specific file, re-applying TTL.
+   * @param {string} fileId - The unique identifier of the file.
+   * @returns {Promise<void>} Resolves when the config has been cleared.
+   * @throws {Error} When the file is not found.
+   */
+  async deleteFileConfig(fileId: string): Promise<void> {
+    await this.client.delete(`/api/v1/files/${fileId}/config`);
+  }
+
+  // -------------------------------------------------------------------------
+  // File Run
+  // -------------------------------------------------------------------------
+
+  /**
+   * Runs a configured file's API with the given inputs.
+   * @param {string} fileId - The unique identifier of the configured file.
+   * @param {Record<string, any>} inputs - Input cell values (keys must match the file's config).
+   * @returns {Promise<RunFileResponse>} The computed output cell values.
+   * @throws {Error} When the file has no config, inputs don't match, or execution fails.
+   */
+  async runFile(fileId: string, inputs: Record<string, any>): Promise<RunFileResponse> {
+    const res = await this.client.post(`/api/v1/files/${fileId}/run`, { inputs });
+    return res.data;
+  }
+
+  // -------------------------------------------------------------------------
+  // API Keys
+  // -------------------------------------------------------------------------
+
+  /**
+   * Lists all API keys for the authenticated user.
+   * @returns {Promise<ApiKey[]>} Array of API key objects (never includes raw key or hash).
+   * @throws {Error} When the API request fails or authentication is invalid.
+   */
+  async listApiKeys(): Promise<ApiKey[]> {
+    const res = await this.client.get('/api/v1/auth/api-keys');
+    return res.data.api_keys || [];
+  }
+
+  /**
+   * Creates a new API key for the authenticated user.
+   * The raw key is returned only in this response — it cannot be retrieved later.
+   * @param {string} name - A friendly name for the key.
+   * @returns {Promise<ApiKeyCreateResponse>} Includes the raw key (store it now).
+   * @throws {Error} When the user already has 10 active keys or auth fails.
+   */
+  async createApiKey(name: string): Promise<ApiKeyCreateResponse> {
+    const res = await this.client.post('/api/v1/auth/api-keys', { name });
+    return res.data;
+  }
+
+  /**
+   * Revokes an API key (soft-delete; audit trail is preserved).
+   * @param {string} keyId - The unique identifier of the key to revoke.
+   * @returns {Promise<void>} Resolves when the key has been revoked.
+   * @throws {Error} When the key is not found or does not belong to the user.
+   */
+  async revokeApiKey(keyId: string): Promise<void> {
+    await this.client.delete(`/api/v1/auth/api-keys/${keyId}`);
   }
 
   /**
