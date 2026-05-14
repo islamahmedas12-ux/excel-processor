@@ -183,6 +183,81 @@ def delete_file(file_id):
 
 
 # ---------------------------------------------------------------------------
+# File API Config
+# ---------------------------------------------------------------------------
+
+@api_bp.route('/files/<file_id>/config', methods=['GET'])
+@require_auth
+def get_file_config(file_id):
+    email = _current_email()
+    meta = file_store.get_meta(file_id, owner_email=email)
+    if not meta:
+        return jsonify({"error": "File not found"}), 404
+    if meta.get('api_config') is None:
+        return jsonify({"error": "No config set for this file"}), 404
+    return jsonify({"success": True, "config": meta['api_config']})
+
+
+@api_bp.route('/files/<file_id>/config', methods=['PUT'])
+@require_auth
+def set_file_config(file_id):
+    email = _current_email()
+    meta = file_store.get_meta(file_id, owner_email=email)
+    if not meta:
+        return jsonify({"error": "File not found"}), 404
+
+    data = request.get_json(silent=True) or {}
+    inputs  = data.get('inputs', [])
+    outputs = data.get('outputs', [])
+    sheet   = data.get('sheet')
+
+    if not inputs or not outputs:
+        return jsonify({"error": "inputs and outputs are required and must be non-empty"}), 422
+
+    # Validate disjointness
+    if set(inputs) & set(outputs):
+        return jsonify({"error": "inputs and outputs must be disjoint"}), 422
+
+    # Validate cell coordinates
+    from excel_processor.validators import validate_cell_coordinates
+    for cell in inputs + outputs:
+        try:
+            validate_cell_coordinates(cell)
+        except Exception:
+            return jsonify({"error": f"Invalid cell coordinate: {cell}"}), 422
+
+    # Validate sheet name exists in the file
+    file_content = file_store.get_content(file_id, owner_email=email)
+    if not file_content:
+        return jsonify({"error": "File content not found"}), 404
+    from openpyxl import load_workbook
+    from io import BytesIO
+    try:
+        wb = load_workbook(BytesIO(file_content), read_only=True, data_only=True)
+        if sheet and sheet not in wb.sheetnames:
+            wb.close()
+            return jsonify({"error": f"Sheet '{sheet}' not found in workbook. Available: {wb.sheetnames}"}), 422
+        wb.close()
+    except Exception as e:
+        return jsonify({"error": f"Cannot open file as Excel: {e}"}), 422
+
+    api_config = {"inputs": inputs, "outputs": outputs, "sheet": sheet}
+    file_store.set_api_config(file_id, api_config, owner_email=email)
+    return jsonify({"success": True, "config": api_config})
+
+
+@api_bp.route('/files/<file_id>/config', methods=['DELETE'])
+@require_auth
+def delete_file_config(file_id):
+    email = _current_email()
+    meta = file_store.get_meta(file_id, owner_email=email)
+    if not meta:
+        return jsonify({"error": "File not found"}), 404
+    file_store.set_api_config(file_id, None, owner_email=email)
+    return '', 204
+
+
+# ---------------------------------------------------------------------------
 # Categories
 # ---------------------------------------------------------------------------
 
