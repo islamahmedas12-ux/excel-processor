@@ -34,10 +34,18 @@ const APIBuilderPage = lazy(() => import('./APIBuilderPage').then(m => ({ defaul
 interface HomePageProps {
   lang: 'ar' | 'en';
   onLangChange: (lang: 'ar' | 'en') => void;
+  editApiFileId?: string | null;
+  onApiEditComplete?: () => void;
 }
 
-export const HomePage: React.FC<HomePageProps> = ({ lang, onLangChange }) => {
+export const HomePage: React.FC<HomePageProps> = ({ lang, onLangChange, editApiFileId, onApiEditComplete }) => {
   const [activeTab, setActiveTab] = useState('apis');
+  const [editApiFileIdState, setEditApiFileIdState] = useState<string | null>(editApiFileId || null);
+
+  const handleEditApi = (fileId: string) => {
+    setEditApiFileIdState(fileId);
+    setActiveTab('api_builder');
+  };
 
   return (
     <FilesProvider>
@@ -50,7 +58,7 @@ export const HomePage: React.FC<HomePageProps> = ({ lang, onLangChange }) => {
             onTabChange={setActiveTab}
           >
             <Suspense fallback={<PageLoader />}>
-              {activeTab === 'apis'     && <APIsPage lang={lang} />}
+              {activeTab === 'apis'     && <APIsPage lang={lang} onEditApi={handleEditApi} />}
               {activeTab === 'files'    && <FilesPage lang={lang} />}
               {activeTab === 'results'  && <ResultsPage lang={lang} />}
               {activeTab === 'read'     && <ReadPage lang={lang} />}
@@ -63,7 +71,7 @@ export const HomePage: React.FC<HomePageProps> = ({ lang, onLangChange }) => {
               {activeTab === 'templates' && <TemplatesPage lang={lang} onTabChange={setActiveTab} />}
               {activeTab === 'jobs'     && <JobsPage lang={lang} />}
               {activeTab === 'api_keys' && <APIKeysPage lang={lang} />}
-              {activeTab === 'api_builder' && <APIBuilderPage lang={lang} onComplete={() => setActiveTab('apis')} />}
+              {activeTab === 'api_builder' && <APIBuilderPage lang={lang} editFileId={editApiFileIdState} onComplete={onApiEditComplete} />}
               {activeTab === 'verify'   && <VerifyTokensPage lang={lang} />}
               {activeTab === 'plans'    && <PlansPage lang={lang} />}
               {activeTab === 'profile' && <ProfilePage lang={lang} />}

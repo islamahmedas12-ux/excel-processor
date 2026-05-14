@@ -8,6 +8,7 @@ import { CodeSnippets } from '../components/CodeSnippets';
 interface APIsPageProps {
   lang: 'ar' | 'en';
   onTabChange?: (tab: string) => void;
+  onEditApi?: (fileId: string) => void;
 }
 
 interface ApiFileCard {
@@ -245,6 +246,13 @@ export const APIsPage: React.FC<APIsPageProps> = ({ lang, onTabChange }) => {
                   >
                     {copiedId === card.id ? <CheckCircle className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
                     <span>{copiedId === card.id ? (isRtl ? 'تم!' : 'Copied!') : t.copyCurl}</span>
+                  </button>
+                  <button
+                    onClick={() => onEditApi?.(card.id)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors"
+                  >
+                    <Settings className="w-3.5 h-3.5" />
+                    <span>{t.editConfig}</span>
                   </button>
                   <button
                     onClick={() => handleDelete(card.id)}
