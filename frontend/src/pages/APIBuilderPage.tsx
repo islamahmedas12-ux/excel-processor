@@ -10,6 +10,7 @@ interface APIBuilderPageProps {
   lang: 'ar' | 'en';
   onComplete?: () => void;
   onCancel?: () => void;
+  editFileId?: string | null;
 }
 
 type Step = 1 | 2 | 3;
@@ -19,14 +20,15 @@ const STEP_LABELS = {
   en: ['Source', 'Configure', 'Use'],
 };
 
-export const APIBuilderPage: React.FC<APIBuilderPageProps> = ({ lang, onComplete, onCancel }) => {
+export const APIBuilderPage: React.FC<APIBuilderPageProps> = ({ lang, onComplete, onCancel, editFileId }) => {
   const { files, uploadFile } = useFiles();
-  const [step, setStep] = useState<Step>(1);
+  const [step, setStep] = useState<Step>(editFileId ? 2 : 1);
+  const [editingFileId] = useState<string | null>(editFileId || null);
+  const [selectedFileId, setSelectedFileId] = useState<string | null>(editFileId || null);
   const isRtl = lang === 'ar';
 
   // Step 1 state
   const [sourceMode, setSourceMode] = useState<'new' | 'existing' | null>(null);
-  const [selectedFileId, setSelectedFileId] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState('');
   const [dragOver, setDragOver] = useState(false);
@@ -82,6 +84,17 @@ export const APIBuilderPage: React.FC<APIBuilderPageProps> = ({ lang, onComplete
     noKeyPlaceholder: 'ek_live_YOUR_KEY_HERE',
     inputPlaceholder: isRtl ? 'أدخل قيمة...' : 'Enter value...',
   };
+
+  // Load existing config when editing
+  useEffect(() => {
+    if (editingFileId) {
+      apiService.getFileConfig(editingFileId).then(cfg => {
+        setSheet(cfg.sheet || '');
+        setInputs(cfg.inputs.join(', '));
+        setOutputs(cfg.outputs.join(', '));
+      }).catch(() => {});
+    }
+  }, [editingFileId]);
 
   // ─── Step 1 handlers ───────────────────────────────────────────────────────
 
