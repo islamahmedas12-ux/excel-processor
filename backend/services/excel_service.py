@@ -10,6 +10,7 @@ from typing import Dict, List, Any, Optional
 from excel_processor.file_reader import ExcelReader
 from excel_processor.file_editor import ExcelEditor
 from .xlsx_patch import write_cells as _zip_write_cells
+from .recalc_service import recalc_xlsx
 
 
 class ExcelService:
@@ -37,24 +38,28 @@ class ExcelService:
             Dict with results
         """
         bytes_io = BytesIO(file_content)
-
+        # Determine sheet name via openpyxl (read-only, no save)
         with ExcelEditor(bytes_io) as editor:
             sheet_name_to_use = sheet_name or editor.get_sheet_names()[0]
 
-            for cell, value in inputs.items():
-                editor.update_cell(
-                    coordinates=cell,
-                    value=value,
-                    sheet_name=sheet_name_to_use,
-                    preserve_format=True
-                )
+        # Step 1: Write inputs via ZIP patching (preserves images/charts byte-for-byte)
+        modified_bytes = _zip_write_cells(file_content, inputs, sheet_name_to_use)
 
-            results = {}
-            for output_cell in outputs:
-                value = editor.get_sheet(sheet_name_to_use)[output_cell].value
-                results[output_cell] = value
+        # Step 2: Recalculate via LibreOffice headless (forces formula evaluation)
+        recalculated_bytes = recalc_xlsx(modified_bytes, filename)
 
-            editor.save()
+        # Step 3: Read output cells with data_only=True to get cached computed values
+        # keep_vba=False strips macros from the output — document this limitation
+        result_io = BytesIO(recalculated_bytes)
+        from openpyxl import load_workbook
+        wb = load_workbook(result_io, data_only=True, keep_vba=False)
+        ws = wb.active if sheet_name is None else wb[sheet_name_to_use]
+
+        results = {}
+        for output_cell in outputs:
+            results[output_cell] = ws[output_cell].value
+
+        wb.close()
 
         return {
             "success": True,
