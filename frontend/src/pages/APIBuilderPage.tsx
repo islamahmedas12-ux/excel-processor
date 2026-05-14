@@ -527,6 +527,7 @@ export const APIBuilderPage: React.FC<APIBuilderPageProps> = ({ lang, onComplete
 
             {/* Code snippets */}
             <CodeSnippets
+              lang={lang}
               fileId={selectedFileId || ''}
               endpointBase={window.location.origin}
               inputs={Object.fromEntries(inputList.map(k => [k, '']))}
