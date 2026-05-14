@@ -29,6 +29,7 @@ const ResultsPage = lazy(() => import('./ResultsPage').then(m => ({ default: m.R
 const DashboardPage = lazy(() => import('./DashboardPage').then(m => ({ default: m.DashboardPage })));
 const ProfilePage = lazy(() => import('./ProfilePage').then(m => ({ default: m.ProfilePage })));
 const APIsPage = lazy(() => import('./APIsPage').then(m => ({ default: m.APIsPage })));
+const APIKeysPage = lazy(() => import('./APIKeysPage').then(m => ({ default: m.APIKeysPage })));
 
 interface HomePageProps {
   lang: 'ar' | 'en';
@@ -61,7 +62,7 @@ export const HomePage: React.FC<HomePageProps> = ({ lang, onLangChange }) => {
               {activeTab === 'insert'   && <InsertImagePage lang={lang} />}
               {activeTab === 'templates' && <TemplatesPage lang={lang} onTabChange={setActiveTab} />}
               {activeTab === 'jobs'     && <JobsPage lang={lang} />}
-              {activeTab === 'api_keys' && <div className="flex items-center justify-center h-64"><p className="text-slate-500">API Keys page — coming soon</p></div>}
+              {activeTab === 'api_keys' && <APIKeysPage lang={lang} />}
               {activeTab === 'verify'   && <VerifyTokensPage lang={lang} />}
               {activeTab === 'plans'    && <PlansPage lang={lang} />}
               {activeTab === 'profile' && <ProfilePage lang={lang} />}
