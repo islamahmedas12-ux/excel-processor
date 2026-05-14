@@ -1195,6 +1195,56 @@ def insert_barcode():
 
 
 # ---------------------------------------------------------------------------
+# API Keys
+# ---------------------------------------------------------------------------
+
+@api_bp.route('/auth/api-keys', methods=['GET'])
+@require_auth
+def list_api_keys():
+    email = _current_email()
+    from ..services import api_key_service
+    keys = api_key_service.list_by_owner(email)
+    return jsonify({"success": True, "api_keys": keys})
+
+
+@api_bp.route('/auth/api-keys', methods=['POST'])
+@require_auth
+def create_api_key():
+    email = _current_email()
+    data = request.get_json(silent=True) or {}
+    name = (data.get('name') or '').strip()
+    if not name:
+        return jsonify({"error": "name is required"}), 400
+
+    from ..services import api_key_service
+    active_keys = [k for k in api_key_service.list_by_owner(email) if k.get('revoked_at') is None]
+    if len(active_keys) >= 10:
+        return jsonify({"error": "api_key_limit_exceeded", "message": "Maximum of 10 active API keys reached. Revoke one first."}), 422
+
+    raw_key, meta = api_key_service.create(email, name)
+    return jsonify({
+        "success": True,
+        "warning": "Store this now; it will not be shown again.",
+        "api_key": {
+            "id": meta['id'],
+            "name": meta['name'],
+            "key": raw_key,
+            "key_prefix": meta['key_prefix'],
+            "created_at": meta['created_at'],
+        },
+    }), 201
+
+
+@api_bp.route('/auth/api-keys/<key_id>', methods=['DELETE'])
+@require_auth
+def revoke_api_key(key_id):
+    email = _current_email()
+    from ..services import api_key_service
+    api_key_service.revoke(key_id, email)
+    return '', 204
+
+
+# ---------------------------------------------------------------------------
 # Document Verification Tokens
 # ---------------------------------------------------------------------------
 
