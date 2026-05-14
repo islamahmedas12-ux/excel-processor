@@ -116,3 +116,50 @@ export interface ErrorResponse {
   code: string;
   message: string;
 }
+
+// ── File API Config ────────────────────────────────────────────────────────────
+
+export interface FileConfig {
+  inputs: string[];
+  outputs: string[];
+  sheet: string | null;
+}
+
+export interface FileConfigResponse {
+  success: boolean;
+  config: FileConfig;
+}
+
+// ── API Keys ──────────────────────────────────────────────────────────────────
+
+export interface ApiKey {
+  id: string;
+  name: string;
+  key_prefix: string;
+  created_at: string;
+  last_used_at: string | null;
+  revoked_at: string | null;
+}
+
+export interface ApiKeyCreateResponse {
+  success: boolean;
+  warning: string;
+  api_key: {
+    id: string;
+    name: string;
+    key: string;
+    key_prefix: string;
+    created_at: string;
+  };
+}
+
+export interface ApiKeyListResponse {
+  success: boolean;
+  api_keys: ApiKey[];
+}
+
+// ── File Run ─────────────────────────────────────────────────────────────────
+
+export interface RunFileResponse {
+  outputs: Record<string, any>;
+}
