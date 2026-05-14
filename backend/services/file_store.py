@@ -44,6 +44,7 @@ def _to_dict(f: File) -> dict:
         'name':        f.name,
         'size_bytes':  f.size_bytes,
         'category_id': f.category_id,
+        'api_config':  f.api_config,
         'created_at':  _iso(f.created_at),
         'expires_at':  _iso(f.expires_at),
     }
@@ -81,6 +82,18 @@ def upload(
         s.add(f)
         s.flush()
         return _to_dict(f)
+
+
+def set_api_config(file_id: str, api_config: Optional[dict], owner_email: str = '') -> bool:
+    with session_scope() as s:
+        f = s.get(File, file_id)
+        if not f:
+            return False
+        if owner_email and f.owner_email != owner_email.lower():
+            return False
+        f.api_config = api_config
+        s.flush()
+        return True
 
 
 def set_category(file_id: str, category_id: Optional[str], owner_email: str = '') -> bool:
@@ -165,6 +178,10 @@ class _FileStore:
     def set_category(self, file_id: str, category_id: Optional[str],
                      owner_email: str = '') -> bool:
         return set_category(file_id, category_id, owner_email=owner_email)
+
+    def set_api_config(self, file_id: str, api_config: Optional[dict],
+                       owner_email: str = '') -> bool:
+        return set_api_config(file_id, api_config, owner_email=owner_email)
 
     def delete(self, file_id: str, owner_email: str = '') -> bool:
         return delete_file(file_id, owner_email=owner_email)
