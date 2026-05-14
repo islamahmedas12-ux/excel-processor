@@ -57,10 +57,12 @@ def upload(
     content: bytes,
     owner_email: str = '',
     category_id: Optional[str] = None,
+    api_config: Optional[dict] = None,
 ) -> dict:
     file_id = str(uuid.uuid4())
     now = _now_dt()
-    expires_at = datetime.now(timezone.utc) + timedelta(hours=FILE_TTL_HOURS)
+    # Files with api_config are permanent API endpoints — no TTL
+    expires_at = None if api_config else datetime.now(timezone.utc) + timedelta(hours=FILE_TTL_HOURS)
 
     storage.put(
         storage.BUCKET_FILES,
@@ -76,6 +78,7 @@ def upload(
             name        = filename,
             size_bytes  = len(content),
             category_id = category_id,
+            api_config  = api_config,
             created_at  = now,
             expires_at  = expires_at,
         )
@@ -92,6 +95,11 @@ def set_api_config(file_id: str, api_config: Optional[dict], owner_email: str = 
         if owner_email and f.owner_email != owner_email.lower():
             return False
         f.api_config = api_config
+        # Clearing config re-applies TTL; setting config makes file permanent
+        if api_config:
+            f.expires_at = None
+        else:
+            f.expires_at = datetime.now(timezone.utc) + timedelta(hours=FILE_TTL_HOURS)
         s.flush()
         return True
 
@@ -157,13 +165,26 @@ def usage(owner_email: str) -> dict:
 
 
 def cleanup_expired():
-    """Delete expired files from both MinIO and Postgres."""
+    """Delete expired files from both MinIO and Postgres.
+
+    Files with api_config (permanent API endpoints) are never deleted.
+    """
     cutoff = datetime.now(timezone.utc) - timedelta(hours=FILE_TTL_HOURS)
     with session_scope() as s:
-        old = s.execute(select(File).where(File.created_at < cutoff)).scalars().all()
+        old = s.execute(
+            select(File).where(
+                File.created_at < cutoff,
+                File.api_config.is_(None),
+            )
+        ).scalars().all()
         for f in old:
             storage.delete(storage.BUCKET_FILES, _key(f.owner_email, f.id))
-        s.execute(delete(File).where(File.created_at < cutoff))
+        s.execute(
+            delete(File).where(
+                File.created_at < cutoff,
+                File.api_config.is_(None),
+            )
+        )
 
 
 # ── Backward-compatibility shim (deprecated — use module functions directly) ──
@@ -172,8 +193,10 @@ class _FileStore:
     """Thin shim over module functions for backward compatibility with old file_store usage."""
 
     def upload(self, filename: str, content: bytes,
-               owner_email: str = '', category_id: Optional[str] = None) -> dict:
-        return upload(filename, content, owner_email=owner_email, category_id=category_id)
+               owner_email: str = '', category_id: Optional[str] = None,
+               api_config: Optional[dict] = None) -> dict:
+        return upload(filename, content, owner_email=owner_email, category_id=category_id,
+                      api_config=api_config)
 
     def set_category(self, file_id: str, category_id: Optional[str],
                      owner_email: str = '') -> bool:
