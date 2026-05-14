@@ -17,7 +17,7 @@ from ..services.excel_service import ExcelService
 from ..services.file_store import file_store
 from ..services.category_store import category_store
 from ..services.result_store import result_store
-from ..services.auth_service import require_auth, verify_token, _extract_token
+from ..services.auth_service import require_auth, require_auth_or_api_key, verify_token, _extract_token
 from ..services.plans import PLANS
 from ..services import job_store
 from ..services import token_store as _token_store
