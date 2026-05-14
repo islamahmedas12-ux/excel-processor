@@ -30,8 +30,8 @@ swagger_config = {
         {
             "endpoint": "apispec",
             "route": "/apispec.json",
-            "rule_filter": "all",
-            "model_filter": "all",
+            "rule_filter": lambda rule: True,
+            "model_filter": lambda tag: True,
         }
     ],
     "static_url_path": "/flasgger_static",
@@ -40,6 +40,7 @@ swagger_config = {
 }
 
 swagger_template = {
+    "swagger": "2.0",
     "info": {
         "title": "Excel Processor API",
         "description": "Excel as a Backend Service — upload Excel files, fill input cells, "
@@ -67,6 +68,10 @@ swagger_template = {
         {"name": "File Run", "description": "Execute a configured file's API"},
         {"name": "API Keys", "description": "Create, list, and revoke API keys"},
         {"name": "Excel Operations", "description": "Read, write, and execute Excel operations"},
+    ],
+    "security": [
+        {"Bearer": []},
+        {"ApiKeyAuth": []},
     ],
 }
 
