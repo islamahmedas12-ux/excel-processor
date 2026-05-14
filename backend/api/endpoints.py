@@ -258,6 +258,60 @@ def delete_file_config(file_id):
 
 
 # ---------------------------------------------------------------------------
+# File Run Endpoint
+# ---------------------------------------------------------------------------
+
+@api_bp.route('/files/<file_id>/run', methods=['POST'])
+@require_auth
+def run_file(file_id):
+    email = _current_email()
+    meta = file_store.get_meta(file_id, owner_email=email)
+    if not meta:
+        return jsonify({"error": "File not found"}), 404
+
+    config = meta.get('api_config')
+    if not config:
+        return jsonify({"error": "No API config set for this file. Use PUT /files/<id>/config first."}), 404
+
+    data = request.get_json(silent=True) or {}
+    inputs = data.get('inputs', {})
+
+    # Validate inputs match configured schema exactly
+    expected_inputs = set(config.get('inputs', []))
+    received_inputs = set(inputs.keys())
+    if received_inputs != expected_inputs:
+        missing = expected_inputs - received_inputs
+        extra = received_inputs - expected_inputs
+        msg = []
+        if missing:
+            msg.append(f"missing inputs: {sorted(missing)}")
+        if extra:
+            msg.append(f"unexpected inputs: {sorted(extra)}")
+        return jsonify({"error": "Input mismatch", "details": "; ".join(msg)}), 422
+
+    # Load file content
+    file_content = file_store.get_content(file_id, owner_email=email)
+    if not file_content:
+        return jsonify({"error": "File content not found"}), 404
+
+    # Execute with stored config
+    sheet_name = config.get('sheet')
+    outputs_list = config.get('outputs', [])
+    result = excel_service.execute(
+        file_content=file_content,
+        filename=meta['name'],
+        inputs=inputs,
+        outputs=outputs_list,
+        sheet_name=sheet_name,
+    )
+
+    if not result.get('success'):
+        return jsonify({"error": "Execute failed"}), 500
+
+    return jsonify({"outputs": result['results']})
+
+
+# ---------------------------------------------------------------------------
 # Categories
 # ---------------------------------------------------------------------------
 
