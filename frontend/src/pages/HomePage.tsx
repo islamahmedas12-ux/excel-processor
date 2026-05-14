@@ -47,6 +47,12 @@ export const HomePage: React.FC<HomePageProps> = ({ lang, onLangChange, editApiF
     setActiveTab('api_builder');
   };
 
+  const navigateToKeysWithDialog = () => {
+    // Signal APIKeysPage to auto-open the create dialog via sessionStorage
+    sessionStorage.setItem('openCreateDialog', '1');
+    setActiveTab('api_keys');
+  };
+
   return (
     <FilesProvider>
       <CategoriesProvider>
@@ -71,7 +77,7 @@ export const HomePage: React.FC<HomePageProps> = ({ lang, onLangChange, editApiF
               {activeTab === 'templates' && <TemplatesPage lang={lang} onTabChange={setActiveTab} />}
               {activeTab === 'jobs'     && <JobsPage lang={lang} />}
               {activeTab === 'api_keys' && <APIKeysPage lang={lang} />}
-              {activeTab === 'api_builder' && <APIBuilderPage lang={lang} editFileId={editApiFileIdState} onComplete={onApiEditComplete} />}
+              {activeTab === 'api_builder' && <APIBuilderPage lang={lang} editFileId={editApiFileIdState} onComplete={onApiEditComplete} onNavigateToKeys={navigateToKeysWithDialog} />}
               {activeTab === 'verify'   && <VerifyTokensPage lang={lang} />}
               {activeTab === 'plans'    && <PlansPage lang={lang} />}
               {activeTab === 'profile' && <ProfilePage lang={lang} />}

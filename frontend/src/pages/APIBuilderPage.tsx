@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Upload, FileSpreadsheet, CheckCircle, Play, ArrowLeft, ArrowRight, RefreshCw, Key, Code2, Copy, Check } from 'lucide-react';
 import { useFiles } from '../context/FilesContext';
 import { SheetSelector } from '../components/SheetSelector';
@@ -11,6 +11,7 @@ interface APIBuilderPageProps {
   onComplete?: () => void;
   onCancel?: () => void;
   editFileId?: string | null;
+  onNavigateToKeys?: () => void;
 }
 
 type Step = 1 | 2 | 3;
@@ -20,7 +21,7 @@ const STEP_LABELS = {
   en: ['Source', 'Configure', 'Use'],
 };
 
-export const APIBuilderPage: React.FC<APIBuilderPageProps> = ({ lang, onComplete, onCancel, editFileId }) => {
+export const APIBuilderPage: React.FC<APIBuilderPageProps> = ({ lang, onComplete, onCancel, editFileId, onNavigateToKeys }) => {
   const { files, uploadFile } = useFiles();
   const [step, setStep] = useState<Step>(editFileId ? 2 : 1);
   const [editingFileId] = useState<string | null>(editFileId || null);
@@ -531,6 +532,7 @@ export const APIBuilderPage: React.FC<APIBuilderPageProps> = ({ lang, onComplete
               inputs={Object.fromEntries(inputList.map(k => [k, '']))}
               apiKeyPrefix={selectedKey?.key_prefix}
               hasApiKey={!!selectedKey}
+              onNavigateToKeys={onNavigateToKeys}
             />
 
             {/* Try it now — inline test panel */}
