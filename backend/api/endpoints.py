@@ -366,7 +366,7 @@ def set_file_config(file_id):
 @require_auth
 def delete_file_config(file_id):
     """
-    Delete the API configuration for a file, re-applying the standard 24h TTL.
+    Delete the API configuration for a file. The file itself is kept.
     ---
     tags:
       - File Config
@@ -378,7 +378,7 @@ def delete_file_config(file_id):
         description: ID of the file
     responses:
       204:
-        description: Config deleted, TTL re-applied
+        description: Config deleted
       404:
         description: File not found
     security:
@@ -740,7 +740,7 @@ def write_cells():
                                            updates=updates, sheet_name=sheet_name)
         modified_bytes = result.pop('_modified_bytes', None)
 
-        # Save result to store (always — templates must not be mutated)
+        # Save result to store (always — never mutate the source file)
         result_meta = None
         source_id = request.form.get('file_id') or request.form.get('result_id') or ''
         if modified_bytes:
@@ -800,7 +800,7 @@ def batch_write_cells():
                                            operations=operations, sheet_name=sheet_name)
         modified_bytes = result.pop('_modified_bytes', None)
 
-        # Save result to store (always — templates must not be mutated)
+        # Save result to store (always — never mutate the source file)
         result_meta = None
         source_id = request.form.get('file_id') or request.form.get('result_id') or ''
         if modified_bytes:
@@ -1011,114 +1011,6 @@ def delete_job(job_id):
     return jsonify({"error": "Job not found"}), 404
 
 
-# ---------------------------------------------------------------------------
-# Template Library
-# ---------------------------------------------------------------------------
-
-@api_bp.route('/templates', methods=['POST'])
-@require_auth
-def upload_template():
-    if 'file' not in request.files:
-        return jsonify({"error": "file is required"}), 400
-    f = request.files['file']
-    if not f.filename:
-        return jsonify({"error": "empty filename"}), 400
-
-    email = _current_email()
-    plan  = _get_user_plan(email)
-    max_t = plan.get('max_templates', 5)
-
-    from ..services import template_store as _tmpl
-    if _tmpl.count(email) >= max_t:
-        return jsonify({
-            "error": "plan_limit",
-            "reason": "templates",
-            "limit":  max_t,
-            "message": f"لقد وصلت للحد الأقصى ({max_t} قوالب). قم بترقية خطتك.",
-            "message_en": f"Template limit reached ({max_t}). Upgrade your plan.",
-        }), 403
-
-    content     = f.read()
-    name        = request.form.get('name', '').strip() or f.filename
-    description = request.form.get('description', '').strip()
-
-    tpl = _tmpl.save(email, f.filename, content, name, description)
-    return jsonify({"success": True, "template": tpl}), 201
-
-
-@api_bp.route('/templates', methods=['GET'])
-@require_auth
-def list_templates():
-    from ..services import template_store as _tmpl
-    email = _current_email()
-    return jsonify({"success": True, "templates": _tmpl.list_by_owner(email)})
-
-
-@api_bp.route('/templates/<tpl_id>', methods=['PATCH'])
-@require_auth
-def update_template(tpl_id):
-    from ..services import template_store as _tmpl
-    email = _current_email()
-    data  = request.get_json(silent=True) or {}
-    tpl   = _tmpl.update_meta(tpl_id, email, data.get('name'), data.get('description'))
-    if not tpl:
-        return jsonify({"error": "Template not found"}), 404
-    return jsonify({"success": True, "template": tpl})
-
-
-@api_bp.route('/templates/<tpl_id>', methods=['DELETE'])
-@require_auth
-def delete_template(tpl_id):
-    from ..services import template_store as _tmpl
-    email = _current_email()
-    if _tmpl.delete(tpl_id, email):
-        return jsonify({"success": True})
-    return jsonify({"error": "Template not found"}), 404
-
-
-@api_bp.route('/templates/<tpl_id>/use', methods=['POST'])
-@require_auth
-def use_template(tpl_id):
-    """
-    Copy a template into result_store so it can be used by write/execute/pdf ops
-    without mutating the original.  Returns a result entry with kind='xlsx'.
-    """
-    from ..services import template_store as _tmpl
-    email   = _current_email()
-    tpl     = _tmpl.get(tpl_id)
-    if not tpl or tpl['owner_email'] != email:
-        return jsonify({"error": "Template not found"}), 404
-
-    content = _tmpl.get_content(tpl_id)
-    if not content:
-        return jsonify({"error": "Template file missing"}), 404
-
-    saved = result_store.save(
-        kind='xlsx',
-        source_file_id=tpl_id,
-        source_file_name=tpl['filename'],
-        filename=tpl['filename'],
-        content=content,
-    )
-    return jsonify({"success": True, "result": saved})
-
-
-@api_bp.route('/templates/<tpl_id>/download', methods=['GET'])
-@require_auth
-def download_template(tpl_id):
-    from ..services import template_store as _tmpl
-    email   = _current_email()
-    tpl     = _tmpl.get(tpl_id)
-    if not tpl or tpl['owner_email'] != email:
-        return jsonify({"error": "Template not found"}), 404
-    content = _tmpl.get_content(tpl_id)
-    if not content:
-        return jsonify({"error": "Template file missing"}), 404
-    mime = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    return send_file(BytesIO(content), mimetype=mime, as_attachment=True,
-                     download_name=tpl['filename'])
-
-
 @api_bp.route('/health', methods=['GET'])
 def health():
     return jsonify({"status": "healthy", "service": "excel-processor"})
@@ -1129,13 +1021,11 @@ def health():
 @api_bp.route('/storage/usage', methods=['GET'])
 @require_auth
 def storage_usage():
-    from ..services import template_store as _tmpl_store
     email = _current_email()
     plan  = _get_user_plan(email)
     files = file_store.usage(email)
-    tpls  = _tmpl_store.usage(email)
 
-    used_bytes = files['total_bytes'] + tpls['bytes']
+    used_bytes = files['total_bytes']
 
     max_bytes = plan['storage_gb'] * 1024 ** 3 if plan['storage_gb'] else plan['max_files'] * plan['max_file_mb'] * 1024 ** 2
 

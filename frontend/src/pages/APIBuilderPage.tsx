@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Upload, FileSpreadsheet, CheckCircle, Play, ArrowLeft, ArrowRight, RefreshCw, Key, Code2, Copy, Check } from 'lucide-react';
+import { Upload, FileSpreadsheet, CheckCircle, Play, ArrowLeft, ArrowRight, Key, Copy, Check } from 'lucide-react';
 import { useFiles } from '../context/FilesContext';
 import { SheetSelector } from '../components/SheetSelector';
 import { CodeSnippets } from '../components/CodeSnippets';
@@ -21,7 +21,7 @@ const STEP_LABELS = {
   en: ['Source', 'Configure', 'Use'],
 };
 
-export const APIBuilderPage: React.FC<APIBuilderPageProps> = ({ lang, onComplete, onCancel, editFileId, onNavigateToKeys }) => {
+export const APIBuilderPage: React.FC<APIBuilderPageProps> = ({ lang, onComplete, editFileId, onNavigateToKeys }) => {
   const { files, uploadFile } = useFiles();
   const [step, setStep] = useState<Step>(editFileId ? 2 : 1);
   const [editingFileId] = useState<string | null>(editFileId || null);
@@ -51,7 +51,6 @@ export const APIBuilderPage: React.FC<APIBuilderPageProps> = ({ lang, onComplete
   // Step 3 state
   const [apiKeys, setApiKeys] = useState<{ id: string; name: string; key_prefix: string }[]>([]);
   const [selectedKey, setSelectedKey] = useState<{ id: string; name: string; key_prefix: string } | null>(null);
-  const [activeApiKey, setActiveApiKey] = useState<string | null>(null);
   const [showKeyDialog, setShowKeyDialog] = useState(false);
   const [newKeyValue, setNewKeyValue] = useState('');
   const [keyCopied, setKeyCopied] = useState(false);

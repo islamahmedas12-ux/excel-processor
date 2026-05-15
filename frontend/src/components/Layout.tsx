@@ -2,21 +2,20 @@ import React, { useState, useEffect } from 'react';
 import {
   FileSpreadsheet, FolderOpen, Eye, Edit3, Settings,
   FileText, Play, Globe, Menu, ChevronRight, Bell,
-  Search, X, LogOut, CreditCard, BriefcaseIcon, ShieldCheck, Layers, QrCode, BookTemplate,
-  Archive, UserCircle, ChevronDown, Key,
+  Search, X, LogOut, BriefcaseIcon, ShieldCheck, Layers, QrCode,
+  Archive, ChevronDown, Key,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useFiles } from '../context/FilesContext';
 import { StorageBar } from './StorageBar';
 import apiService from '../services/api';
 
-type TabId = 'apis' | 'files' | 'templates' | 'results' | 'jobs' | 'api_keys' |
+type TabId = 'apis' | 'files' | 'results' | 'jobs' | 'api_keys' |
   'read' | 'write' | 'batch' | 'pdf' | 'execute' | 'merge' | 'insert' | 'verify' | 'plans' | 'profile';
 
 const MAIN_NAV: Array<{ id: TabId; ar: string; en: string; icon: React.ElementType }> = [
   { id: 'apis',      ar: 'واجهات API',     en: 'APIs',          icon: Key             },
   { id: 'files',     ar: 'الملفات',         en: 'Files',         icon: FolderOpen      },
-  { id: 'templates', ar: 'مكتبة القوالب',   en: 'Templates',     icon: BookTemplate   },
   { id: 'results',  ar: 'النتائج',         en: 'Results',       icon: Archive         },
   { id: 'jobs',      ar: 'المهام',          en: 'Jobs',          icon: BriefcaseIcon   },
   { id: 'api_keys', ar: 'مفاتيح API',       en: 'API Keys',      icon: Key            },
@@ -73,7 +72,7 @@ export const Layout: React.FC<LayoutProps> = ({
     }).catch(() => setAvatarUrl(null));
   }, [activeTab]);
 
-  const activeItem = NAV.find(n => n.id === activeTab);
+  const activeItem = [...MAIN_NAV, ...ADVANCED_NAV].find(n => n.id === activeTab);
   const pageTitle  = activeItem ? (isRtl ? activeItem.ar : activeItem.en) : '';
   const SidebarBody = () => (
     <div className="flex flex-col h-full" dir={dir}>

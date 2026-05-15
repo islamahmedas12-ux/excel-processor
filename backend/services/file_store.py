@@ -1,6 +1,7 @@
 """
 Postgres-backed per-user file store.
-Files live for FILE_TTL_HOURS then are pruned by cleanup_expired().
+Uploaded files are permanent — there is no expiry. Plan quotas
+(max_files / storage) bound how much a user can keep.
 File content lives in MinIO ('files' bucket, key = '<safe_owner_email>/<file_id>.xlsx').
 Metadata (name, category_id, size, timestamps) lives in the 'files' Postgres table.
 """
@@ -8,15 +9,13 @@ Metadata (name, category_id, size, timestamps) lives in the 'files' Postgres tab
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from typing import Optional
-from sqlalchemy import select, func, delete
+from sqlalchemy import select, func
 
 from ..db import session_scope
 from ..models import File
 from . import storage
-
-FILE_TTL_HOURS = 24
 
 
 def _key(owner_email: str, file_id: str) -> str:
@@ -46,7 +45,6 @@ def _to_dict(f: File) -> dict:
         'category_id': f.category_id,
         'api_config':  f.api_config,
         'created_at':  _iso(f.created_at),
-        'expires_at':  _iso(f.expires_at),
     }
 
 
@@ -61,8 +59,6 @@ def upload(
 ) -> dict:
     file_id = str(uuid.uuid4())
     now = _now_dt()
-    # Files with api_config are permanent API endpoints — no TTL
-    expires_at = None if api_config else datetime.now(timezone.utc) + timedelta(hours=FILE_TTL_HOURS)
 
     storage.put(
         storage.BUCKET_FILES,
@@ -80,7 +76,6 @@ def upload(
             category_id = category_id,
             api_config  = api_config,
             created_at  = now,
-            expires_at  = expires_at,
         )
         s.add(f)
         s.flush()
@@ -95,11 +90,6 @@ def set_api_config(file_id: str, api_config: Optional[dict], owner_email: str = 
         if owner_email and f.owner_email != owner_email.lower():
             return False
         f.api_config = api_config
-        # Clearing config re-applies TTL; setting config makes file permanent
-        if api_config:
-            f.expires_at = None
-        else:
-            f.expires_at = datetime.now(timezone.utc) + timedelta(hours=FILE_TTL_HOURS)
         s.flush()
         return True
 
@@ -162,29 +152,6 @@ def usage(owner_email: str) -> dict:
             .where(File.owner_email == owner_email.lower())
         ).one()
         return {'file_count': int(row[0] or 0), 'total_bytes': int(row[1] or 0)}
-
-
-def cleanup_expired():
-    """Delete expired files from both MinIO and Postgres.
-
-    Files with api_config (permanent API endpoints) are never deleted.
-    """
-    cutoff = datetime.now(timezone.utc) - timedelta(hours=FILE_TTL_HOURS)
-    with session_scope() as s:
-        old = s.execute(
-            select(File).where(
-                File.created_at < cutoff,
-                File.api_config.is_(None),
-            )
-        ).scalars().all()
-        for f in old:
-            storage.delete(storage.BUCKET_FILES, _key(f.owner_email, f.id))
-        s.execute(
-            delete(File).where(
-                File.created_at < cutoff,
-                File.api_config.is_(None),
-            )
-        )
 
 
 # ── Backward-compatibility shim (deprecated — use module functions directly) ──

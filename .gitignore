@@ -117,3 +117,7 @@ logs/security/
 .autobuild-goal.md
 .autobuild-progress.md
 .autobuild-order.txt
+
+# local-only compose port overrides
+docker-compose.override.yml
+frontend/tsconfig.tsbuildinfo

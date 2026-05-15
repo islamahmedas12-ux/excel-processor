@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { FileSpreadsheet, Plus, Play, Settings, Copy, Trash2, CheckCircle, XCircle, ExternalLink } from 'lucide-react';
+import { FileSpreadsheet, Plus, Play, Settings, Copy, Trash2, CheckCircle, XCircle } from 'lucide-react';
 import { useFiles } from '../context/FilesContext';
 import apiService from '../services/api';
 import type { FileConfig } from '../types/api';
-import { CodeSnippets } from '../components/CodeSnippets';
 
 interface APIsPageProps {
   lang: 'ar' | 'en';
@@ -36,8 +35,8 @@ const formatSize = (bytes: number) => {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 };
 
-export const APIsPage: React.FC<APIsPageProps> = ({ lang, onTabChange }) => {
-  const { files, loading, deleteFile, refreshFiles } = useFiles();
+export const APIsPage: React.FC<APIsPageProps> = ({ lang, onTabChange, onEditApi }) => {
+  const { files, loading, deleteFile } = useFiles();
   const [cards, setCards] = useState<ApiFileCard[]>([]);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [testModal, setTestModal] = useState<TestModal | null>(null);
@@ -216,7 +215,7 @@ export const APIsPage: React.FC<APIsPageProps> = ({ lang, onTabChange }) => {
                 )}
 
                 {/* Inputs preview */}
-                {configured && card.api_config?.inputs.length > 0 && (
+                {configured && card.api_config && card.api_config.inputs.length > 0 && (
                   <div className="mb-3">
                     <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">{t.inputs}</p>
                     <div className="flex flex-wrap gap-1">
