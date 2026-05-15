@@ -2,6 +2,9 @@ import axios, { AxiosInstance } from 'axios';
 import type { FileEntry } from '../context/FilesContext';
 import type {
   FileConfig,
+  FileConfigV2,
+  DataSource,
+  DataSourceTestResponse,
   ApiKey,
   ApiKeyCreateResponse,
   RunFileResponse,
@@ -599,9 +602,18 @@ class ExcelApiService {
    * @returns {Promise<FileConfig>} The saved configuration.
    * @throws {Error} When the file is not found or validation fails.
    */
-  async saveFileConfig(fileId: string, config: FileConfig): Promise<FileConfig> {
+  async saveFileConfig(fileId: string, config: FileConfig | FileConfigV2): Promise<FileConfig | FileConfigV2> {
     const res = await this.client.put(`/api/v1/files/${fileId}/config`, config);
     return res.data.config;
+  }
+
+  /**
+   * Fetches a data source with sample params so the visual mapper can show
+   * its real JSON fields. Nothing is persisted.
+   */
+  async testDataSource(source: DataSource, params: Record<string, any>): Promise<DataSourceTestResponse> {
+    const res = await this.client.post('/api/v1/data-source/test', { source, params });
+    return res.data;
   }
 
   /**
@@ -625,8 +637,14 @@ class ExcelApiService {
    * @returns {Promise<RunFileResponse>} The computed output cell values.
    * @throws {Error} When the file has no config, inputs don't match, or execution fails.
    */
-  async runFile(fileId: string, inputs: Record<string, any>): Promise<RunFileResponse> {
-    const res = await this.client.post(`/api/v1/files/${fileId}/run`, { inputs });
+  async runFile(
+    fileId: string,
+    inputs: Record<string, any>,
+    params?: Record<string, any>,
+  ): Promise<RunFileResponse> {
+    const body: Record<string, any> = { inputs };
+    if (params) body.params = params;
+    const res = await this.client.post(`/api/v1/files/${fileId}/run`, body);
     return res.data;
   }
 

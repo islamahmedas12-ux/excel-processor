@@ -119,6 +119,7 @@ export interface ErrorResponse {
 
 // ── File API Config ────────────────────────────────────────────────────────────
 
+// v1 (legacy, manual-only) — still accepted by the backend.
 export interface FileConfig {
   inputs: string[];
   outputs: string[];
@@ -127,7 +128,77 @@ export interface FileConfig {
 
 export interface FileConfigResponse {
   success: boolean;
-  config: FileConfig;
+  config: FileConfig | FileConfigV2;
+}
+
+// ── v2 dynamic binding config ───────────────────────────────────────────────
+
+export type AuthType =
+  | 'none' | 'bearer' | 'api_key_header' | 'query_param' | 'basic' | 'custom_header';
+
+export interface DataSourceAuth {
+  type: AuthType;
+  token?: string;            // bearer
+  header_name?: string;      // api_key_header
+  param_name?: string;       // query_param
+  value?: string;            // api_key_header / query_param
+  username?: string;         // basic
+  password?: string;         // basic
+  headers?: Record<string, string>; // custom_header
+}
+
+export interface DataSource {
+  id: string;
+  name: string;
+  method: string;            // GET | POST | ...
+  url: string;               // may contain {param} placeholders
+  auth: DataSourceAuth;
+  headers?: Record<string, string>;
+  query?: Record<string, string>;
+  body?: any;
+}
+
+export interface RunParam {
+  name: string;
+  required?: boolean;
+}
+
+export type BindingSource =
+  | { type: 'constant'; value: any }
+  | { type: 'param'; name: string }
+  | { type: 'jsonpath'; source: string; path: string }
+  | {
+      type: 'jsonpath_array';
+      source: string;
+      path: string;
+      layout:
+        | { mode: 'down' | 'right'; anchor: string }
+        | { mode: 'explicit'; cells: string[] };
+    };
+
+export interface InputBinding {
+  target: { sheet?: string | null; cell: string };
+  source: BindingSource;
+}
+
+export interface OutputCell {
+  sheet?: string | null;
+  cell: string;
+  name?: string;
+}
+
+export interface FileConfigV2 {
+  version: 2;
+  run_params: RunParam[];
+  data_sources: DataSource[];
+  inputs: InputBinding[];
+  outputs: OutputCell[];
+}
+
+export interface DataSourceTestResponse {
+  success: boolean;
+  placeholders: string[];
+  data: any;
 }
 
 // ── API Keys ──────────────────────────────────────────────────────────────────
