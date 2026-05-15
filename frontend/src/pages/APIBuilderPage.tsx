@@ -44,6 +44,9 @@ export const APIBuilderPage: React.FC<APIBuilderPageProps> = ({
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Sheet names of the selected file (populated once a file is chosen)
+  const [sheets, setSheets] = useState<string[]>([]);
+
   // v2 config model
   const [dataSources, setDataSources] = useState<DataSource[]>([]);
   const [runParams, setRunParams] = useState<RunParam[]>([]);
@@ -116,6 +119,14 @@ export const APIBuilderPage: React.FC<APIBuilderPageProps> = ({
       }
     }).catch(() => {});
   }, [editFileId]);
+
+  // Load the file's real sheet names whenever the selected file changes.
+  useEffect(() => {
+    if (!fileId) { setSheets([]); return; }
+    apiService.getSheets(fileId)
+      .then(s => setSheets(s || []))
+      .catch(() => setSheets([]));
+  }, [fileId]);
 
   // Keep run params in sync with URL placeholders across all sources.
   useEffect(() => {
@@ -445,9 +456,12 @@ export const APIBuilderPage: React.FC<APIBuilderPageProps> = ({
             const st = b.source.type;
             return (
               <div key={i} className="border border-slate-200 rounded-2xl p-3 grid grid-cols-12 gap-2 items-start">
-                <input className={`${input} col-span-2`} placeholder={t.sheet}
+                <select className={`${input} col-span-2`}
                   value={b.target.sheet || ''}
-                  onChange={e => updateBinding(i, { target: { ...b.target, sheet: e.target.value } })} />
+                  onChange={e => updateBinding(i, { target: { ...b.target, sheet: e.target.value } })}>
+                  <option value="">{isRtl ? '(افتراضي)' : '(default)'}</option>
+                  {sheets.map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
                 <input className={`${input} col-span-2`} placeholder="A1"
                   value={b.target.cell}
                   onChange={e => updateBinding(i, { target: { ...b.target, cell: e.target.value } })} />
@@ -557,8 +571,11 @@ export const APIBuilderPage: React.FC<APIBuilderPageProps> = ({
           </div>
           {outputs.map((o, i) => (
             <div key={i} className="flex gap-2">
-              <input className={`${input} w-32`} placeholder={t.sheet} value={o.sheet || ''}
-                onChange={e => updateOutput(i, { sheet: e.target.value })} />
+              <select className={`${input} w-40`} value={o.sheet || ''}
+                onChange={e => updateOutput(i, { sheet: e.target.value })}>
+                <option value="">{isRtl ? '(افتراضي)' : '(default)'}</option>
+                {sheets.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
               <input className={`${input} w-28`} placeholder="C1" value={o.cell}
                 onChange={e => updateOutput(i, { cell: e.target.value })} />
               <input className={input} placeholder={t.outName} value={o.name || ''}
