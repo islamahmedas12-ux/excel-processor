@@ -322,44 +322,33 @@ def set_file_config(file_id):
     if not meta:
         return jsonify({"error": "File not found"}), 404
 
-    data = request.get_json(silent=True) or {}
-    inputs  = data.get('inputs', [])
-    outputs = data.get('outputs', [])
-    sheet   = data.get('sheet')
+    config = request.get_json(silent=True) or {}
 
-    if not inputs or not outputs:
-        return jsonify({"error": "inputs and outputs are required and must be non-empty"}), 422
+    from ..services import api_config_schema
+    ok, err = api_config_schema.validate(config)
+    if not ok:
+        return jsonify({"error": err}), 422
 
-    # Validate disjointness
-    if set(inputs) & set(outputs):
-        return jsonify({"error": "inputs and outputs must be disjoint"}), 422
-
-    # Validate cell coordinates
-    from excel_processor.validators import validate_cell_coordinates
-    for cell in inputs + outputs:
+    # For the legacy (v1) shape keep the friendly sheet-exists check.
+    if not api_config_schema.is_v2(config):
+        sheet = config.get('sheet')
+        file_content = file_store.get_content(file_id, owner_email=email)
+        if not file_content:
+            return jsonify({"error": "File content not found"}), 404
+        from openpyxl import load_workbook
+        from io import BytesIO
         try:
-            validate_cell_coordinates(cell)
-        except Exception:
-            return jsonify({"error": f"Invalid cell coordinate: {cell}"}), 422
-
-    # Validate sheet name exists in the file
-    file_content = file_store.get_content(file_id, owner_email=email)
-    if not file_content:
-        return jsonify({"error": "File content not found"}), 404
-    from openpyxl import load_workbook
-    from io import BytesIO
-    try:
-        wb = load_workbook(BytesIO(file_content), read_only=True, data_only=True)
-        if sheet and sheet not in wb.sheetnames:
+            wb = load_workbook(BytesIO(file_content), read_only=True, data_only=True)
+            if sheet and sheet not in wb.sheetnames:
+                names = wb.sheetnames
+                wb.close()
+                return jsonify({"error": f"Sheet '{sheet}' not found. Available: {names}"}), 422
             wb.close()
-            return jsonify({"error": f"Sheet '{sheet}' not found in workbook. Available: {wb.sheetnames}"}), 422
-        wb.close()
-    except Exception as e:
-        return jsonify({"error": f"Cannot open file as Excel: {e}"}), 422
+        except Exception as e:
+            return jsonify({"error": f"Cannot open file as Excel: {e}"}), 422
 
-    api_config = {"inputs": inputs, "outputs": outputs, "sheet": sheet}
-    file_store.set_api_config(file_id, api_config, owner_email=email)
-    return jsonify({"success": True, "config": api_config})
+    file_store.set_api_config(file_id, config, owner_email=email)
+    return jsonify({"success": True, "config": config})
 
 
 @api_bp.route('/files/<file_id>/config', methods=['DELETE'])
@@ -459,9 +448,42 @@ def run_file(file_id):
         return response, 429
 
     data = request.get_json(silent=True) or {}
-    inputs = data.get('inputs', {})
 
-    # Validate inputs match configured schema exactly
+    file_content = file_store.get_content(file_id, owner_email=email)
+    if not file_content:
+        return jsonify({"error": "File content not found"}), 404
+
+    from ..services import api_config_schema
+
+    if api_config_schema.is_v2(config):
+        # Dynamic config: body is { "params": {...}, "inputs": {...}? }.
+        params = data.get('params', {}) or {}
+        manual_inputs = data.get('inputs', {}) or {}
+
+        missing = [
+            p['name'] for p in config.get('run_params', [])
+            if p.get('required') and params.get(p['name']) in (None, '')
+        ]
+        if missing:
+            return jsonify({"error": "Missing required params",
+                            "details": f"required: {sorted(missing)}"}), 422
+
+        from ..services import api_runner, binding_resolver
+        from ..services.data_source import DataSourceError
+        try:
+            result = api_runner.run(
+                file_content=file_content,
+                filename=meta['name'],
+                config=config,
+                params=params,
+                manual_inputs=manual_inputs,
+            )
+        except (binding_resolver.BindingError, DataSourceError) as exc:
+            return jsonify({"error": "Binding/source error", "details": str(exc)}), 502
+        return jsonify({"outputs": result['outputs']})
+
+    # ── legacy v1 path (manual cells, single sheet) ──────────────────────────
+    inputs = data.get('inputs', {})
     expected_inputs = set(config.get('inputs', []))
     received_inputs = set(inputs.keys())
     if received_inputs != expected_inputs:
@@ -474,26 +496,67 @@ def run_file(file_id):
             msg.append(f"unexpected inputs: {sorted(extra)}")
         return jsonify({"error": "Input mismatch", "details": "; ".join(msg)}), 422
 
-    # Load file content
-    file_content = file_store.get_content(file_id, owner_email=email)
-    if not file_content:
-        return jsonify({"error": "File content not found"}), 404
-
-    # Execute with stored config
-    sheet_name = config.get('sheet')
-    outputs_list = config.get('outputs', [])
     result = excel_service.execute(
         file_content=file_content,
         filename=meta['name'],
         inputs=inputs,
-        outputs=outputs_list,
-        sheet_name=sheet_name,
+        outputs=config.get('outputs', []),
+        sheet_name=config.get('sheet'),
     )
-
     if not result.get('success'):
         return jsonify({"error": "Execute failed"}), 500
-
     return jsonify({"outputs": result['results']})
+
+
+@api_bp.route('/data-source/test', methods=['POST'])
+@require_auth
+def test_data_source():
+    """
+    Fetch a single data source with sample params and return its JSON body.
+    Used by the visual mapper so the user can see real response fields while
+    binding them to cells. Never persisted.
+    ---
+    tags:
+      - File Config
+    parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          properties:
+            source:
+              type: object
+              description: A data_source definition (url, method, auth, ...)
+            params:
+              type: object
+              description: Values for the URL's {placeholders}
+    responses:
+      200:
+        description: The parsed JSON response plus the placeholders it needs
+      502:
+        description: The external source could not be fetched
+    security:
+      - Bearer: []
+    """
+    body = request.get_json(silent=True) or {}
+    source = body.get('source') or {}
+    params = body.get('params') or {}
+
+    if not source.get('url'):
+        return jsonify({"error": "source.url is required"}), 422
+
+    from ..services import data_source
+    try:
+        data = data_source.fetch(source, params)
+    except data_source.DataSourceError as exc:
+        return jsonify({"error": "fetch_failed", "details": str(exc)}), 502
+
+    return jsonify({
+        "success": True,
+        "placeholders": data_source.find_placeholders(source.get('url', '')),
+        "data": data,
+    })
 
 
 # ---------------------------------------------------------------------------

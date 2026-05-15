@@ -1,644 +1,638 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Upload, FileSpreadsheet, CheckCircle, Play, ArrowLeft, ArrowRight, Key, Copy, Check } from 'lucide-react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
+import {
+  Upload, FileSpreadsheet, ArrowLeft, ArrowRight, Plus, Trash2,
+  Play, Check, Database, Link2,
+} from 'lucide-react';
 import { useFiles } from '../context/FilesContext';
-import { SheetSelector } from '../components/SheetSelector';
-import { CodeSnippets } from '../components/CodeSnippets';
 import apiService from '../services/api';
-import type { FileConfig } from '../types/api';
+import type {
+  FileConfigV2, DataSource, RunParam, InputBinding, OutputCell, AuthType,
+} from '../types/api';
 
 interface APIBuilderPageProps {
   lang: 'ar' | 'en';
   onComplete?: () => void;
-  onCancel?: () => void;
   editFileId?: string | null;
   onNavigateToKeys?: () => void;
 }
 
-type Step = 1 | 2 | 3;
+type Step = 1 | 2 | 3 | 4 | 5;
 
-const STEP_LABELS = {
-  ar: ['المصدر', 'الإعداد', 'الاستخدام'],
-  en: ['Source', 'Configure', 'Use'],
-};
+const AUTH_TYPES: AuthType[] = [
+  'none', 'bearer', 'api_key_header', 'query_param', 'basic', 'custom_header',
+];
 
-export const APIBuilderPage: React.FC<APIBuilderPageProps> = ({ lang, onComplete, editFileId, onNavigateToKeys }) => {
-  const { files, uploadFile } = useFiles();
-  const [step, setStep] = useState<Step>(editFileId ? 2 : 1);
-  const [editingFileId] = useState<string | null>(editFileId || null);
-  const [selectedFileId, setSelectedFileId] = useState<string | null>(editFileId || null);
+const uid = () => Math.random().toString(36).slice(2, 9);
+
+/** Pull {param} names out of a URL template. */
+const placeholdersOf = (url: string): string[] =>
+  Array.from(new Set((url.match(/\{([a-zA-Z_][a-zA-Z0-9_]*)\}/g) || [])
+    .map(s => s.slice(1, -1))));
+
+export const APIBuilderPage: React.FC<APIBuilderPageProps> = ({
+  lang, onComplete, editFileId, onNavigateToKeys,
+}) => {
   const isRtl = lang === 'ar';
+  const { files, uploadFile } = useFiles();
 
-  // Step 1 state
-  const [sourceMode, setSourceMode] = useState<'new' | 'existing' | null>(null);
+  const [step, setStep] = useState<Step>(editFileId ? 2 : 1);
+  const [fileId, setFileId] = useState<string | null>(editFileId || null);
+
+  // Step 1
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState('');
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Step 2 state
-  const [sheet, setSheet] = useState('');
-  const [inputs, setInputs] = useState('');
-  const [outputs, setOutputs] = useState('');
+  // v2 config model
+  const [dataSources, setDataSources] = useState<DataSource[]>([]);
+  const [runParams, setRunParams] = useState<RunParam[]>([]);
+  const [bindings, setBindings] = useState<InputBinding[]>([]);
+  const [outputs, setOutputs] = useState<OutputCell[]>([]);
+
+  // Sample responses fetched via /data-source/test, keyed by source id
+  const [samples, setSamples] = useState<Record<string, any>>({});
+  const [testParams, setTestParams] = useState<Record<string, string>>({});
+
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
 
-  // Test preview state (step 2 inline)
-  const [testValues, setTestValues] = useState<Record<string, string>>({});
-  const [testLoading, setTestLoading] = useState(false);
-  const [testOutputs, setTestOutputs] = useState<Record<string, any> | null>(null);
-  const [testError, setTestError] = useState('');
-
-  // Step 3 state
-  const [apiKeys, setApiKeys] = useState<{ id: string; name: string; key_prefix: string }[]>([]);
-  const [selectedKey, setSelectedKey] = useState<{ id: string; name: string; key_prefix: string } | null>(null);
-  const [showKeyDialog, setShowKeyDialog] = useState(false);
-  const [newKeyValue, setNewKeyValue] = useState('');
-  const [keyCopied, setKeyCopied] = useState(false);
+  // Step 5
+  const [apiKeyPrefix, setApiKeyPrefix] = useState<string | null>(null);
+  const [runResult, setRunResult] = useState<Record<string, any> | null>(null);
+  const [runError, setRunError] = useState('');
+  const [running, setRunning] = useState(false);
 
   const t = {
-    step1Title: isRtl ? 'اختر الملف' : 'Choose a file',
-    step1Hint: isRtl ? 'رفع ملف جديد أو اختيار ملف موجود' : 'Upload a new file or pick an existing one',
-    uploadNew: isRtl ? 'رفع ملف جديد' : 'Upload new file',
-    useExisting: isRtl ? ' اختيار ملف موجود' : 'Use existing file',
-    dragHint: isRtl ? 'اسحب ملف Excel هنا أو انقر للاختيار' : 'Drop an Excel file here or click to browse',
+    steps: isRtl
+      ? ['المصدر', 'مصادر البيانات', 'الربط', 'المخرجات', 'الاستخدام']
+      : ['Source', 'Data Sources', 'Mapping', 'Outputs', 'Use'],
+    chooseFile: isRtl ? 'اختر ملف Excel' : 'Choose an Excel file',
+    dragHint: isRtl ? 'اسحب ملف هنا أو انقر' : 'Drop a file here or click',
     uploading: isRtl ? 'جاري الرفع...' : 'Uploading...',
-    step2Title: isRtl ? 'إعداد API' : 'Configure API',
-    inputsLabel: isRtl ? 'خلية الإدخال' : 'Input cells',
-    inputsHint: isRtl ? 'أسماء خلايا الإدخال مفصولة بفواصل (مثل: A1, B2)' : 'Input cell names separated by commas (e.g.: A1, B2)',
-    outputsLabel: isRtl ? 'خلية الإخراج' : 'Output cells',
-    outputsHint: isRtl ? 'أسماء خلايا الإخراج مفصولة بفواصل (مثل: C1, D2)' : 'Output cell names separated by commas (e.g.: C1, D2)',
-    testPreview: isRtl ? 'معاينة' : 'Preview',
-    runPreview: isRtl ? 'تشغيل المعاينة' : 'Run preview',
-    step3Title: isRtl ? 'استخدم الـ API' : 'Use your API',
-    endpoint: isRtl ? 'نقطة النهاية' : 'Endpoint',
-    yourKey: isRtl ? 'مفتاح API' : 'API key',
-    generateKey: isRtl ? 'إنشاء مفتاح ▸' : 'Generate a key ▸',
-    copyKey: isRtl ? 'نسخ المفتاح' : 'Copy key',
-    tryIt: isRtl ? 'جرّب الآن' : 'Try it now',
+    existing: isRtl ? 'أو اختر ملفاً موجوداً' : 'Or pick an existing file',
     back: isRtl ? 'رجوع' : 'Back',
-    next: isRtl ? 'التالي' : 'Next',
-    saveAndContinue: isRtl ? 'حفظ ومتابعة ▸' : 'Save & continue ▸',
-    close: isRtl ? 'إغلاق' : 'Close',
+    next: isRtl ? 'التالي ▸' : 'Next ▸',
+    addSource: isRtl ? '+ مصدر بيانات' : '+ Data source',
+    addBinding: isRtl ? '+ ربط خلية' : '+ Cell binding',
+    addOutput: isRtl ? '+ خلية إخراج' : '+ Output cell',
+    name: isRtl ? 'الاسم' : 'Name',
+    method: isRtl ? 'الطريقة' : 'Method',
+    url: isRtl ? 'الرابط (يدعم {param})' : 'URL (supports {param})',
+    auth: isRtl ? 'المصادقة' : 'Auth',
+    test: isRtl ? 'اختبار' : 'Test',
+    testing: isRtl ? '...' : '...',
+    sheet: isRtl ? 'الورقة' : 'Sheet',
+    cell: isRtl ? 'الخلية' : 'Cell',
+    sourceType: isRtl ? 'المصدر' : 'Source',
+    value: isRtl ? 'القيمة' : 'Value',
+    path: isRtl ? 'مسار JSON' : 'JSON path',
+    layout: isRtl ? 'التوزيع' : 'Layout',
+    anchor: isRtl ? 'خلية البداية' : 'Anchor',
+    cellsCsv: isRtl ? 'خلايا (بفواصل)' : 'Cells (comma-sep)',
+    outName: isRtl ? 'اسم (اختياري)' : 'Name (optional)',
+    save: isRtl ? 'حفظ ومتابعة ▸' : 'Save & continue ▸',
+    saving: isRtl ? 'جاري الحفظ...' : 'Saving...',
+    runParams: isRtl ? 'مفاتيح التشغيل' : 'Run params',
+    tryIt: isRtl ? 'جرّب الآن' : 'Try it now',
+    result: isRtl ? 'النتيجة' : 'Result',
     done: isRtl ? 'تم — إغلاق' : 'Done — Close',
-    previewOutputs: isRtl ? 'النتيجة' : 'Output',
-    noKeyPlaceholder: 'ek_live_YOUR_KEY_HERE',
-    inputPlaceholder: isRtl ? 'أدخل قيمة...' : 'Enter value...',
+    genKey: isRtl ? 'إنشاء مفتاح API ▸' : 'Generate an API key ▸',
+    constant: isRtl ? 'قيمة ثابتة' : 'Constant',
+    param: isRtl ? 'مفتاح تشغيل' : 'Run param',
+    fromApi: isRtl ? 'حقل من API' : 'API field',
+    fromApiArr: isRtl ? 'مصفوفة من API' : 'API array',
   };
 
-  // Load existing config when editing
+  // Load existing v2 config when editing
   useEffect(() => {
-    if (editingFileId) {
-      apiService.getFileConfig(editingFileId).then(cfg => {
-        setSheet(cfg.sheet || '');
-        setInputs(cfg.inputs.join(', '));
-        setOutputs(cfg.outputs.join(', '));
-      }).catch(() => {});
-    }
-  }, [editingFileId]);
+    if (!editFileId) return;
+    apiService.getFileConfig(editFileId).then((cfg: any) => {
+      if (cfg && cfg.version === 2) {
+        setDataSources(cfg.data_sources || []);
+        setRunParams(cfg.run_params || []);
+        setBindings(cfg.inputs || []);
+        setOutputs(cfg.outputs || []);
+      }
+    }).catch(() => {});
+  }, [editFileId]);
 
-  // ─── Step 1 handlers ───────────────────────────────────────────────────────
+  // Keep run params in sync with URL placeholders across all sources.
+  useEffect(() => {
+    const fromUrls = new Set<string>();
+    dataSources.forEach(s => placeholdersOf(s.url).forEach(p => fromUrls.add(p)));
+    setRunParams(prev => {
+      const kept = prev.filter(p => fromUrls.has(p.name));
+      const keptNames = new Set(kept.map(p => p.name));
+      const added = [...fromUrls].filter(n => !keptNames.has(n))
+        .map(name => ({ name, required: true }));
+      return [...kept, ...added];
+    });
+  }, [dataSources]);
 
-  const handleFileDrop = async (file: File) => {
-    if (!file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) {
-      setUploadError(isRtl ? 'يرجى اختيار ملف Excel (.xlsx / .xls)' : 'Please select an Excel file (.xlsx / .xls)');
+  // ── Step 1 ────────────────────────────────────────────────────────────────
+
+  const onPickFile = async (file: File) => {
+    if (!/\.(xlsx|xls)$/i.test(file.name)) {
+      setUploadError(isRtl ? 'ملف Excel فقط' : 'Excel files only');
       return;
     }
     setUploading(true);
     setUploadError('');
     try {
       const entry = await uploadFile(file);
-      setSelectedFileId(entry.id);
-      setSourceMode('new');
+      setFileId(entry.id);
+      setStep(2);
     } catch {
-      setUploadError(isRtl ? 'فشل رفع الملف' : 'Failed to upload file');
+      setUploadError(isRtl ? 'فشل الرفع' : 'Upload failed');
     } finally {
       setUploading(false);
     }
   };
 
-  const handleFileInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) await handleFileDrop(file);
+  // ── Step 2: data sources ──────────────────────────────────────────────────
+
+  const addSource = () => setDataSources(s => [...s, {
+    id: uid(), name: '', method: 'GET', url: '', auth: { type: 'none' },
+  }]);
+
+  const updateSource = (i: number, patch: Partial<DataSource>) =>
+    setDataSources(s => s.map((src, idx) => idx === i ? { ...src, ...patch } : src));
+
+  const removeSource = (i: number) =>
+    setDataSources(s => s.filter((_, idx) => idx !== i));
+
+  const testSource = async (src: DataSource) => {
+    try {
+      const params: Record<string, any> = {};
+      placeholdersOf(src.url).forEach(p => { params[p] = testParams[p] ?? ''; });
+      const res = await apiService.testDataSource(src, params);
+      setSamples(prev => ({ ...prev, [src.id]: res.data }));
+    } catch (e: any) {
+      setSamples(prev => ({
+        ...prev,
+        [src.id]: { _error: e?.response?.data?.details || 'fetch failed' },
+      }));
+    }
   };
 
-  const handleExistingFileSelect = (fileId: string) => {
-    setSelectedFileId(fileId);
-  };
+  // ── Step 3: bindings ──────────────────────────────────────────────────────
 
-  // ─── Step 2 handlers ───────────────────────────────────────────────────────
+  const addBinding = () => setBindings(b => [...b, {
+    target: { sheet: '', cell: '' },
+    source: { type: 'constant', value: '' },
+  }]);
 
-  const handleSaveConfig = async () => {
-    if (!selectedFileId || !inputs.trim() || !outputs.trim()) return;
+  const updateBinding = (i: number, patch: Partial<InputBinding>) =>
+    setBindings(b => b.map((bn, idx) => idx === i ? { ...bn, ...patch } : bn));
+
+  const removeBinding = (i: number) =>
+    setBindings(b => b.filter((_, idx) => idx !== i));
+
+  // ── Step 4: outputs ───────────────────────────────────────────────────────
+
+  const addOutput = () => setOutputs(o => [...o, { sheet: '', cell: '', name: '' }]);
+  const updateOutput = (i: number, patch: Partial<OutputCell>) =>
+    setOutputs(o => o.map((ou, idx) => idx === i ? { ...ou, ...patch } : ou));
+  const removeOutput = (i: number) =>
+    setOutputs(o => o.filter((_, idx) => idx !== i));
+
+  const buildConfig = (): FileConfigV2 => ({
+    version: 2,
+    run_params: runParams,
+    data_sources: dataSources.map(s => ({
+      ...s,
+      url: s.url.trim(),
+    })),
+    inputs: bindings
+      .filter(b => b.target.cell.trim())
+      .map(b => ({
+        target: {
+          sheet: b.target.sheet?.trim() || null,
+          cell: b.target.cell.trim().toUpperCase(),
+        },
+        source: b.source,
+      })),
+    outputs: outputs
+      .filter(o => o.cell.trim())
+      .map(o => ({
+        sheet: o.sheet?.trim() || null,
+        cell: o.cell.trim().toUpperCase(),
+        name: o.name?.trim() || undefined,
+      })),
+  });
+
+  const saveConfig = async () => {
+    if (!fileId) return;
     setSaving(true);
     setSaveError('');
     try {
-      const config: FileConfig = {
-        inputs: inputs.split(',').map(s => s.trim()).filter(Boolean),
-        outputs: outputs.split(',').map(s => s.trim()).filter(Boolean),
-        sheet: sheet || null,
-      };
-      await apiService.saveFileConfig(selectedFileId, config);
-      // load API keys for step 3
-      const keys = await apiService.listApiKeys();
-      setApiKeys(keys.filter(k => !k.revoked_at));
-      setStep(3);
+      await apiService.saveFileConfig(fileId, buildConfig());
+      setStep(5);
     } catch (e: any) {
-      setSaveError(e?.response?.data?.error || (isRtl ? 'فشل حفظ الإعداد' : 'Failed to save config'));
+      setSaveError(e?.response?.data?.error || (isRtl ? 'فشل الحفظ' : 'Save failed'));
     } finally {
       setSaving(false);
     }
   };
 
-  const handleRunPreview = async () => {
-    if (!selectedFileId || !inputs.trim()) return;
-    const inputList = inputs.split(',').map(s => s.trim()).filter(Boolean);
-    const testInputs: Record<string, string> = {};
-    inputList.forEach(k => { testInputs[k] = testValues[k] || ''; });
-    setTestLoading(true);
-    setTestError('');
-    setTestOutputs(null);
+  // ── Step 5: try it ────────────────────────────────────────────────────────
+
+  const tryRun = async () => {
+    if (!fileId) return;
+    setRunning(true);
+    setRunError('');
+    setRunResult(null);
     try {
-      const res = await apiService.runFile(selectedFileId, testInputs);
-      setTestOutputs(res.outputs);
+      const params: Record<string, any> = {};
+      runParams.forEach(p => { params[p.name] = testParams[p.name] ?? ''; });
+      const res = await apiService.runFile(fileId, {}, params);
+      setRunResult(res.outputs as any);
     } catch (e: any) {
-      setTestError(e?.response?.data?.error || 'Preview failed');
+      setRunError(e?.response?.data?.details || e?.response?.data?.error
+        || (isRtl ? 'فشل التشغيل' : 'Run failed'));
     } finally {
-      setTestLoading(false);
+      setRunning(false);
     }
   };
 
-  // ─── Step 3 handlers ───────────────────────────────────────────────────────
-
-  const handleGenerateKey = async () => {
+  const generateKey = async () => {
     try {
-      const res = await apiService.createApiKey(isRtl ? 'مفتاح الإنتاج' : 'Production key');
-      setNewKeyValue(res.api_key.key);
-      setShowKeyDialog(true);
-      const keys = await apiService.listApiKeys();
-      setApiKeys(keys.filter(k => !k.revoked_at));
-      setSelectedKey({ id: res.api_key.id, name: res.api_key.name, key_prefix: res.api_key.key_prefix });
-    } catch { /* noop */ }
+      const r = await apiService.createApiKey(isRtl ? 'مفتاح الإنتاج' : 'Production key');
+      setApiKeyPrefix(r.api_key?.key_prefix || r.api_key?.key?.slice(0, 12) || null);
+    } catch {
+      onNavigateToKeys?.();
+    }
   };
 
-  const handleCopyNewKey = async () => {
-    await navigator.clipboard.writeText(newKeyValue);
-    setKeyCopied(true);
-    setTimeout(() => setKeyCopied(false), 1800);
-  };
+  const curlSnippet = useMemo(() => {
+    const base = window.location.origin;
+    const params: Record<string, any> = {};
+    runParams.forEach(p => { params[p.name] = testParams[p.name] || `<${p.name}>`; });
+    return `curl -X POST "${base}/api/v1/files/${fileId}/run" \\
+  -H "Content-Type: application/json" \\
+  -H "X-API-Key: ${apiKeyPrefix || 'ek_live_YOUR_KEY'}" \\
+  -d '${JSON.stringify({ params })}'`;
+  }, [fileId, runParams, testParams, apiKeyPrefix]);
 
-  const endpointUrl = selectedFileId ? `${window.location.origin}/api/v1/files/${selectedFileId}/run` : '';
+  // ── render helpers ────────────────────────────────────────────────────────
 
-  const inputList = inputs.split(',').map(s => s.trim()).filter(Boolean);
-  const outputList = outputs.split(',').map(s => s.trim()).filter(Boolean);
+  const StepBar = () => (
+    <div className="flex items-center gap-2 mb-8 flex-wrap" dir={isRtl ? 'rtl' : 'ltr'}>
+      {t.steps.map((label, idx) => {
+        const n = (idx + 1) as Step;
+        const active = n === step, done = n < step;
+        return (
+          <React.Fragment key={label}>
+            <button
+              onClick={() => done && setStep(n)}
+              className={`px-3 py-1.5 rounded-xl text-sm font-bold transition
+                ${active ? 'bg-primary-600 text-white'
+                  : done ? 'bg-primary-50 text-primary-600'
+                    : 'bg-slate-100 text-slate-400'}`}>
+              {done ? <Check className="inline w-3.5 h-3.5 me-1" /> : `${n} `}{label}
+            </button>
+            {idx < t.steps.length - 1 && <span className="text-slate-300">—</span>}
+          </React.Fragment>
+        );
+      })}
+    </div>
+  );
+
+  const input = "w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary-200";
+  const label = "block text-xs font-bold text-slate-500 mb-1";
 
   return (
-    <div className="max-w-2xl mx-auto">
-      {/* Step indicator */}
-      <div className="flex items-center justify-center gap-3 mb-8">
-        {([1, 2, 3] as Step[]).map((s, i) => (
-          <React.Fragment key={s}>
-            <button
-              onClick={() => s < step && setStep(s)}
-              disabled={s >= step}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                s === step
-                  ? 'bg-primary-600 text-white'
-                  : s < step
-                  ? 'bg-primary-100 text-primary-700 hover:bg-primary-200 cursor-pointer'
-                  : 'bg-slate-100 text-slate-400 cursor-not-allowed'
-              }`}
-            >
-              <span className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-xs">
-                {s < step ? <CheckCircle className="w-3.5 h-3.5" /> : s}
-              </span>
-              <span>{STEP_LABELS[lang][i]}</span>
-            </button>
-            {i < 2 && <div className={`w-8 h-0.5 rounded ${s < step ? 'bg-primary-400' : 'bg-slate-200'}`} />}
-          </React.Fragment>
-        ))}
-      </div>
+    <div className="max-w-4xl mx-auto" dir={isRtl ? 'rtl' : 'ltr'}>
+      <StepBar />
 
-      {/* ── Step 1: Source ─────────────────────────────────────────────────── */}
+      {/* ── Step 1: Source ── */}
       {step === 1 && (
-        <div>
-          <h2 className="text-xl font-bold text-slate-800 mb-1">{t.step1Title}</h2>
-          <p className="text-sm text-slate-500 mb-6">{t.step1Hint}</p>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-            <button
-              onClick={() => setSourceMode('new')}
-              className={`p-5 rounded-2xl border-2 transition-all text-left ${
-                sourceMode === 'new' ? 'border-primary-500 bg-primary-50' : 'border-slate-200 hover:border-slate-300 bg-white'
-              }`}
-            >
-              <div className="w-10 h-10 rounded-xl bg-primary-100 flex items-center justify-center mb-3">
-                <Upload className="w-5 h-5 text-primary-600" />
-              </div>
-              <p className="text-sm font-semibold text-slate-800">{t.uploadNew}</p>
-            </button>
-
-            <button
-              onClick={() => setSourceMode('existing')}
-              className={`p-5 rounded-2xl border-2 transition-all text-left ${
-                sourceMode === 'existing' ? 'border-primary-500 bg-primary-50' : 'border-slate-200 hover:border-slate-300 bg-white'
-              }`}
-            >
-              <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center mb-3">
-                <FileSpreadsheet className="w-5 h-5 text-slate-600" />
-              </div>
-              <p className="text-sm font-semibold text-slate-800">{t.useExisting}</p>
-            </button>
+        <div className="space-y-4">
+          <h2 className="text-lg font-bold">{t.chooseFile}</h2>
+          <div
+            onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+            onDragLeave={() => setDragOver(false)}
+            onDrop={e => {
+              e.preventDefault(); setDragOver(false);
+              const f = e.dataTransfer.files?.[0]; if (f) onPickFile(f);
+            }}
+            onClick={() => fileInputRef.current?.click()}
+            className={`border-2 border-dashed rounded-2xl p-12 text-center cursor-pointer transition
+              ${dragOver ? 'border-primary-500 bg-primary-50' : 'border-slate-200'}`}>
+            <Upload className="w-8 h-8 mx-auto text-slate-400 mb-2" />
+            <p className="text-sm text-slate-500">{uploading ? t.uploading : t.dragHint}</p>
+            <input ref={fileInputRef} type="file" accept=".xlsx,.xls" className="hidden"
+              onChange={e => { const f = e.target.files?.[0]; if (f) onPickFile(f); }} />
           </div>
-
-          {/* Upload zone */}
-          {sourceMode === 'new' && (
-            <div
-              className={`border-2 border-dashed rounded-2xl p-8 text-center transition-colors ${
-                dragOver ? 'border-primary-400 bg-primary-50' : 'border-slate-200 hover:border-primary-300'
-              }`}
-              onDragOver={e => { e.preventDefault(); setDragOver(true); }}
-              onDragLeave={() => setDragOver(false)}
-              onDrop={e => {
-                e.preventDefault();
-                setDragOver(false);
-                const file = e.dataTransfer.files[0];
-                if (file) handleFileDrop(file);
-              }}
-              onClick={() => fileInputRef.current?.click()}
-            >
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".xlsx,.xls"
-                className="hidden"
-                onChange={handleFileInputChange}
-              />
-              {uploading ? (
-                <div className="flex flex-col items-center gap-2">
-                  <div className="w-8 h-8 border-3 border-primary-200 border-t-primary-600 rounded-full animate-spin" />
-                  <p className="text-sm text-slate-500">{t.uploading}</p>
-                </div>
-              ) : (
-                <>
-                  <Upload className="w-8 h-8 text-slate-400 mx-auto mb-2" />
-                  <p className="text-sm text-slate-600 font-medium">{t.dragHint}</p>
-                </>
-              )}
-              {uploadError && (
-                <p className="mt-2 text-sm text-red-500">{uploadError}</p>
-              )}
-            </div>
-          )}
-
-          {/* Existing files list */}
-          {sourceMode === 'existing' && (
-            <div className="space-y-2">
-              {files.length === 0 ? (
-                <p className="text-sm text-slate-400 text-center py-8">
-                  {isRtl ? 'لا توجد ملفات. قم برفع ملف أولاً.' : 'No files yet. Upload one first.'}
-                </p>
-              ) : (
-                files.map(f => (
-                  <button
-                    key={f.id}
-                    onClick={() => handleExistingFileSelect(f.id)}
-                    className={`w-full flex items-center gap-3 p-3 rounded-xl border transition-all text-left ${
-                      selectedFileId === f.id
-                        ? 'border-primary-400 bg-primary-50'
-                        : 'border-slate-200 hover:border-slate-300 bg-white'
-                    }`}
-                  >
-                    <FileSpreadsheet className="w-5 h-5 text-slate-400 flex-shrink-0" />
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-slate-700 truncate">{f.name}</p>
-                    </div>
-                    {selectedFileId === f.id && (
-                      <CheckCircle className="w-4 h-4 text-primary-600 flex-shrink-0" />
-                    )}
+          {uploadError && <p className="text-sm text-red-600">{uploadError}</p>}
+          {files.length > 0 && (
+            <div>
+              <p className={label}>{t.existing}</p>
+              <div className="flex flex-wrap gap-2">
+                {files.map(f => (
+                  <button key={f.id}
+                    onClick={() => { setFileId(f.id); setStep(2); }}
+                    className="px-3 py-1.5 rounded-xl border border-slate-200 text-sm hover:border-primary-400 flex items-center gap-1.5">
+                    <FileSpreadsheet className="w-4 h-4 text-emerald-500" />{f.name}
                   </button>
-                ))
-              )}
+                ))}
+              </div>
             </div>
           )}
-
-          {/* Step 1 footer */}
-          <div className="flex justify-end mt-6">
-            <button
-              onClick={() => setStep(2)}
-              disabled={!selectedFileId}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <span>{t.next}</span>
-              <ArrowRight className={`w-4 h-4 ${isRtl ? 'rotate-180' : ''}`} />
-            </button>
-          </div>
         </div>
       )}
 
-      {/* ── Step 2: Configure ───────────────────────────────────────────────── */}
+      {/* ── Step 2: Data sources ── */}
       {step === 2 && (
-        <div>
-          <div className="flex items-center gap-3 mb-6">
-            <button
-              onClick={() => setStep(1)}
-              className="p-2 rounded-lg hover:bg-slate-100 transition-colors"
-            >
-              <ArrowLeft className="w-4 h-4 text-slate-500" />
-            </button>
-            <div>
-              <h2 className="text-xl font-bold text-slate-800">{t.step2Title}</h2>
-              <p className="text-xs text-slate-400 mt-0.5">
-                {files.find(f => f.id === selectedFileId)?.name || ''}
-              </p>
-            </div>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-bold flex items-center gap-2">
+              <Database className="w-5 h-5 text-primary-600" />{t.steps[1]}
+            </h2>
+            <button onClick={addSource} className="text-sm text-primary-600 font-bold">{t.addSource}</button>
           </div>
+          <p className="text-xs text-slate-500">
+            {isRtl ? 'اختياري — لو كل القيم يدوية أو ثوابت تجاوز الخطوة دي.'
+              : 'Optional — skip if every cell is a constant or manual.'}
+          </p>
 
-          <div className="space-y-5">
-            {/* Sheet selector */}
-            <div>
-              <SheetSelector lang={lang} value={sheet} onChange={setSheet} />
-            </div>
-
-            {/* Inputs */}
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">{t.inputsLabel}</label>
-              <input
-                type="text"
-                value={inputs}
-                onChange={e => setInputs(e.target.value)}
-                placeholder={isRtl ? 'A1, B2, C3' : 'A1, B2, C3'}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-              />
-              <p className="text-xs text-slate-400 mt-1">{t.inputsHint}</p>
-            </div>
-
-            {/* Outputs */}
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">{t.outputsLabel}</label>
-              <input
-                type="text"
-                value={outputs}
-                onChange={e => setOutputs(e.target.value)}
-                placeholder={isRtl ? 'D1, E2, F3' : 'D1, E2, F3'}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-              />
-              <p className="text-xs text-slate-400 mt-1">{t.outputsHint}</p>
-            </div>
-
-            {/* Inline test preview */}
-            {inputList.length > 0 && (
-              <div className="rounded-xl border border-slate-200 overflow-hidden">
-                <div className="bg-slate-50 px-4 py-2.5 border-b border-slate-200 flex items-center gap-2">
-                  <Play className="w-4 h-4 text-slate-500" />
-                  <span className="text-sm font-medium text-slate-600">{t.testPreview}</span>
-                </div>
-                <div className="p-4 space-y-3">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {inputList.map(key => (
-                      <div key={key}>
-                        <label className="block text-xs font-medium text-slate-500 mb-1">{key}</label>
-                        <input
-                          type="text"
-                          value={testValues[key] || ''}
-                          onChange={e => setTestValues({ ...testValues, [key]: e.target.value })}
-                          placeholder={t.inputPlaceholder}
-                          className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-                        />
-                      </div>
-                    ))}
-                  </div>
-                  <button
-                    onClick={handleRunPreview}
-                    disabled={testLoading || inputList.some(k => !testValues[k]?.trim())}
-                    className="flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-sm font-medium transition-colors disabled:opacity-50"
-                  >
-                    {testLoading
-                      ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      : <Play className="w-4 h-4" />}
-                    <span>{t.runPreview}</span>
-                  </button>
-
-                  {testError && (
-                    <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-600">
-                      {testError}
-                    </div>
-                  )}
-
-                  {testOutputs && (
-                    <div>
-                      <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">{t.previewOutputs}</p>
-                      <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-200 space-y-1">
-                        {outputList.map(out => (
-                          <div key={out} className="flex items-center gap-2 text-sm">
-                            <span className="font-mono text-slate-500 w-8">{out}</span>
-                            <span className="font-mono text-emerald-700 font-medium">
-                              {testOutputs[out] !== undefined ? String(testOutputs[out]) : '(no value)'}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {saveError && (
-              <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-sm text-red-600">
-                {saveError}
-              </div>
-            )}
-          </div>
-
-          {/* Step 2 footer */}
-          <div className="flex justify-end gap-3 mt-6">
-            <button
-              onClick={() => setStep(1)}
-              className="px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
-            >
-              {t.back}
-            </button>
-            <button
-              onClick={handleSaveConfig}
-              disabled={saving || !inputs.trim() || !outputs.trim()}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium transition-colors disabled:opacity-50"
-            >
-              {saving
-                ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                : <CheckCircle className="w-4 h-4" />}
-              <span>{t.saveAndContinue}</span>
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* ── Step 3: Use ─────────────────────────────────────────────────────── */}
-      {step === 3 && (
-        <div>
-          <div className="flex items-center gap-3 mb-6">
-            <button
-              onClick={() => setStep(2)}
-              className="p-2 rounded-lg hover:bg-slate-100 transition-colors"
-            >
-              <ArrowLeft className="w-4 h-4 text-slate-500" />
-            </button>
-            <div>
-              <h2 className="text-xl font-bold text-slate-800">{t.step3Title}</h2>
-              <p className="text-xs text-slate-400 mt-0.5">
-                {files.find(f => f.id === selectedFileId)?.name || ''}
-              </p>
-            </div>
-          </div>
-
-          <div className="space-y-5">
-            {/* Endpoint */}
-            <div className="rounded-xl bg-slate-50 border border-slate-200 p-4">
-              <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">{t.endpoint}</p>
-              <code className="text-sm text-slate-700 font-mono break-all">{endpointUrl}</code>
-            </div>
-
-            {/* API Key selector */}
-            <div>
-              <p className="text-sm font-medium text-slate-700 mb-2">{t.yourKey}</p>
-              <div className="flex items-center gap-3">
-                <select
-                  value={selectedKey?.id || ''}
-                  onChange={e => {
-                    const k = apiKeys.find(k => k.id === e.target.value);
-                    setSelectedKey(k || null);
-                  }}
-                  className="flex-1 px-3 py-2.5 rounded-xl border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary-500"
-                >
-                  <option value="">— {isRtl ? 'اختر مفتاحاً' : 'Select a key'} —</option>
-                  {apiKeys.map(k => (
-                    <option key={k.id} value={k.id}>{k.name} ({k.key_prefix}…)</option>
-                  ))}
+          {dataSources.map((src, i) => (
+            <div key={src.id} className="border border-slate-200 rounded-2xl p-4 space-y-3">
+              <div className="flex gap-2">
+                <input className={input} placeholder={t.name} value={src.name}
+                  onChange={e => updateSource(i, { name: e.target.value })} />
+                <select className={`${input} w-28`} value={src.method}
+                  onChange={e => updateSource(i, { method: e.target.value })}>
+                  {['GET', 'POST', 'PUT', 'PATCH'].map(m => <option key={m}>{m}</option>)}
                 </select>
-                <button
-                  onClick={handleGenerateKey}
-                  className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-sm font-medium text-slate-600 transition-colors"
-                >
-                  <Key className="w-4 h-4" />
-                  <span>{t.generateKey}</span>
+                <button onClick={() => removeSource(i)}
+                  className="px-2 text-red-500 hover:bg-red-50 rounded-lg">
+                  <Trash2 className="w-4 h-4" />
                 </button>
               </div>
-            </div>
+              <input className={input} placeholder="https://api.example.com/items/{id}"
+                value={src.url} onChange={e => updateSource(i, { url: e.target.value })} />
 
-            {/* Code snippets */}
-            <CodeSnippets
-              lang={lang}
-              fileId={selectedFileId || ''}
-              endpointBase={window.location.origin}
-              inputs={Object.fromEntries(inputList.map(k => [k, '']))}
-              apiKeyPrefix={selectedKey?.key_prefix}
-              hasApiKey={!!selectedKey}
-              onNavigateToKeys={onNavigateToKeys}
-            />
-
-            {/* Try it now — inline test panel */}
-            {selectedKey && (
-              <div className="rounded-xl border border-slate-200 overflow-hidden">
-                <div className="bg-slate-50 px-4 py-2.5 border-b border-slate-200 flex items-center gap-2">
-                  <Play className="w-4 h-4 text-slate-500" />
-                  <span className="text-sm font-medium text-slate-600">{t.tryIt}</span>
-                </div>
-                <div className="p-4 space-y-3">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {inputList.map(key => (
-                      <div key={key}>
-                        <label className="block text-xs font-medium text-slate-500 mb-1">{key}</label>
-                        <input
-                          type="text"
-                          value={testValues[key] || ''}
-                          onChange={e => setTestValues({ ...testValues, [key]: e.target.value })}
-                          placeholder={t.inputPlaceholder}
-                          className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-                        />
-                      </div>
-                    ))}
-                  </div>
-                  <button
-                    onClick={handleRunPreview}
-                    disabled={testLoading || inputList.some(k => !testValues[k]?.trim())}
-                    className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium transition-colors disabled:opacity-50"
-                  >
-                    {testLoading
-                      ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      : <Play className="w-4 h-4" />}
-                    <span>{t.runPreview}</span>
-                  </button>
-
-                  {testError && (
-                    <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-600">
-                      {testError}
-                    </div>
-                  )}
-
-                  {testOutputs && (
-                    <div>
-                      <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">{t.previewOutputs}</p>
-                      <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-200">
-                        <pre className="text-sm font-mono text-slate-800 whitespace-pre-wrap">
-                          {JSON.stringify(testOutputs, null, 2)}
-                        </pre>
-                      </div>
-                    </div>
-                  )}
-                </div>
+              <div className="flex gap-2">
+                <select className={`${input} w-40`} value={src.auth.type}
+                  onChange={e => updateSource(i, { auth: { type: e.target.value as AuthType } })}>
+                  {AUTH_TYPES.map(a => <option key={a} value={a}>{a}</option>)}
+                </select>
+                {src.auth.type === 'bearer' && (
+                  <input className={input} placeholder="token" value={src.auth.token || ''}
+                    onChange={e => updateSource(i, { auth: { ...src.auth, token: e.target.value } })} />
+                )}
+                {src.auth.type === 'api_key_header' && (<>
+                  <input className={input} placeholder="Header name (X-API-Key)"
+                    value={src.auth.header_name || ''}
+                    onChange={e => updateSource(i, { auth: { ...src.auth, header_name: e.target.value } })} />
+                  <input className={input} placeholder="value" value={src.auth.value || ''}
+                    onChange={e => updateSource(i, { auth: { ...src.auth, value: e.target.value } })} />
+                </>)}
+                {src.auth.type === 'query_param' && (<>
+                  <input className={input} placeholder="param name (api_key)"
+                    value={src.auth.param_name || ''}
+                    onChange={e => updateSource(i, { auth: { ...src.auth, param_name: e.target.value } })} />
+                  <input className={input} placeholder="value" value={src.auth.value || ''}
+                    onChange={e => updateSource(i, { auth: { ...src.auth, value: e.target.value } })} />
+                </>)}
+                {src.auth.type === 'basic' && (<>
+                  <input className={input} placeholder="username" value={src.auth.username || ''}
+                    onChange={e => updateSource(i, { auth: { ...src.auth, username: e.target.value } })} />
+                  <input className={input} placeholder="password" type="password"
+                    value={src.auth.password || ''}
+                    onChange={e => updateSource(i, { auth: { ...src.auth, password: e.target.value } })} />
+                </>)}
               </div>
-            )}
-          </div>
 
-          {/* Step 3 footer */}
-          <div className="flex justify-end gap-3 mt-6">
-            <button
-              onClick={() => setStep(2)}
-              className="px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
-            >
-              {t.back}
-            </button>
-            <button
-              onClick={onComplete}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium transition-colors"
-            >
-              <CheckCircle className="w-4 h-4" />
-              <span>{isRtl ? 'تم — إغلاق' : 'Done — Close'}</span>
-            </button>
-          </div>
+              {placeholdersOf(src.url).length > 0 && (
+                <div className="flex gap-2 flex-wrap items-center">
+                  <span className="text-xs text-slate-400">{t.runParams}:</span>
+                  {placeholdersOf(src.url).map(p => (
+                    <input key={p} className={`${input} w-40`} placeholder={`${p} (test value)`}
+                      value={testParams[p] || ''}
+                      onChange={e => setTestParams(tp => ({ ...tp, [p]: e.target.value }))} />
+                  ))}
+                </div>
+              )}
+
+              <button onClick={() => testSource(src)}
+                className="text-sm px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 font-bold">
+                {t.test}
+              </button>
+              {samples[src.id] && (
+                <pre className="text-[11px] bg-slate-900 text-slate-100 rounded-xl p-3 overflow-auto max-h-56" dir="ltr">
+                  {JSON.stringify(samples[src.id], null, 2)}
+                </pre>
+              )}
+            </div>
+          ))}
         </div>
       )}
 
-      {/* Key-show-once dialog */}
-      {showKeyDialog && newKeyValue && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6">
-            <div className="mb-4">
-              <div className="w-12 h-12 rounded-2xl bg-emerald-100 flex items-center justify-center mb-3">
-                <Check className="w-6 h-6 text-emerald-600" />
+      {/* ── Step 3: Bindings ── */}
+      {step === 3 && (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-bold flex items-center gap-2">
+              <Link2 className="w-5 h-5 text-primary-600" />{t.steps[2]}
+            </h2>
+            <button onClick={addBinding} className="text-sm text-primary-600 font-bold">{t.addBinding}</button>
+          </div>
+
+          {bindings.map((b, i) => {
+            const st = b.source.type;
+            return (
+              <div key={i} className="border border-slate-200 rounded-2xl p-3 grid grid-cols-12 gap-2 items-start">
+                <input className={`${input} col-span-2`} placeholder={t.sheet}
+                  value={b.target.sheet || ''}
+                  onChange={e => updateBinding(i, { target: { ...b.target, sheet: e.target.value } })} />
+                <input className={`${input} col-span-2`} placeholder="A1"
+                  value={b.target.cell}
+                  onChange={e => updateBinding(i, { target: { ...b.target, cell: e.target.value } })} />
+                <select className={`${input} col-span-3`} value={st}
+                  onChange={e => {
+                    const v = e.target.value;
+                    const next =
+                      v === 'constant' ? { type: 'constant', value: '' }
+                        : v === 'param' ? { type: 'param', name: runParams[0]?.name || '' }
+                          : v === 'jsonpath' ? { type: 'jsonpath', source: dataSources[0]?.id || '', path: '' }
+                            : { type: 'jsonpath_array', source: dataSources[0]?.id || '', path: '', layout: { mode: 'down', anchor: b.target.cell || 'A1' } };
+                    updateBinding(i, { source: next as any });
+                  }}>
+                  <option value="constant">{t.constant}</option>
+                  <option value="param">{t.param}</option>
+                  <option value="jsonpath">{t.fromApi}</option>
+                  <option value="jsonpath_array">{t.fromApiArr}</option>
+                </select>
+
+                <div className="col-span-4 flex gap-2">
+                  {st === 'constant' && (
+                    <input className={input} placeholder={t.value}
+                      value={(b.source as any).value ?? ''}
+                      onChange={e => updateBinding(i, { source: { type: 'constant', value: e.target.value } })} />
+                  )}
+                  {st === 'param' && (
+                    <select className={input} value={(b.source as any).name}
+                      onChange={e => updateBinding(i, { source: { type: 'param', name: e.target.value } })}>
+                      {runParams.map(p => <option key={p.name} value={p.name}>{p.name}</option>)}
+                    </select>
+                  )}
+                  {(st === 'jsonpath' || st === 'jsonpath_array') && (
+                    <select className={`${input} w-32`} value={(b.source as any).source}
+                      onChange={e => updateBinding(i, { source: { ...(b.source as any), source: e.target.value } })}>
+                      {dataSources.map(s => <option key={s.id} value={s.id}>{s.name || s.id}</option>)}
+                    </select>
+                  )}
+                  {(st === 'jsonpath' || st === 'jsonpath_array') && (
+                    <input className={input} placeholder="items[0].f07 / items[*].n01"
+                      value={(b.source as any).path}
+                      onChange={e => updateBinding(i, { source: { ...(b.source as any), path: e.target.value } })} />
+                  )}
+                </div>
+
+                {st === 'jsonpath_array' && (
+                  <div className="col-span-11 flex gap-2 items-center">
+                    <span className="text-xs text-slate-400">{t.layout}:</span>
+                    <select className={`${input} w-28`}
+                      value={(b.source as any).layout?.mode || 'down'}
+                      onChange={e => {
+                        const mode = e.target.value;
+                        const layout = mode === 'explicit'
+                          ? { mode, cells: [] } : { mode, anchor: b.target.cell || 'A1' };
+                        updateBinding(i, { source: { ...(b.source as any), layout } });
+                      }}>
+                      <option value="down">down</option>
+                      <option value="right">right</option>
+                      <option value="explicit">explicit</option>
+                    </select>
+                    {(b.source as any).layout?.mode === 'explicit' ? (
+                      <input className={input} placeholder={t.cellsCsv}
+                        value={((b.source as any).layout?.cells || []).join(', ')}
+                        onChange={e => updateBinding(i, {
+                          source: {
+                            ...(b.source as any),
+                            layout: { mode: 'explicit', cells: e.target.value.split(',').map(s => s.trim().toUpperCase()).filter(Boolean) },
+                          },
+                        })} />
+                    ) : (
+                      <input className={`${input} w-28`} placeholder={t.anchor}
+                        value={(b.source as any).layout?.anchor || ''}
+                        onChange={e => updateBinding(i, {
+                          source: { ...(b.source as any), layout: { mode: (b.source as any).layout.mode, anchor: e.target.value.toUpperCase() } },
+                        })} />
+                    )}
+                  </div>
+                )}
+                <button onClick={() => removeBinding(i)}
+                  className="col-span-1 text-red-500 hover:bg-red-50 rounded-lg flex justify-center pt-2">
+                  <Trash2 className="w-4 h-4" />
+                </button>
               </div>
-              <h3 className="text-lg font-bold text-slate-800">{isRtl ? 'تم إنشاء المفتاح!' : 'Key created!'}</h3>
-            </div>
-            <div className="mb-4 p-4 rounded-xl bg-red-50 border border-red-200 text-sm text-red-700 font-medium">
-              {isRtl
-                ? 'هذه هي المرة الوحيدة التي ستظهر فيها هذا المفتاح. انسخه الآن.'
-                : 'This is the only time you will see this key. Copy it now.'}
-            </div>
-            <div className="flex items-center gap-2 p-3 rounded-xl bg-slate-900 text-white mb-4">
-              <code className="flex-1 text-xs font-mono break-all">{newKeyValue}</code>
-              <button
-                onClick={handleCopyNewKey}
-                className="flex-shrink-0 p-2 rounded-lg bg-slate-700 hover:bg-slate-600 transition-colors"
-              >
-                {keyCopied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+            );
+          })}
+
+          {Object.keys(samples).length > 0 && (
+            <details className="text-xs">
+              <summary className="cursor-pointer text-slate-500">
+                {isRtl ? 'عرض عينات الاستجابة (لنسخ المسارات)' : 'Show sampled responses (to copy paths)'}
+              </summary>
+              {Object.entries(samples).map(([sid, data]) => (
+                <pre key={sid} className="bg-slate-900 text-slate-100 rounded-xl p-3 overflow-auto max-h-56 mt-2" dir="ltr">
+                  {sid}: {JSON.stringify(data, null, 2)}
+                </pre>
+              ))}
+            </details>
+          )}
+        </div>
+      )}
+
+      {/* ── Step 4: Outputs ── */}
+      {step === 4 && (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-bold">{t.steps[3]}</h2>
+            <button onClick={addOutput} className="text-sm text-primary-600 font-bold">{t.addOutput}</button>
+          </div>
+          {outputs.map((o, i) => (
+            <div key={i} className="flex gap-2">
+              <input className={`${input} w-32`} placeholder={t.sheet} value={o.sheet || ''}
+                onChange={e => updateOutput(i, { sheet: e.target.value })} />
+              <input className={`${input} w-28`} placeholder="C1" value={o.cell}
+                onChange={e => updateOutput(i, { cell: e.target.value })} />
+              <input className={input} placeholder={t.outName} value={o.name || ''}
+                onChange={e => updateOutput(i, { name: e.target.value })} />
+              <button onClick={() => removeOutput(i)}
+                className="px-2 text-red-500 hover:bg-red-50 rounded-lg">
+                <Trash2 className="w-4 h-4" />
               </button>
             </div>
-            <button
-              onClick={() => { setShowKeyDialog(false); setNewKeyValue(''); }}
-              className="w-full px-4 py-2.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium transition-colors"
-            >
-              {isRtl ? 'تم — إغلاق' : 'Done — Close'}
+          ))}
+          {saveError && <p className="text-sm text-red-600">{saveError}</p>}
+        </div>
+      )}
+
+      {/* ── Step 5: Use ── */}
+      {step === 5 && (
+        <div className="space-y-4">
+          <h2 className="text-lg font-bold">{t.steps[4]}</h2>
+          {!apiKeyPrefix && (
+            <button onClick={generateKey}
+              className="text-sm px-4 py-2 rounded-xl bg-primary-600 text-white font-bold">
+              {t.genKey}
             </button>
+          )}
+          <pre className="text-[11px] bg-slate-900 text-slate-100 rounded-xl p-4 overflow-auto" dir="ltr">
+            {curlSnippet}
+          </pre>
+
+          <div className="border border-slate-200 rounded-2xl p-4 space-y-3">
+            <p className="font-bold text-sm">{t.tryIt}</p>
+            {runParams.map(p => (
+              <div key={p.name}>
+                <label className={label}>{p.name}</label>
+                <input className={input} value={testParams[p.name] || ''}
+                  onChange={e => setTestParams(tp => ({ ...tp, [p.name]: e.target.value }))} />
+              </div>
+            ))}
+            <button onClick={tryRun} disabled={running}
+              className="text-sm px-4 py-2 rounded-xl bg-emerald-600 text-white font-bold flex items-center gap-1.5">
+              <Play className="w-4 h-4" />{running ? '...' : t.tryIt}
+            </button>
+            {runError && <p className="text-sm text-red-600">{runError}</p>}
+            {runResult && (
+              <pre className="text-xs bg-emerald-50 text-emerald-900 rounded-xl p-3 overflow-auto" dir="ltr">
+                {JSON.stringify(runResult, null, 2)}
+              </pre>
+            )}
           </div>
+
+          <button onClick={() => onComplete?.()}
+            className="text-sm px-4 py-2 rounded-xl border border-slate-200 font-bold">
+            {t.done}
+          </button>
+        </div>
+      )}
+
+      {/* ── Nav ── */}
+      {step > 1 && step < 5 && (
+        <div className="flex justify-between mt-8">
+          <button onClick={() => setStep((step - 1) as Step)}
+            className="px-4 py-2 rounded-xl border border-slate-200 text-sm font-bold flex items-center gap-1.5">
+            <ArrowLeft className="w-4 h-4" />{t.back}
+          </button>
+          {step < 4 ? (
+            <button onClick={() => setStep((step + 1) as Step)}
+              className="px-4 py-2 rounded-xl bg-primary-600 text-white text-sm font-bold flex items-center gap-1.5">
+              {t.next}<ArrowRight className="w-4 h-4" />
+            </button>
+          ) : (
+            <button onClick={saveConfig} disabled={saving || !fileId}
+              className="px-4 py-2 rounded-xl bg-primary-600 text-white text-sm font-bold flex items-center gap-1.5">
+              {saving ? t.saving : t.save}<Plus className="w-4 h-4" />
+            </button>
+          )}
         </div>
       )}
     </div>
