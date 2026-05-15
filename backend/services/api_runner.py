@@ -49,9 +49,9 @@ def run(
             cell = out["cell"]
             sheet = out.get("sheet")
             ws = wb[sheet] if sheet and sheet in wb.sheetnames else wb.active
-            # Key by "Sheet!Cell" when a sheet is specified, else just "Cell",
-            # so callers with multi-sheet outputs get unambiguous keys.
-            key = f"{sheet}!{cell}" if sheet else cell
+            # Prefer the caller-friendly name; fall back to "Sheet!Cell"
+            # (or just "Cell") so multi-sheet outputs stay unambiguous.
+            key = out.get("name") or (f"{sheet}!{cell}" if sheet else cell)
             outputs[key] = ws[cell].value
     finally:
         wb.close()
