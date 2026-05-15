@@ -21,7 +21,6 @@ const BatchExecutePage = lazy(() => import('./BatchExecutePage').then(m => ({ de
 const FilesPage = lazy(() => import('./FilesPage').then(m => ({ default: m.FilesPage })));
 const MergePdfPage = lazy(() => import('./MergePdfPage').then(m => ({ default: m.MergePdfPage })));
 const InsertImagePage = lazy(() => import('./InsertImagePage').then(m => ({ default: m.InsertImagePage })));
-const TemplatesPage = lazy(() => import('./TemplatesPage').then(m => ({ default: m.TemplatesPage })));
 const JobsPage = lazy(() => import('./JobsPage').then(m => ({ default: m.JobsPage })));
 const VerifyTokensPage = lazy(() => import('./VerifyTokensPage').then(m => ({ default: m.VerifyTokensPage })));
 const PlansPage = lazy(() => import('./PlansPage').then(m => ({ default: m.PlansPage })));
@@ -74,7 +73,6 @@ export const HomePage: React.FC<HomePageProps> = ({ lang, onLangChange, editApiF
               {activeTab === 'execute' && <BatchExecutePage lang={lang} />}
               {activeTab === 'merge'    && <MergePdfPage lang={lang} />}
               {activeTab === 'insert'   && <InsertImagePage lang={lang} />}
-              {activeTab === 'templates' && <TemplatesPage lang={lang} onTabChange={setActiveTab} />}
               {activeTab === 'jobs'     && <JobsPage lang={lang} />}
               {activeTab === 'api_keys' && <APIKeysPage lang={lang} />}
               {activeTab === 'api_builder' && <APIBuilderPage lang={lang} editFileId={editApiFileIdState} onComplete={onApiEditComplete} onNavigateToKeys={navigateToKeysWithDialog} />}

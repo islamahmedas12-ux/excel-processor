@@ -76,19 +76,6 @@ class Job(Base):
     updated_at  = Column(DateTime(timezone=True), nullable=False, default=_utc_now)
 
 
-class Template(Base):
-    __tablename__ = 'templates'
-    id          = Column(String, primary_key=True)
-    owner_email = Column(String, nullable=False, index=True)
-    name        = Column(String, nullable=False)
-    description = Column(Text, nullable=False, default='')
-    filename    = Column(String, nullable=False)
-    size_bytes  = Column(Integer, nullable=False, default=0)
-    sha256      = Column(String, nullable=False)
-    created_at  = Column(DateTime(timezone=True), nullable=False, default=_utc_now)
-    updated_at  = Column(DateTime(timezone=True), nullable=False, default=_utc_now)
-
-
 class File(Base):
     __tablename__ = 'files'
     id          = Column(String, primary_key=True)
@@ -98,7 +85,6 @@ class File(Base):
     category_id = Column(String)
     api_config  = Column(JSONB)
     created_at  = Column(DateTime(timezone=True), nullable=False, default=_utc_now)
-    expires_at  = Column(DateTime(timezone=True))
 
 
 class Result(Base):

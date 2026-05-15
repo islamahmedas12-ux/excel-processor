@@ -8,7 +8,6 @@ export { ExportPdfPage } from './ExportPdfPage';
 export { BatchExecutePage } from './BatchExecutePage';
 export { MergePdfPage } from './MergePdfPage';
 export { InsertImagePage } from './InsertImagePage';
-export { TemplatesPage } from './TemplatesPage';
 export { JobsPage } from './JobsPage';
 export { VerifyTokensPage } from './VerifyTokensPage';
 export { ResultsPage } from './ResultsPage';

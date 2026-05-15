@@ -13,7 +13,7 @@ _DEFAULTS: dict[str, dict] = {
     'free': {
         'label': 'Free', 'label_ar': 'مجاني',
         'price_usd': 0, 'max_files': 3, 'max_file_mb': 100,
-        'storage_gb': 0.3, 'max_concurrent_jobs': 1, 'max_templates': 5,
+        'storage_gb': 0.3, 'max_concurrent_jobs': 1,
         'description': '3 ملفات، كل ملف حتى 100 MB',
         'description_en': '3 files, up to 100 MB each',
         'features': ['3 ملفات مرفوعة', 'حجم أقصى 100 MB للملف', 'قراءة وكتابة الخلايا', 'تصدير PDF'],
@@ -23,7 +23,7 @@ _DEFAULTS: dict[str, dict] = {
     'basic': {
         'label': 'Basic', 'label_ar': 'أساسي',
         'price_usd': 9, 'max_files': 50, 'max_file_mb': 500,
-        'storage_gb': 5, 'max_concurrent_jobs': 3, 'max_templates': 25,
+        'storage_gb': 5, 'max_concurrent_jobs': 3,
         'description': '50 ملفاً، كل ملف حتى 500 MB',
         'description_en': '50 files, up to 500 MB each',
         'features': ['50 ملفاً مرفوعاً', 'حجم أقصى 500 MB للملف', '5 GB مساحة تخزين', 'دعم فني بالإيميل'],
@@ -33,7 +33,7 @@ _DEFAULTS: dict[str, dict] = {
     'pro': {
         'label': 'Pro', 'label_ar': 'احترافي',
         'price_usd': 29, 'max_files': 200, 'max_file_mb': 1024,
-        'storage_gb': 20, 'max_concurrent_jobs': 10, 'max_templates': 100,
+        'storage_gb': 20, 'max_concurrent_jobs': 10,
         'description': '200 ملفاً، كل ملف حتى 1 GB',
         'description_en': '200 files, up to 1 GB each',
         'features': ['200 ملفاً مرفوعاً', 'حجم أقصى 1 GB للملف', '20 GB مساحة تخزين', 'دعم فني ذو أولوية'],
@@ -43,7 +43,7 @@ _DEFAULTS: dict[str, dict] = {
     'business': {
         'label': 'Business', 'label_ar': 'أعمال',
         'price_usd': 79, 'max_files': 999, 'max_file_mb': 2048,
-        'storage_gb': 100, 'max_concurrent_jobs': 50, 'max_templates': 999,
+        'storage_gb': 100, 'max_concurrent_jobs': 50,
         'description': 'ملفات غير محدودة، كل ملف حتى 2 GB',
         'description_en': 'Unlimited files, up to 2 GB each',
         'features': ['ملفات غير محدودة', 'حجم أقصى 2 GB للملف', '100 GB مساحة تخزين', 'دعم فني 24/7'],

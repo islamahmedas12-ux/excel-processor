@@ -13,7 +13,9 @@ interface CodeSnippetsProps {
 
 type Language = 'curl' | 'javascript' | 'python';
 
-const SNIPPETS: Record<Language, { ar: string; en: string; code: (props: CodeSnippetsProps) => string }> = {
+type SnippetArgs = Pick<CodeSnippetsProps, 'fileId' | 'endpointBase' | 'inputs' | 'apiKeyPrefix'>;
+
+const SNIPPETS: Record<Language, { ar: string; en: string; code: (props: SnippetArgs) => string }> = {
   curl: {
     ar: 'cURL',
     en: 'cURL',

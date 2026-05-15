@@ -248,13 +248,13 @@ export const FilesPage: React.FC<FilesPageProps> = ({ lang }) => {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const t = lang === 'ar' ? {
-    title: 'مستودع الملفات', description: 'ارفع ملفات Excel كـ templates — تُستخدم في جميع الأدوات دون تعديل',
+    title: 'مستودع الملفات', description: 'ارفع ملفات Excel — محفوظة بشكل دائم وتُستخدم في جميع الأدوات',
     upload: 'ارفع ملف', uploading: 'جاري الرفع...', dropzone: 'اسحب .xlsx أو .xls هنا أو انقر للاختيار',
     manageCats: 'إدارة التصنيفات', noFiles: 'لا توجد ملفات — ارفع أول ملف لديك',
     uncategorized: 'غير مصنّف', uploadSuccess: (n: string) => `تم رفع "${n}"`,
     deleteConfirm: (n: string) => `حذف "${n}"؟`, searchPlaceholder: 'ابحث في الملفات...',
   } : {
-    title: 'File Repository', description: 'Upload Excel files as templates — used across all tools without modification',
+    title: 'File Repository', description: 'Upload Excel files — kept permanently and used across all tools',
     upload: 'Upload File', uploading: 'Uploading...', dropzone: 'Drop .xlsx or .xls here or click to browse',
     manageCats: 'Manage Categories', noFiles: 'No files yet — upload your first file',
     uncategorized: 'Uncategorized', uploadSuccess: (n: string) => `"${n}" uploaded`,

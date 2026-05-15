@@ -3,6 +3,11 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install --no-audit --no-fund
 COPY . .
+# Default to a relative API base ("/") so the browser calls same-origin
+# /api/* which this image's nginx proxies to the backend container. This
+# avoids hardcoding a host:port and works behind any port remap / domain.
+ARG VITE_API_URL=/
+ENV VITE_API_URL=$VITE_API_URL
 RUN npm run build
 
 FROM nginx:alpine
