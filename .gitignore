@@ -89,6 +89,7 @@ frontend/build/
 # Excel files (sample/test data - optional)
 *.xlsx
 !sample_data/*.xlsx
+!tests/fixtures/*.xlsx
 
 # Logs
 *.log
