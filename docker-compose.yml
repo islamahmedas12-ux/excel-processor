@@ -50,15 +50,32 @@ services:
       S3_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
       # Use the in-compose Postgres for local dev (fast). Production deployments override this.
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      # Formula recalculation is delegated entirely to the calc-service.
+      CALC_SERVICE_URL: http://calc-service:8100
     depends_on:
       postgres:
         condition: service_healthy
       minio:
         condition: service_started
+      calc-service:
+        condition: service_healthy
     volumes:
       - ./backend/data:/app/backend/data
     ports:
       - "5000:5000"
+    networks:
+      - excel-net
+
+  calc-service:
+    build: ./calc-service
+    container_name: excel-calc-service
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8100/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
     networks:
       - excel-net
 

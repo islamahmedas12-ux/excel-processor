@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<oor:items xmlns:oor="http://openoffice.org/2001/registry" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+ <!-- Force LibreOffice Calc to ALWAYS recalculate formulas when a document is
+      loaded. Without this, LibreOffice defaults OOXML (.xlsx) to "Never
+      recalculate" and `soffice --convert-to xlsx` preserves the original
+      (empty / stale) cached <v> values. Value 0 = Always, 1 = Never, 2 = Prompt. -->
+ <item oor:path="/org.openoffice.Office.Calc/Formula/Load">
+  <prop oor:name="ODFRecalcMode" oor:op="fuse">
+   <value>0</value>
+  </prop>
+ </item>
+ <item oor:path="/org.openoffice.Office.Calc/Formula/Load">
+  <prop oor:name="OOXMLRecalcMode" oor:op="fuse">
+   <value>0</value>
+  </prop>
+ </item>
+ <!-- Suppress the first-run / registration dialogs in headless mode. -->
+ <item oor:path="/org.openoffice.Setup/Product">
+  <prop oor:name="ooSetupInstCompleted" oor:op="fuse">
+   <value>true</value>
+  </prop>
+ </item>
+</oor:items>
